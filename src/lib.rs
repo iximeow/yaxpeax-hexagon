@@ -1,0 +1,934 @@
+//! qualcomm `hexagon` decoder implemented as part of the `yaxpeax` project. implements traits
+//! provided by `yaxpeax-arch`.
+//!
+//! decoder is written against the ISA described in `Qualcomm Hexagon V73`:
+//! * retrieved 2024-09-21 from https://docs.qualcomm.com/bundle/publicresource/80-N2040-53_REV_AB_Qualcomm_Hexagon_V73_Programmers_Reference_Manual.pdf
+//! * sha256: `44ebafd1119f725bd3c6ffb87499232520df9a0a6e3e3dc6ea329b15daed11a8`
+
+use core::fmt;
+use core::cmp;
+
+use yaxpeax_arch::{AddressDiff, Arch, Decoder, LengthedInstruction, Reader};
+use yaxpeax_arch::StandardDecodeError as DecodeError;
+
+#[derive(Debug)]
+pub struct Hexagon;
+
+impl Arch for Hexagon {
+    type Word = u8;
+    /// V73 Section 3.3.7:
+    /// > Packets should not wrap the *4GB address space*.
+    type Address = u32;
+    type Instruction = InstructionPacket;
+    type DecodeError = yaxpeax_arch::StandardDecodeError;
+    type Decoder = InstDecoder;
+    type Operand = Operand;
+}
+
+#[derive(Debug, Copy, Clone, Default)]
+struct Predicate {
+    state: u8,
+}
+
+impl Predicate {
+    fn reg(num: u8) -> Self {
+        assert!(num <= 0b11);
+        Self { state: num }
+    }
+
+    fn num(&self) -> u8 {
+        self.state & 0b11
+    }
+
+    fn set_negated(mut self) -> Self {
+        assert!(self.state & 0b0100 == 0);
+        self.state |= 0b0100;
+        self
+    }
+
+    fn negated(&self) -> bool {
+        self.state & 0b0100 != 0
+    }
+
+    fn set_pred_new(mut self) -> Self {
+        assert!(self.state & 0b1000 == 0);
+        self.state |= 0b1000;
+        self
+    }
+
+    fn pred_new(&self) -> bool {
+        self.state & 0b1000 != 0
+    }
+}
+
+#[derive(Debug, Copy, Clone, Default)]
+struct LoopEnd {
+    loops_ended: u8
+}
+
+impl LoopEnd {
+    fn end_0(&self) -> bool {
+        self.loops_ended & 0b01 != 0
+    }
+
+    fn end_1(&self) -> bool {
+        self.loops_ended & 0b10 != 0
+    }
+
+    fn end_any(&self) -> bool {
+        self.loops_ended != 0
+    }
+
+    /// NOT FOR PUBLIC
+    fn mark_end(&mut self, lp: u8) {
+        self.loops_ended |= 1 << lp;
+    }
+}
+
+/// V73 Section 3.3.3:
+/// > The assembler automatically rejects packets that oversubscribe the hardware resources.
+///
+/// but such bit patterns may exist. invalid packets likely mean the disassembler has walked into
+/// invalid code, but should be decoded and shown as-is; the application using `yaxpeax-hexagon`
+/// must decide what to do with bogus instruction packets.
+#[derive(Debug, Copy, Clone, Default)]
+pub struct InstructionPacket {
+    /// each packet has up to four instructions (V73 Section 1.1.3)
+    instructions: [Instruction; 4],
+    /// the actual number of instructions in this packet
+    instruction_count: u8,
+    /// the number of 4-byte instruction words this packet occupies
+    word_count: u8,
+    /// how this packet interacts with hardware loops 0 and/or 1
+    loop_effect: LoopEnd,
+}
+
+impl fmt::Display for InstructionPacket {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.write_str("{ ")?;
+        write!(f, "{}", self.instructions[0]);
+        for i in 1..self.instruction_count {
+            write!(f, "; {}", self.instructions[i as usize])?;
+        }
+
+        f.write_str(" }")?;
+        if self.loop_effect.end_0() {
+            f.write_str(":endloop0")?;
+        }
+        if self.loop_effect.end_1() {
+            f.write_str(":endloop1")?;
+        }
+
+        Ok(())
+    }
+}
+
+/// V5x Section 1.7.2 describes register access syntax. paraphrased:
+///
+/// registers may be written as `Rds[.elst]`.
+///
+/// `ds` describes the operand type and bit size:
+/// | Symbol | Operand Type | Size (in Bits) |
+/// |--------|--------------|----------------|
+/// | d      | Destination  | 32             |
+/// | dd     | Destination  | 64             |
+/// | s      | Source 1     | 32             |
+/// | ss     | Source 1     | 64             |
+/// | t      | Source 2     | 32             |
+/// | tt     | Source 2     | 64             |
+/// | u      | Source 3     | 32             |
+/// | uu     | Source 3     | 64             |
+/// | x      | Source+Dest  | 32             |
+/// | xx     | Source+Dest  | 64             |
+///
+/// `elst` describes access of the bit fields in register `Rds`. V5x Figure 1-4:
+///
+/// ```
+/// |  .b[7] |  .b[6] |  .b[5] |  .b[4] |  .b[3] |  .b[2] |  .b[1] |  .b[0] |     signed bytes
+/// | .ub[7] | .ub[6] | .ub[5] | .ub[4] | .ub[3] | .ub[2] | .ub[1] | .ub[0] |   unsigned bytes
+/// |       .h[3]     |       .h[2]     |       .h[1]     |       .h[0]     |     signed halfwords
+/// |      .uh[3]     |      .uh[2]     |      .uh[1]     |      .uh[0]     |   unsigned halfwords
+/// |                .w[1]              |                .w[0]              |     signed words
+/// |               .uw[1]              |               .uw[0]              |   unsigned words
+/// ```
+///
+/// meanwhile a register can be accessed as a single element with some trailing specifiers. V5x
+/// Table 1-2:
+///
+/// | Symbol | Meaning |
+/// |--------|---------|
+/// | .sN    | Bits `[N-1:0]` are treated as an N-bit signed number. For example, R0.s16 means the least significant 16 bits of R0 are treated as a 16-bit signed number. |
+/// | .uN    | Bits `[N-1:0]` are treated as an N-bit unsigned number. |
+/// | .H     | The most significant 16 bits of a 32-bit register. |
+/// | .L     | The least significant 16 bits of a 32-bit register. |
+///
+/// and finally, "Duplex instructions" (V73 Section 3.6):
+/// > Unlike Compound instructions, duplex instructions do not have distinctive syntax – in
+/// > assembly code they appear identical to the instructions they are composed of. The assembler
+/// > is responsible for recognizing when a pair of instructions can be encoded as a single duplex
+/// > rather than a pair of regular instruction words.
+///
+/// V73 Section 10.3 discusses duplex instructions in more detail:
+/// > A duplex is encoded as a 32-bit instruction with bits [15:14] set to 00. The sub-instructions
+/// > that comprise a duplex are encoded as 13-bit fields in the duplex.
+/// >
+/// > The sub-instructions in a duplex always execute in slot 0 and slot 1.
+#[derive(Debug, Copy, Clone)]
+pub struct Instruction {
+    opcode: Opcode,
+    dest: Option<Operand>,
+    predicate: Option<Predicate>,
+    sources: [Operand; 3],
+    sources_count: u8,
+}
+
+/// V73 Section 3.1 indicates that jumps have taken/not-taken hints, saturation can be a hint,
+/// rounding can be a hint, predicate can be used for carry in/out, result shifting by fixed
+/// counts, and load/store reordering prevention are all kinds of hints that may be present.
+///
+/// additionally, V73 Section 3.2 outlines instruction classes which relate to the available
+/// execution units:
+/// ```
+/// XTYPE
+///     XTYPE ALU           64-bit ALU operations
+///     XTYPE BIT           Bit operations
+///     XTYPE COMLPEX
+///     XTYPE FP
+///     XTYPE MPY
+///     XTYPE PERM          Vector permut and format conversion
+///     XTYPE PRED          Predicate operations
+///     XTYPE SHIFT         Shift operations (with optional ALU)
+/// ALU32                   32-bit ALU operations
+///     ALU32 ALU           Arithmetic and logical
+///     ALU32 PERM          Permute
+///     ALU32 PRED          Predicate operations
+/// CR
+/// JR
+/// J
+/// LD
+/// MEMOP
+/// NV
+///     NV J
+///     NV ST
+/// ST
+/// SYSTEM
+///     SYSTEM USER
+/// ```
+#[allow(non_camel_case_types)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub enum Opcode {
+    /// TODO: remove. should never be shown. implies an instruction was parially decoded but
+    /// accepted?
+    BUG,
+    // V73 Section 10.9
+    // > NOTE: When a constant extender is explicitly specified with a GP-relative load/store, the
+    // > processor ignores the value in GP and creates the effective address directly from the 32-bit
+    // > constant value.
+    //
+    // TODO: similar special interpretation of constant extender on 32-bit immediate operands and
+    // 32-bit jump/call target addresses.
+
+    Nop,
+
+    // V73 page 214 ("Jump to address")
+    Jump,
+
+    Memb,
+    Memub,
+    Memh,
+    Memuh,
+    Memw,
+    Memd,
+
+    Membh,
+    MemhFifo,
+    Memubh,
+    MembFifo,
+
+    Aslh,
+    Asrh,
+    Mov,
+    Zxtb,
+    Sxtb,
+    Zxth,
+    Sxth,
+}
+
+/// TODO: don't know if this will be useful, but this is how V73 is described.. it also appears to
+/// be the overall structure of the processor at least back to V5x.
+/// TODO: how far back does this organization reflect reality? all the way to V2?
+enum ExecutionUnit {
+    /// Load/store unit
+    /// LD, ST, ALU32, MEMOP, NV, SYSTEM
+    S0,
+    /// Load/store unit
+    /// LD, ST, ALU32
+    S1,
+    /// X unit
+    /// XTYPE, ALU32, J, JR
+    S2,
+    /// X unit
+    /// XTYPE, ALU32, J, CR
+    S3
+}
+
+/// V73 Section 2.1:
+/// > thirty-two 32-bit general-purpose registers (named R0 through R31)
+///
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+struct GPR(u8);
+
+impl GPR {
+    const SP: GPR = GPR(29);
+    const FP: GPR = GPR(30);
+    const LR: GPR = GPR(31);
+}
+
+impl fmt::Display for GPR {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        const NAMES: [&'static str; 32] = [
+            "R0", "R1", "R2", "R3", "R4", "R5", "R6", "R7",
+            "R8", "R9", "R10", "R11", "R12", "R13", "R14", "R15",
+            "R16", "R17", "R18", "R19", "R20", "R21", "R22", "R23",
+            "R24", "R25", "R26", "R27",
+            // the three R29 through R31 general registers support subroutines and the Software
+            // Stack. ... they have symbol aliases that indicate when these registers are accessed
+            // as subroutine and stack registers (V73 Section 2.1)
+            "R28", "SP", "FP", "LR",
+        ];
+
+        f.write_str(NAMES[self.0 as usize])
+    }
+}
+
+/// V73 Section 2.1:
+/// > the general registers can be specified as a pair that represent a single 64-bit register.
+/// >
+/// > NOTE: the first register in a register pair must always be odd-numbered, and the second must be
+/// > the next lower register.
+///
+/// from Table 2-2, note there is an entry of `R31:R30 (LR:FP)`
+struct RegPair(u8);
+
+/// V73 Section 2.2:
+/// > the Hexagon processor includes a set of 32-bit control registers that provide access to
+/// > processor features such as the program counter, hardware loops, and vector predicates.
+/// >
+/// > unlike general registers, control registers are used as instruction operands only in the
+/// > following cases:
+/// > * instructions that require a specific control register as an operand
+/// > * register transfer instructions
+/// >
+/// > NOTE: when a control register is used in a register transfer, the other operand must be a
+/// > general register.
+/// also V73 Section 2.2:
+/// > the control registers have numeric aliases (C0 through C31).
+///
+/// while the names are written out first, the numeric form of the register is probably what is
+/// used more often...
+///
+/// also, the `*LO/*HI` registers seem like they may be used in some circumstances as a pair
+/// without the `LO/HI` suffixes, so there may need to be a `ControlRegPair` type too.
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+struct ControlReg(u8);
+
+impl ControlReg {
+    /// Loop start address register 0
+    const SA0: ControlReg = ControlReg(0);
+    /// Loop count register 0
+    const LC0: ControlReg = ControlReg(1);
+    /// Loop start address register 1
+    const SA1: ControlReg = ControlReg(2);
+    /// Loop count register 1
+    const LC1: ControlReg = ControlReg(3);
+    /// Predicate registers
+    const PREDICATES: ControlReg = ControlReg(4);
+
+    // C5 is unused
+
+    /// Modifier register 0
+    const M0: ControlReg = ControlReg(6);
+    /// Modifier register 1
+    const M1: ControlReg = ControlReg(7);
+    /// User status register
+    ///
+    /// V73 Section 2.2.3:
+    /// > USR stores the following status and control values:
+    /// > * Cache prefetch enable
+    /// > * Cache prefetch status
+    /// > * Floating point modes
+    /// > * Floating point status
+    /// > * Hardware loop configuration
+    /// > * Sticky Saturation overflow
+    /// >
+    /// > NOTE: A user control register transfer to USR cannot be gruoped in an instruction packet
+    /// with a Floating point instruction.
+    /// > NOTE: When a transfer to USR chagnes the enable trap bits [29:25], an isync instruction
+    /// (Section 5.11) must execute before the new exception programming can take effect.
+    const USR: ControlReg = ControlReg(8);
+    /// Program counter
+    const PC: ControlReg = ControlReg(9);
+    /// User general pointer
+    const UGP: ControlReg = ControlReg(10);
+    /// Global pointer
+    const GP: ControlReg = ControlReg(11);
+    /// Circular start register 0
+    const CS0: ControlReg = ControlReg(12);
+    /// Circular start register 1
+    const CS1: ControlReg = ControlReg(13);
+    /// Cycle count registers
+    ///
+    /// according to V5x manual section 1.5, new in V5x
+    const UPCYCLELO: ControlReg = ControlReg(14);
+    /// Cycle count registers
+    ///
+    /// according to V5x manual section 1.5, new in V5x
+    const UPCYCLEHI: ControlReg = ControlReg(15);
+    /// Stack bounds register
+    ///
+    /// V73 Section 2.2.10:
+    /// > The frame limit register (FRAMELIMIT) stores the low address of the memory area reserved
+    /// > for the software stack (Section 7.3.1).
+    const FRAMELIMIT: ControlReg = ControlReg(16);
+    /// Stack smash register
+    ///
+    /// V73 Section 2.2.11:
+    /// > The frame key register (FRAMEKEY) stores the key value that XOR-scrambles return
+    /// > addresses when they are stored on the software tack (Section 7.3.2).
+    const FRAMEKEY: ControlReg = ControlReg(17);
+    /// Packet count registers
+    ///
+    /// v73 Section 2.2.12:
+    /// > The packet count registers (PKTCOUNTLO to PKTCOUNTHI) store a 64-bit value containing the
+    /// > current number of instruction packets exceuted since a PKTCOUNT registers was last
+    /// > written to.
+    const PKTCOUNTLO: ControlReg = ControlReg(18);
+    /// Packet count registers
+    const PKTCOUNTHI: ControlReg = ControlReg(19);
+
+    // C20-C29 are reserved
+
+    /// Qtimer registers
+    ///
+    /// V73 Section 2.2.13:
+    /// > The QTimer registers (UTIMERLO to UTIMERHI) provide access to the QTimer global reference
+    /// > count value. They enable Hexagon software to read the 64-bit time value without having to
+    /// > perform an expensive advanced high-performance bus (AHB) load.
+    /// > ...
+    /// > These registers are read only – hardware automatically updates these registers to contain
+    /// > the current QTimer value.
+    const UTIMERLO: ControlReg = ControlReg(30);
+    /// Qtimer registers
+    const UTIMERHI: ControlReg = ControlReg(31);
+}
+
+impl PartialEq for Instruction {
+    fn eq(&self, other: &Self) -> bool {
+        panic!("partialeq")
+    }
+}
+
+impl Instruction {
+}
+
+impl Default for Instruction {
+    fn default() -> Instruction {
+        Instruction {
+            opcode: Opcode::BUG,
+            dest: None,
+            predicate: None,
+            sources: [Operand::Nothing, Operand::Nothing, Operand::Nothing],
+            sources_count: 0,
+        }
+    }
+}
+
+impl fmt::Display for Instruction {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if let Some(predication) = self.predicate {
+            write!(f, "if ({}P{}{}) ",
+                if predication.negated() { "!" } else { "" },
+                if predication.pred_new() { ".new" } else { "" },
+                predication.num()
+            )?;
+        }
+
+        // V73 Section 10.11
+        // > The assembler encodes some Hexagon processor instructions as variants of other
+        // > instructions. The encoding as a variant done for Operations that are functionally
+        // > equivalent to other instructions, but are still defined as separate instructions because
+        // > of their programming utility as common operations.
+        // ...
+        // | Instruction  | Mapping          |
+        // |--------------|------------------|
+        // | Rd = not(Rs) | Rd = sub(#-1,Rs) |
+        // | Rd = neg(Rs) | Rd = sub(#0,Rs)  |
+        // | Rdd = Rss    | Rdd = combine(Rss.H32, Rss.L32) |
+        if let Some(o) = self.dest.as_ref() {
+            write!(f, "{} = ", o)?;
+        }
+        write!(f, "{}", self.opcode)?;
+        if self.sources_count > 0 {
+            f.write_str("(")?;
+            write!(f, "{}", self.sources[0])?;
+            for i in 1..self.sources_count {
+                write!(f, ", {}", self.sources[i as usize])?;
+            }
+            f.write_str(")")?;
+        }
+
+        Ok(())
+    }
+}
+
+impl LengthedInstruction for InstructionPacket {
+    type Unit = AddressDiff<<Hexagon as Arch>::Address>;
+    fn min_size() -> Self::Unit {
+        AddressDiff::from_const(4)
+    }
+    fn len(&self) -> Self::Unit {
+        AddressDiff::from_const(self.word_count as u32 * 4)
+    }
+}
+
+impl yaxpeax_arch::Instruction for InstructionPacket {
+    // only know how to decode well-formed instructions at the moment
+    fn well_defined(&self) -> bool { true }
+}
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub enum Operand {
+    Nothing,
+    /*
+    /// one of the 16 32-bit general purpose registers: `R0 (sp)` through `R15`.
+    Register { num: u8 },
+    /// one of the 16 32-bit general purpose registers, but a smaller part of it. typically
+    /// sign-extended to 32b for processing.
+    Subreg { num: u8, width: SizeCode },
+    */
+
+    PCRel32 { rel: i32 },
+
+    Gpr { reg: u8 },
+
+    RegOffset { base: u8, offset: u32, },
+
+    RegShiftedReg { base: u8, index: u8, shift: u8 },
+}
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub enum SizeCode {
+    S,
+    B,
+    W,
+    A,
+    L,
+    D,
+    UW,
+}
+
+impl fmt::Display for SizeCode {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let text = match self {
+            SizeCode::S => "s",
+            SizeCode::B => "b",
+            SizeCode::W => "w",
+            SizeCode::A => "a",
+            SizeCode::L => "l",
+            SizeCode::D => "d",
+            SizeCode::UW => "uw",
+        };
+
+        f.write_str(text)
+    }
+}
+
+impl SizeCode {
+    fn bytes(&self) -> u8 {
+        match self {
+            SizeCode::S => 1,
+            SizeCode::B => 1,
+            SizeCode::W => 2,
+            SizeCode::UW => 2,
+            SizeCode::A => 3,
+            SizeCode::L => 4,
+            SizeCode::D => 8,
+        }
+    }
+}
+
+/*
+impl fmt::Display for Operand {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    }
+}
+*/
+
+impl fmt::Display for Opcode {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        panic!("TODO:");
+    }
+}
+
+#[derive(Debug)]
+pub struct InstDecoder { }
+
+impl Default for InstDecoder {
+    fn default() -> Self {
+        InstDecoder {}
+    }
+}
+
+trait DecodeHandler<T: Reader<<Hexagon as Arch>::Address, <Hexagon as Arch>::Word>> {
+    #[inline(always)]
+    fn read_u8(&mut self, words: &mut T) -> Result<u8, <Hexagon as Arch>::DecodeError> {
+        let b = words.next()?;
+        self.on_word_read(b);
+        Ok(b)
+    }
+    #[inline(always)]
+    fn read_u16(&mut self, words: &mut T) -> Result<u16, <Hexagon as Arch>::DecodeError> {
+        let mut buf = [0u8; 2];
+        words.next_n(&mut buf).ok().ok_or(DecodeError::ExhaustedInput)?;
+        self.on_word_read(buf[0]);
+        self.on_word_read(buf[1]);
+        Ok(u16::from_le_bytes(buf))
+    }
+    #[inline(always)]
+    fn read_u32(&mut self, words: &mut T) -> Result<u32, <Hexagon as Arch>::DecodeError> {
+        let mut buf = [0u8; 4];
+        words.next_n(&mut buf).ok().ok_or(DecodeError::ExhaustedInput)?;
+        self.on_word_read(buf[0]);
+        self.on_word_read(buf[1]);
+        self.on_word_read(buf[2]);
+        self.on_word_read(buf[3]);
+        Ok(u32::from_le_bytes(buf))
+    }
+    #[inline(always)]
+    fn read_inst_word(&mut self, words: &mut T) -> Result<u32, <Hexagon as Arch>::DecodeError>;
+    fn on_decode_start(&mut self) {}
+    fn on_decode_end(&mut self) {}
+    fn start_instruction(&mut self);
+    fn end_instruction(&mut self);
+    fn on_loop_end(&mut self, loop_num: u8);
+    fn on_opcode_decoded(&mut self, _opcode: Opcode) -> Result<(), <Hexagon as Arch>::DecodeError> { Ok(()) }
+    fn on_source_decoded(&mut self, _operand: Operand) -> Result<(), <Hexagon as Arch>::DecodeError> { Ok(()) }
+    fn on_dest_decoded(&mut self, _operand: Operand) -> Result<(), <Hexagon as Arch>::DecodeError> { Ok(()) }
+    fn inst_predicated(&mut self, num: u8, negated: bool, pred_new: bool) -> Result<(), <Hexagon as Arch>::DecodeError> { Ok(()) }
+    fn on_word_read(&mut self, _word: <Hexagon as Arch>::Word) {}
+}
+
+impl<T: yaxpeax_arch::Reader<<Hexagon as Arch>::Address, <Hexagon as Arch>::Word>> DecodeHandler<T> for InstructionPacket {
+    fn on_decode_start(&mut self) {
+        self.instructions = [Instruction::default(); 4];
+        self.instruction_count = 0;
+        self.word_count = 0;
+    }
+    fn on_loop_end(&mut self, loop_num: u8) {
+        self.loop_effect.mark_end(loop_num);
+    }
+    fn on_opcode_decoded(&mut self, opcode: Opcode) -> Result<(), <Hexagon as Arch>::DecodeError> {
+        self.instructions[self.instruction_count as usize].opcode = opcode;
+        Ok(())
+    }
+    fn on_source_decoded(&mut self, operand: Operand) -> Result<(), <Hexagon as Arch>::DecodeError> {
+        let mut inst = &mut self.instructions[self.instruction_count as usize];
+        inst.sources[inst.sources_count as usize] = operand;
+        inst.sources_count += 1;
+        Ok(())
+    }
+    fn on_dest_decoded(&mut self, operand: Operand) -> Result<(), <Hexagon as Arch>::DecodeError> {
+        let mut inst = &mut self.instructions[self.instruction_count as usize];
+        assert!(inst.dest.is_none());
+        inst.dest = Some(operand);
+        Ok(())
+    }
+    fn inst_predicated(&mut self, num: u8, negated: bool, pred_new: bool) -> Result<(), <Hexagon as Arch>::DecodeError> {
+        let mut inst = &mut self.instructions[self.instruction_count as usize];
+        assert!(inst.predicate.is_none());
+        inst.predicate = Some(Predicate::reg(num).set_negated().set_pred_new());
+        Ok(())
+    }
+    #[inline(always)]
+    fn read_inst_word(&mut self, words: &mut T) -> Result<u32, <Hexagon as Arch>::DecodeError> {
+        self.word_count += 1;
+        self.read_u32(words)
+    }
+    fn on_word_read(&mut self, _word: <Hexagon as Arch>::Word) { }
+    fn start_instruction(&mut self) { }
+    fn end_instruction(&mut self) {
+        self.instruction_count += 1;
+    }
+}
+
+impl Decoder<Hexagon> for InstDecoder {
+    fn decode_into<T: Reader<<Hexagon as Arch>::Address, <Hexagon as Arch>::Word>>(&self, packet: &mut InstructionPacket, words: &mut T) -> Result<(), <Hexagon as Arch>::DecodeError> {
+        decode_packet(self, packet, words)
+    }
+}
+
+fn reg_b0(inst: u32) -> u8 { (inst & 0b11111) as u8 }
+fn reg_b8(inst: u32) -> u8 { ((inst >> 8) & 0b11111) as u8 }
+fn reg_b16(inst: u32) -> u8 { ((inst >> 16) & 0b11111) as u8 }
+
+fn decode_packet<
+    T: Reader<<Hexagon as Arch>::Address, <Hexagon as Arch>::Word>,
+    H: DecodeHandler<T>,
+>(decoder: &<Hexagon as Arch>::Decoder, handler: &mut H, words: &mut T) -> Result<(), <Hexagon as Arch>::DecodeError> {
+    handler.on_decode_start();
+
+    let mut current_word = 0;
+
+    // V73 Section 10.6:
+    // > In addition to encoding the last instruction in a packet, the Parse field of the
+    // > instruction word (Section 10.5) encodes the last packet in a hardware loop.
+    //
+    // accumulate Parse fields to comapre against V73 Table 10-7 once we've read the whole
+    // packet.
+    //
+    // TODO: if the first instruction is a duplex, does that mean the packet cannot indicate
+    // loop end?
+    let mut loop_bits: u8 = 0b0000;
+
+    // V74 Section 10.6:
+    // > A constant extender is encoded as a 32-bit instruction with the 4-bit ICLASS field set to
+    // > 0 and the 2-bit Parse field set to its usual value (Section 10.5). The remaining 26 bits in
+    // > the instruction word store the data bits that are prepended to an operand as small as six
+    // > bits to create a full 32-bit value.
+    // > ...
+    // > If the instruction operand to extend is longer than six bits, the overlapping bits in the
+    // > base instruction must be encoded as zeros. The value in the constant extender always
+    // > supplies the upper 26 bits.
+    let mut extender: Option<u32> = None;
+
+    // have we seen an end of packet?
+    let mut end = false;
+
+    while !end {
+        if current_word >= 4 {
+            panic!("TODO: instruction too large");
+            // Err(DecodeError::InstructionTooLarge)
+        }
+
+        let inst: u32 = handler.read_inst_word(words)?;
+
+        println!("read word {:08x}", inst);
+
+        // V73 Section 10.5:
+        // > Instruction packets are encoded using two bits of the instruction word (15:14), whic
+        // > are referred to as the Parse field of the instruction word.
+        let parse = (inst >> 14) & 0b11;
+
+        if current_word == 0 {
+            loop_bits |= parse as u8;
+        } else if current_word == 1 {
+            loop_bits |= (parse as u8) << 2;
+        }
+
+        // V73 Section 10.5:
+        // > 11 indicates that an instruction is the last instruction in a packet
+        // > 01 or 10 indicate that an instruction is not the last instruction in a packet
+        // > 00 indicates a duplex
+        match parse {
+            0b00 => {
+                println!("duplex,");
+            }
+            0b01 | 0b10 => {
+                println!("middle");
+            }
+            0b11 => {
+                println!("eop");
+                end = true;
+
+                if loop_bits & 0b0111 == 0b0110 {
+                    handler.on_loop_end(0);
+                } else if loop_bits == 0b1001 {
+                    handler.on_loop_end(1);
+                } else if loop_bits == 0b1010 {
+                    handler.on_loop_end(0);
+                    handler.on_loop_end(1);
+                }
+            }
+            _ => {
+                unreachable!();
+            }
+        }
+
+        let iclass = (inst >> 28) & 0b1111;
+        println!(" iclass: {:04b}", iclass);
+
+
+        if iclass == 0b0000 {
+            extender = Some((inst & 0x3fff) | ((inst >> 2) & 0xfff));
+        } else {
+            handler.start_instruction();
+            decode_instruction(decoder, handler, inst, extender)?;
+            handler.end_instruction();
+        }
+
+        current_word += 1;
+    }
+
+    Ok(())
+}
+
+fn can_be_extended(iclass: u8, regclass: u8) -> bool {
+    panic!("TODO: Table 10-10")
+}
+
+fn decode_instruction<
+    T: Reader<<Hexagon as Arch>::Address, <Hexagon as Arch>::Word>,
+    H: DecodeHandler<T>,
+>(decoder: &<Hexagon as Arch>::Decoder, handler: &mut H, inst: u32, extender: Option<u32>) -> Result<(), <Hexagon as Arch>::DecodeError> {
+    let iclass = (inst >> 28) & 0b1111;
+
+    // V73 Section 10.9
+    // > A constant extender must be positioned in a packet immediately before the
+    // > instruction that it extends
+    // > ...
+    // > If a constant extender is encoded in a packet for an instruction that does not
+    // > accept a constant extender, the execution result is undefined. The assembler
+    // > normally ensures that only valid constant extenders are generated.
+    if extender.is_some() {
+        eprintln!("TODO: error; unconsumed extender");
+    }
+
+    // this is *called* "RegType" in the manual but it seem to more often describe
+    // opcodes?
+    let reg_type = (inst >> 24) & 0b1111;
+    let min_op = (inst >> 21) & 0b111;
+
+    match iclass {
+        0b0011 => {
+            let upper = (inst >> 26) & 0b11;
+            match upper {
+                0b00 => {
+                    // 00011 | 00xxxxxxx
+                    // everything under this is a predicated load
+                    let nn = (inst >> 24) & 0b11;
+
+                    let negated = nn & 1 == 1;
+                    let pred_new = nn >> 1 == 1;
+
+                    let ddddd = reg_b0(inst);
+                    let vv = ((inst >> 5) & 0b11) as u8;
+                    let i_lo = (inst >> 7) & 0b1;
+                    let ttttt = reg_b8(inst);
+                    let i_hi = ((inst >> 13) & 0b1) << 1;
+                    let ii = (i_lo | i_hi) as u8;
+                    let sssss = reg_b16(inst);
+                    let op = (inst >> 21) & 0b111;
+
+                    handler.inst_predicated(vv, negated, pred_new);
+                    handler.on_source_decoded(Operand::RegShiftedReg { base: sssss, index: ttttt, shift: ii })?;
+                    handler.on_dest_decoded(Operand::Gpr { reg: ddddd })?;
+
+                    use Opcode::*;
+                    static OPCODES: [Option<Opcode>; 8] = [
+                        Some(Memb), Some(Memub), Some(Memh), Some(Memuh),
+                        Some(Memw), None,        Some(Memd), None,
+                    ];
+                    handler.on_opcode_decoded(OPCODES[op as usize].ok_or(DecodeError::InvalidOpcode)?);
+                }
+                other => {
+                    panic!("TODO: other: {}", other);
+                }
+            }
+        }
+        0b0101 => {
+            let majop = (inst >> 25) & 0b111;
+            match majop {
+                0b100 => {
+                    // V73 Jump to address
+                    // 0 1 0 1 | 1 0 0 i...
+                    handler.on_opcode_decoded(Opcode::Jump);
+                    let imm = ((inst >> 1) & 0x7fff) | ((inst >> 3) & 0xff8000);
+                    let imm = ((imm as i32) << 10) >> 10;
+                    handler.on_source_decoded(Operand::PCRel32 { rel: imm & !0b11 })?;
+                },
+                _ => {
+                    // TODO: exhaustive
+                }
+            }
+        },
+        0b0111 => {
+            if reg_type == 0b0000 {
+                static OPS: [Option<Opcode>; 8] = [
+                    Some(Opcode::Aslh), Some(Opcode::Asrh), None, Some(Opcode::Mov),
+                    Some(Opcode::Zxtb), Some(Opcode::Sxtb), Some(Opcode::Zxth), Some(Opcode::Sxth),
+                ];
+
+                let Some(opcode) = OPS[min_op as usize] else {
+                    return Err(DecodeError::InvalidOpcode);
+                };
+
+                let ddddd = reg_b0(inst);
+                let sssss = reg_b16(inst);
+                let predicated = (inst >> 15) & 1 != 0;
+
+                if opcode == Opcode::Mov && predicated {
+                    // no support for predicated register transfer..?
+                    return Err(DecodeError::InvalidOpcode);
+                } else if opcode == Opcode::Zxtb && !predicated {
+                    // non-predicated zext is assembled as `Rd=and(Rs,#255)`
+                    // really curious if hardware supports this instruction anyway...
+                    return Err(DecodeError::InvalidOpcode);
+                }
+
+                handler.on_opcode_decoded(opcode);
+
+                if predicated {
+                    let pred_bits = (inst >> 10) & 0b11;
+                    let negated = pred_bits >> 1 != 0;
+                    let dotnew = pred_bits & 1 != 0;
+                    let pred_number = (inst >> 8) & 0b11;
+
+                    handler.inst_predicated(pred_number as u8, negated, dotnew);
+                }
+
+                handler.on_dest_decoded(Operand::Gpr { reg: ddddd })?;
+                handler.on_source_decoded(Operand::Gpr { reg: sssss })?;
+            } else {
+            }
+            if (inst >> 24) & 0b1111 == 0b1111 {
+                handler.on_opcode_decoded(Opcode::Nop);
+            }
+        }
+        0b1001 => {
+            if (inst >> 27) & 1 != 0 {
+                panic!("other mem op");
+            }
+
+            let ddddd = reg_b0(inst);
+            let sssss = reg_b16(inst);
+            let i_lo = (inst >> 5) & 0b1_1111_1111;
+            let i_hi = (inst >> 25) & 0b11;
+            let i = i_lo | (i_hi << 9);
+            let op = (inst >> 21) & 0b1111;
+
+            static SAMT: [u8; 16] = [
+                0xff, 0x01, 0x00, 0x01,
+                0x00, 0x02, 0xff, 0x02,
+                0x03, 0x03, 0x03, 0x03,
+                0x03, 0xff, 0x03, 0xff,
+            ];
+
+            handler.on_source_decoded(Operand::RegOffset { base: sssss, offset: (i as u32) << SAMT[op as usize] });
+            handler.on_dest_decoded(Operand::Gpr { reg: ddddd })?;
+
+            use Opcode::*;
+            static OPCODES: [Option<Opcode>; 16] = [
+                None,      Some(Membh), Some(MemhFifo), Some(Memubh),
+                Some(MembFifo), Some(Memubh), None, Some(Membh),
+                Some(Memb), Some(Memub), Some(Memh), Some(Memuh),
+                Some(Memw), None, Some(Memd), None,
+            ];
+            handler.on_opcode_decoded(OPCODES[op as usize].ok_or(DecodeError::InvalidOpcode)?);
+        }
+        _ => {
+            // TODO: exhaustive
+        }
+    }
+
+    Ok(())
+}
