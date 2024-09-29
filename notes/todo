@@ -1436,6 +1436,7 @@ A L I A S     A L I A S     A L I A S    A L I A S     A L I A S   | Rd=zxtb(Rs)
 |1 1 1 1|0 0 1 1 1 0 1|s s s s s| P P |0 t t t t t - - -|d d d d d| Rd=combine(Rt.H,Rs.L)       - ALU32 PERM/slots 0 1 2 3
 |1 1 1 1|0 0 1 1 1 1 0|s s s s s| P P |0 t t t t t - - -|d d d d d| Rd=combine(Rt.L,Rs.H)       - ALU32 PERM/slots 0 1 2 3
 |1 1 1 1|0 0 1 1 1 1 1|s s s s s| P P |0 t t t t t - - -|d d d d d| Rd=combine(Rt.L,Rs.L)       - ALU32 PERM/slots 0 1 2 3
+|1 1 1 1|0 1 0 0 - - -|s s s s s| P P |- t t t t t - u u|d d d d d| Rd=mux(Pu,Rs,Rt)            - ALU32 PERM/slots 0 1 2 3
 |1 1 1 1|0 1 0 1 0 - -|s s s s s| P P |0 t t t t t - - -|d d d d d| Rdd=combine(Rs,Rt)          - ALU32 PERM/slots 0 1 2 3
 |1 1 1 1|0 1 0 1 1 - -|s s s s s| P P |- t t t t t - - -|d d d d d| Rdd=packhl(Rs,Rt)           - ALU32 PERM/slots 0 1 2 3
 |1 1 1 1|0 1 1 0 0 0 0|s s s s s| P P |- t t t t t - - -|d d d d d| Rd=vaddh(Rs,Rt)             - ALU32/slots 0 1 2 3      -
