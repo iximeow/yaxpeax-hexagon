@@ -1105,9 +1105,6 @@ fn decode_instruction<
                     if predicate_store {
                         let nn = (inst >> 23) & 0b11;
 
-                        let negated = nn & 1 == 1;
-                        let pred_new = nn >> 1 == 1;
-
                         let l_lo = reg_b0(inst);
                         let vv = ((inst >> 5) & 0b11) as u8;
                         let iiiiii = (inst >> 7) & 0b11_1111;
@@ -1464,20 +1461,20 @@ fn decode_instruction<
                         handler.on_dest_decoded(Operand::gpr(ddddd))?;
                         Opcode::CmpEq
                     };
-                    handler.on_opcode_decoded(op);
+                    handler.on_opcode_decoded(op)?;
 
                     let min_low = min_op & 0b11;
 
                     if min_low == 0b11 {
-                        handler.negate_result();
+                        handler.negate_result()?;
                     }
 
                     if min_low == 0b01 {
-                        handler.on_source_decoded(Operand::imm_i8(i));
-                        handler.on_source_decoded(Operand::gpr(sssss));
+                        handler.on_source_decoded(Operand::imm_i8(i))?;
+                        handler.on_source_decoded(Operand::gpr(sssss))?;
                     } else {
-                        handler.on_source_decoded(Operand::gpr(sssss));
-                        handler.on_source_decoded(Operand::imm_i8(i));
+                        handler.on_source_decoded(Operand::gpr(sssss))?;
+                        handler.on_source_decoded(Operand::imm_i8(i))?;
                     }
                 } else {
                     let sssss = reg_b16(inst);
@@ -1503,7 +1500,7 @@ fn decode_instruction<
                 let sssss = reg_b16(inst);
                 let ddddd = reg_b0(inst);
 
-                handler.on_opcode_decoded(Opcode::Add);
+                handler.on_opcode_decoded(Opcode::Add)?;
 
                 let negated = (min_op >> 2) & 1 == 1;
                 let pred_number = min_op & 0b11;
@@ -1638,7 +1635,7 @@ fn decode_instruction<
 
                 let ddddd = reg_b0(inst);
 
-                handler.on_opcode_decoded(Opcode::TransferImmediate);
+                handler.on_opcode_decoded(Opcode::TransferImmediate)?;
 
                 let negated = (min_op >> 2) & 1 == 1;
                 let pred_number = min_op & 0b11;
