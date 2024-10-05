@@ -196,11 +196,46 @@ pub struct InstructionPacket {
 pub struct Instruction {
     opcode: Opcode,
     dest: Option<Operand>,
-    predicate: Option<Predicate>,
-    negated: bool,
-    branch_hinted: Option<BranchHint>,
+    flags: InstFlags,
+
     sources: [Operand; 3],
     sources_count: u8,
+}
+
+#[derive(Debug, Copy, Clone)]
+enum RoundingMode {
+    Round,
+    Raw,
+}
+
+impl RoundingMode {
+    fn as_label(&self) -> &'static str {
+        match self {
+            RoundingMode::Round => ":rnd",
+            RoundingMode::Raw => ":raw",
+        }
+    }
+}
+
+#[derive(Debug, Copy, Clone)]
+struct InstFlags {
+    predicate: Option<Predicate>,
+    branch_hint: Option<BranchHint>,
+    negated: bool,
+    saturate: bool,
+    rounded: Option<RoundingMode>,
+}
+
+impl Default for InstFlags {
+    fn default() -> Self {
+        Self {
+            predicate: None,
+            branch_hint: None,
+            negated: false,
+            saturate: false,
+            rounded: None,
+        }
+    }
 }
 
 /// V73 Section 3.1 indicates that jumps have taken/not-taken hints, saturation can be a hint,
@@ -311,6 +346,22 @@ pub enum Opcode {
     TlbInvAsid,
     Ctlbw,
     Tlboc,
+
+    Asr,
+    Lsr,
+    Asl,
+    Rol,
+    Vsathub,
+    Vsatwuh,
+    Vsatwh,
+    Vsathb,
+    Vasrh,
+
+    Vabsh,
+    Vabsw,
+    Vasrw,
+    Vlsrw,
+    Vaslw,
 }
 
 impl Opcode {
@@ -519,9 +570,7 @@ impl Default for Instruction {
         Instruction {
             opcode: Opcode::BUG,
             dest: None,
-            predicate: None,
-            negated: false,
-            branch_hinted: None,
+            flags: InstFlags::default(),
             sources: [Operand::Nothing, Operand::Nothing, Operand::Nothing],
             sources_count: 0,
         }
@@ -743,7 +792,9 @@ trait DecodeHandler<T: Reader<<Hexagon as Arch>::Address, <Hexagon as Arch>::Wor
     fn on_dest_decoded(&mut self, _operand: Operand) -> Result<(), <Hexagon as Arch>::DecodeError> { Ok(()) }
     fn inst_predicated(&mut self, num: u8, negated: bool, pred_new: bool) -> Result<(), <Hexagon as Arch>::DecodeError> { Ok(()) }
     fn negate_result(&mut self) -> Result<(), <Hexagon as Arch>::DecodeError> { Ok(()) }
+    fn saturate(&mut self) -> Result<(), <Hexagon as Arch>::DecodeError> { Ok(()) }
     fn branch_hint(&mut self, hint_taken: bool) -> Result<(), <Hexagon as Arch>::DecodeError> { Ok(()) }
+    fn rounded(&mut self, mode: RoundingMode) -> Result<(), <Hexagon as Arch>::DecodeError> { Ok(()) }
     fn on_word_read(&mut self, _word: <Hexagon as Arch>::Word) {}
 }
 
@@ -773,25 +824,38 @@ impl<T: yaxpeax_arch::Reader<<Hexagon as Arch>::Address, <Hexagon as Arch>::Word
         Ok(())
     }
     fn inst_predicated(&mut self, num: u8, negated: bool, pred_new: bool) -> Result<(), <Hexagon as Arch>::DecodeError> {
-        let mut inst = &mut self.instructions[self.instruction_count as usize];
-        assert!(inst.predicate.is_none());
-        inst.predicate = Some(Predicate::reg(num).set_negated(negated).set_pred_new(pred_new));
+        let mut flags = &mut self.instructions[self.instruction_count as usize].flags;
+        assert!(flags.predicate.is_none());
+        flags.predicate = Some(Predicate::reg(num).set_negated(negated).set_pred_new(pred_new));
         Ok(())
     }
     fn negate_result(&mut self) -> Result<(), <Hexagon as Arch>::DecodeError> {
-        let mut inst = &mut self.instructions[self.instruction_count as usize];
-        assert!(!inst.negated);
-        inst.negated = true;
+        let mut flags = &mut self.instructions[self.instruction_count as usize].flags;
+        assert!(!flags.negated);
+        flags.negated = true;
         Ok(())
     }
+    fn saturate(&mut self) -> Result<(), <Hexagon as Arch>::DecodeError> {
+        let mut flags = &mut self.instructions[self.instruction_count as usize].flags;
+        assert!(!flags.saturate);
+        flags.saturate = true;
+        Ok(())
+
+    }
     fn branch_hint(&mut self, hint_taken: bool) -> Result<(), <Hexagon as Arch>::DecodeError> {
-        let mut inst = &mut self.instructions[self.instruction_count as usize];
-        assert!(inst.branch_hinted.is_none());
+        let mut flags = &mut self.instructions[self.instruction_count as usize].flags;
+        assert!(flags.branch_hint.is_none());
         if hint_taken {
-            inst.branch_hinted = Some(BranchHint::Taken);
+            flags.branch_hint = Some(BranchHint::Taken);
         } else {
-            inst.branch_hinted = Some(BranchHint::NotTaken);
+            flags.branch_hint = Some(BranchHint::NotTaken);
         }
+        Ok(())
+    }
+    fn rounded(&mut self, mode: RoundingMode) -> Result<(), <Hexagon as Arch>::DecodeError> {
+        let mut flags = &mut self.instructions[self.instruction_count as usize].flags;
+        assert!(flags.rounded.is_none());
+        flags.rounded = Some(mode);
         Ok(())
     }
     #[inline(always)]
@@ -1309,15 +1373,15 @@ fn decode_instruction<
                     let sssss = reg_b16(inst);
                     let ddddd = reg_b0(inst);
                     handler.on_opcode_decoded(Opcode::TransferRegister)?;
-                    handler.on_source_decoded(Operand::crpair(ddddd)?)?;
-                    handler.on_dest_decoded(Operand::gprpair(sssss)?)?;
+                    handler.on_source_decoded(Operand::crpair(sssss)?)?;
+                    handler.on_dest_decoded(Operand::gprpair(ddddd)?)?;
                 }
                 0b1010000 => {
                     let sssss = reg_b16(inst);
                     let ddddd = reg_b0(inst);
                     handler.on_opcode_decoded(Opcode::TransferRegister)?;
-                    handler.on_source_decoded(Operand::cr(ddddd))?;
-                    handler.on_dest_decoded(Operand::gpr(sssss))?;
+                    handler.on_source_decoded(Operand::cr(sssss))?;
+                    handler.on_dest_decoded(Operand::gpr(ddddd))?;
                 }
                 0b1010010 => {
                     if (inst >> 16) & 0b11111 != 0b01001 {
@@ -1658,9 +1722,65 @@ fn decode_instruction<
             }
             }
         }
+        0b1000 => {
+            let ddddd = reg_b0(inst);
+            let iiiiii = ((inst >> 8) & 0b111111) as u8;
+            let sssss = reg_b16(inst);
+
+            let majbits = (inst >> 24) & 0b1111;
+            let minbits = (inst >> 21) & 0b111;
+            let op_low = (inst >> 5) & 0b111;
+
+            match majbits {
+                0b0000 => {
+                    handler.on_source_decoded(Operand::gprpair(sssss)?)?;
+                    handler.on_dest_decoded(Operand::gprpair(ddddd)?)?;
+                    match minbits {
+                        0b000 => {
+                            static OPS: [Opcode; 8] = [
+                                Asr, Lsr, Asl, Rol,
+                                Vsathub, Vsatwuh, Vsatwh, Vsathb,
+                            ];
+                            handler.on_opcode_decoded(OPS[op_low as usize])?;
+                            if op_low < 0b100 {
+                                handler.on_source_decoded(Operand::imm_u8(iiiiii))?;
+                            }
+                        }
+                        0b001 => {
+                            opcode_check!(inst & 0x00e0 == 0);
+                            operand_check!(inst & 0x3000 == 0);
+                            handler.on_source_decoded(Operand::imm_u8(iiiiii))?;
+                            handler.on_opcode_decoded(Opcode::Vasrh)?;
+                            handler.rounded(RoundingMode::Raw)?;
+                        }
+                        0b010 => {
+                            static OPS: [Option<Opcode>; 8] = [
+                                Some(Vasrw), Some(Vlsrw), Some(Vaslw), None,
+                                Some(Vabsh), Some(Vabsh), Some(Vabsw), Some(Vabsw),
+                            ];
+                            handler.on_opcode_decoded(decode_opcode!(OPS[op_low as usize]))?;
+                            if op_low < 0b100 {
+                                operand_check!(inst & 0x2000 == 0);
+                                handler.on_source_decoded(Operand::imm_u8(iiiiii))?;
+                            } else {
+                                if op_low & 1 == 1 {
+                                    handler.saturate()?;
+                                }
+                            }
+                        }
+                        _ => {
+//                            todo!("the rest");
+                        }
+                    }
+                },
+                _ => {
+                //    todo!("the rest");
+                }
+            }
+        }
         0b1001 => {
             if (inst >> 27) & 1 != 0 {
-                panic!("other mem op");
+                todo!("other mem op");
             }
 
             let ddddd = reg_b0(inst);

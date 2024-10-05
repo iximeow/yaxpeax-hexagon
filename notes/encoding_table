@@ -937,7 +937,7 @@ A L I A S     A L I A S     A L I A S    A L I A S     A L I A S   | Rd=zxtb(Rs)
 |0 1 0 1|0 1 0 0 1 0 -|x x x x x| P P |- i i i i i - - -|i i i - -| trap1(Rx,#u8)          - SYSTEM/slot 2
 |0 1 0 1|0 1 1 1 1 1 1|x x x x x| P P |0 1 - - - - 0 0 0|- - - - -| unpause          - SYSTEM/slot 2
 |ICLASS |RegType|MajOp|s5       |Parse|           |MinOp|d5       |
-|1 0 0 0|0 0 0 0|1 0 0|s s s s s| P P |- - - - - -|1 1 0|- - - - -| Rdd=abs(Rss)          - XTYPE ALU/slot 2,3
+|1 0 0 0|0 0 0 0|1 0 0|s s s s s| P P |- - - - - -|1 1 0|d d d d d| Rdd=abs(Rss)          - XTYPE ALU/slot 2,3
 |1 0 0 0|1 1 0 0|1 0 0|s s s s s| P P |- - - - - -|1 0 0|d d d d d| Rd=abs(Rs)          - XTYPE ALU/slot 2,3
 |1 0 0 0|1 1 0 0|1 0 0|s s s s s| P P |- - - - - -|1 0 1|d d d d d| Rd=abs(Rs)          - XTYPE ALU/slot 2,3
 

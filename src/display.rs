@@ -24,7 +24,7 @@ impl fmt::Display for InstructionPacket {
 
 impl fmt::Display for Instruction {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        if let Some(predication) = self.predicate {
+        if let Some(predication) = self.flags.predicate {
             write!(f, "if ({}P{}{}) ",
                 if predication.negated() { "!" } else { "" },
                 predication.num(),
@@ -62,7 +62,7 @@ impl fmt::Display for Instruction {
         ];
         if JUMPS.contains(&self.opcode) {
             use crate::BranchHint;
-            let hint_label = match self.branch_hinted.unwrap() {
+            let hint_label = match self.flags.branch_hint.unwrap() {
                 BranchHint::Taken => { "t" },
                 BranchHint::NotTaken => { "nt" },
             };
@@ -85,7 +85,7 @@ impl fmt::Display for Instruction {
             return Ok(());
         }
 
-        if self.negated {
+        if self.flags.negated {
             f.write_str("!")?;
         }
         write!(f, "{}", self.opcode)?;
@@ -99,6 +99,12 @@ impl fmt::Display for Instruction {
             f.write_str(")")?;
         }
 
+        if let Some(mode) = self.flags.rounded {
+            write!(f, "{}", mode.as_label())?;
+        }
+        if self.flags.saturate {
+            f.write_str(":sat")?;
+        }
         Ok(())
     }
 }
@@ -167,6 +173,22 @@ impl fmt::Display for Opcode {
             Opcode::TlbInvAsid => { f.write_str("tlbinvasid") },
             Opcode::Ctlbw => { f.write_str("ctlbw") },
             Opcode::Tlboc => { f.write_str("tlboc") },
+
+            Opcode::Asr => { f.write_str("asr") },
+            Opcode::Lsr => { f.write_str("lsr") },
+            Opcode::Asl => { f.write_str("asl") },
+            Opcode::Rol => { f.write_str("rol") },
+            Opcode::Vsathub => { f.write_str("vsathub") },
+            Opcode::Vsatwuh => { f.write_str("vsatwuh") },
+            Opcode::Vsatwh => { f.write_str("vsatwh") },
+            Opcode::Vsathb => { f.write_str("vsathb") },
+            Opcode::Vasrh => { f.write_str("vasrh") },
+
+            Opcode::Vabsh => { f.write_str("vabsh") },
+            Opcode::Vabsw => { f.write_str("vabsw") },
+            Opcode::Vasrw => { f.write_str("vasrw") },
+            Opcode::Vlsrw => { f.write_str("vlsrw") },
+            Opcode::Vaslw => { f.write_str("vaslw") },
         }
     }
 }
@@ -184,7 +206,14 @@ impl fmt::Display for Operand {
                 write!(f, "R{}", reg)
             }
             Operand::Cr { reg } => {
-                write!(f, "C{}", reg)
+                match reg {
+                    9 => {
+                        f.write_str("pc")
+                    }
+                    reg => {
+                        write!(f, "C{}", reg)
+                    }
+                }
             }
             Operand::Sr { reg } => {
                 write!(f, "S{}", reg)

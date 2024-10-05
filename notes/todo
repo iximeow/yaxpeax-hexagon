@@ -343,20 +343,20 @@ A L I A S     A L I A S     A L I A S    A L I A S     A L I A S   | Rd=zxtb(Rs)
 |0 1 1 0|0 0 0 1 0 1 i|s s s s s| P P |i 1 i i i i i i i|i i i i -| if (Rs>=#0) jump:t #r13:2   - J/slot 3
 |0 1 1 0|0 0 0 1 1 1 i|s s s s s| P P |i 0 i i i i i i i|i i i i -| if (Rs<=#0) jump:nt #r13:2  - J/slot 3
 |0 1 1 0|0 0 0 1 1 1 i|s s s s s| P P |i 1 i i i i i i i|i i i i -| if (Rs<=#0) jump:t #r13:2   - J/slot 3
-|0 1 1 0|0 0 1 0 0 0 1|s s s s s| P P |- - - - - - - - -|d d d d d| Cd=Rs                       - CR/slot 3           - CONTROL REGISTERS ARE NOT NUMBERED NORMALLY
+
 |0 1 1 0|0 0 1 0 0 1 0|s s s s s| P P |- - - - - - 0 0 0|- - - - -| trace(Rs)     - SYSTEM/slot 3
 |0 1 1 0|0 0 1 0 0 1 0|s s s s s| P P |- - - - - - 0 0 1|- - - - -| diag(Rs)     - SYSTEM/slot 3
 |0 1 1 0|0 0 1 0 0 1 0|s s s s s| P P |- t t t t t 0 1 0|- - - - -| diag0(Rss,Rtt)     - SYSTEM/slot 3
 |0 1 1 0|0 0 1 0 0 1 0|s s s s s| P P |- t t t t t 0 1 1|- - - - -| diag1(Rss,Rtt)     - SYSTEM/slot 3
-|0 1 1 0|0 0 1 1 0 0 1|s s s s s| P P |- - - - - - - - -|d d d d d| Cdd=Rss                     - CR/slot 3           - CONTROL REGISTERS ARE NOT NUMBERED NORMALLY
-|0 1 1 0|1 0 0 0 0 0 0|s s s s s| P P |- - - - - - - - -|d d d d d| Rss=Cdd                     - CR/slot 3           - CONTROL REGISTERS ARE NOT NUMBERED NORMALLY
+
+
 |0 1 1 0|1 0 0 1 0 0 0|l l l l l| P P |- i i i i i l l l|i i - l l| loop1(#r7:2,#U10)           - CR/slot 3
 |0 1 1 0|1 0 0 1 0 0 1|l l l l l| P P |- i i i i i l l l|i i - l l| loop1(#r7:2,#U10)           - CR/slot 3
 |0 1 1 0|1 0 0 1 1 0 1|l l l l l| P P |- i i i i i l l l|i i - l l| p3=sp1loop0(#r7:2,#U10)     - CR/slot 3
 |0 1 1 0|1 0 0 1 1 1 0|l l l l l| P P |- i i i i i l l l|i i - l l| p3=sp2loop0(#r7:2,#U10)     - CR/slot 3
 |0 1 1 0|1 0 0 1 1 1 1|l l l l l| P P |- i i i i i l l l|i i - l l| p3=sp3loop0(#r7:2,#U10)     - CR/slot 3
-|0 1 1 0|1 0 1 0 0 0 0|s s s s s| P P |- - - - - - - - -|d d d d d| Rs=Cd                       - CR/slot 3           - CONTROL REGISTERS ARE NOT NUMBERED NORMALLY
-|0 1 1 0|1 0 1 0 0 1 0|0 1 0 0 1| P P |- i i i i i i - -|d d d d d| Rd=add(pc,#u6)              - CR/slot 3
+
+
 |0 1 1 0|1 0 1 1 0 0 0|0 - - s s| P P |0 - - - t t - - -|- - - d d| Pd=and(Pt,Ps)               - CR/slot 3
 |0 1 1 0|1 0 1 1 0 0 0|0 - - s s| P P |1 - - - t t 1 - -|1 - - d d| Pd=fastcorner9(Ps,Pt)       - CR/slot 3
 |0 1 1 0|1 0 1 1 0 0 0|1 - - s s| P P |0 - - - t t u u -|- - - d d| Pd=and(Ps,and(Pt,Pu))       - CR/slot 3
@@ -437,25 +437,25 @@ A L I A S     A L I A S     A L I A S    A L I A S     A L I A S   | Rd=zxtb(Rs)
 
 
 
-|1 0 0 0|0 0 0 0|0 0 0|s s s s s| P P |- - - - - -|1 0 0|d d d d d| Rdd=vsathub(Rss)                 - XTYPE PERM/slot 2,3
-|1 0 0 0|0 0 0 0|0 0 0|s s s s s| P P |- - - - - -|1 0 1|d d d d d| Rdd=vsatwuh(Rss)                 - XTYPE PERM/slot 2,3
-|1 0 0 0|0 0 0 0|0 0 0|s s s s s| P P |- - - - - -|1 1 0|d d d d d| Rdd=vsatwh(Rss)                 - XTYPE PERM/slot 2,3
-|1 0 0 0|0 0 0 0|0 0 0|s s s s s| P P |- - - - - -|1 1 1|d d d d d| Rdd=vsathb(Rss)                 - XTYPE PERM/slot 2,3
-|1 0 0 0|0 0 0 0|0 0 0|s s s s s| P P |i i i i i i|0 0 0|d d d d d| Rdd=asr(Rss,#u6)                 - XTYPE PERM/slot 2,3
-|1 0 0 0|0 0 0 0|0 0 0|s s s s s| P P |i i i i i i|0 0 1|d d d d d| Rdd=lsr(Rss,#u6)                 - XTYPE PERM/slot 2,3
-|1 0 0 0|0 0 0 0|0 0 0|s s s s s| P P |i i i i i i|0 1 0|d d d d d| Rdd=asl(Rss,#u6)                 - XTYPE PERM/slot 2,3
-|1 0 0 0|0 0 0 0|0 0 0|s s s s s| P P |i i i i i i|0 1 1|d d d d d| Rdd=rol(Rss,#u6)                 - XTYPE PERM/slot 2,3
-|1 0 0 0|0 0 0 0|0 0 1|s s s s s| P P |0 0 i i i i|0 0 0|d d d d d| Rdd=vasrh(Rss,#u4):raw                 - XTYPE PERM/slot 2,3
-|1 0 0 0|0 0 0 0|0 1 0|s s s s s| P P |- - - - - -|1 0 0|d d d d d| Rdd=vabsh(Rss)                 - XTYPE ALU/slot 2,3
-|1 0 0 0|0 0 0 0|0 1 0|s s s s s| P P |- - - - - -|1 0 1|d d d d d| Rdd=vabsh(Rss):sat                 - XTYPE ALU/slot 2,3
-|1 0 0 0|0 0 0 0|0 1 0|s s s s s| P P |- - - - - -|1 1 0|d d d d d| Rdd=vabsw(Rss)                 - XTYPE ALU/slot 2,3
-|1 0 0 0|0 0 0 0|0 1 0|s s s s s| P P |- - - - - -|1 1 1|d d d d d| Rdd=vabsw(Rss):sat                 - XTYPE ALU/slot 2,3
-|1 0 0 0|0 0 0 0|0 1 0|s s s s s| P P |0 i i i i i|0 0 0|d d d d d| Rdd=vasrw(Rss,#u5)                 - XTYPE PERM/slot 2,3
-|1 0 0 0|0 0 0 0|0 1 0|s s s s s| P P |0 i i i i i|0 0 1|d d d d d| Rdd=vlsrw(Rss,#u5)                 - XTYPE PERM/slot 2,3
-|1 0 0 0|0 0 0 0|0 1 0|s s s s s| P P |0 i i i i i|0 1 0|d d d d d| Rdd=vaslw(Rss,#u5)                 - XTYPE PERM/slot 2,3
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 |1 0 0 0|0 0 0 0|1 0 0|s s s s s| P P |- - - - - -|1 0 0|d d d d d| Rdd=not(Rss)                 - XTYPE ALU/slot 2,3
 |1 0 0 0|0 0 0 0|1 0 0|s s s s s| P P |- - - - - -|1 0 1|d d d d d| Rdd=neg(Rss)                 - XTYPE ALU/slot 2,3
-|1 0 0 0|0 0 0 0|1 0 0|s s s s s| P P |- - - - - -|1 1 0|- - - - -| Rdd=abs(Rss)          - XTYPE ALU/slot 2,3
+|1 0 0 0|0 0 0 0|1 0 0|s s s s s| P P |- - - - - -|1 1 0|d d d d d| Rdd=abs(Rss)          - XTYPE ALU/slot 2,3
 |1 0 0 0|0 0 0 0|1 0 0|s s s s s| P P |- - - - - -|1 1 1|d d d d d| Rdd=vconj(Rss):sat                 - XTYPE COMPLEX/slot 2,3
 |1 0 0 0|0 0 0 0|1 0 0|s s s s s| P P |0 0 i i i i|0 0 0|d d d d d| Rdd=vasrh(Rss,#u4)                 - XTYPE PERM/slot 2,3
 |1 0 0 0|0 0 0 0|1 0 0|s s s s s| P P |0 0 i i i i|0 0 1|d d d d d| Rdd=vlsrh(Rss,#u4)                 - XTYPE PERM/slot 2,3
