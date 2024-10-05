@@ -32,6 +32,12 @@ struct Predicate {
     state: u8,
 }
 
+#[derive(Debug, Copy, Clone)]
+enum BranchHint {
+    Taken,
+    NotTaken,
+}
+
 macro_rules! opcode_check {
     ($e:expr) => {
         if !$e {
@@ -192,6 +198,7 @@ pub struct Instruction {
     dest: Option<Operand>,
     predicate: Option<Predicate>,
     negated: bool,
+    branch_hinted: Option<BranchHint>,
     sources: [Operand; 3],
     sources_count: u8,
 }
@@ -246,13 +253,21 @@ pub enum Opcode {
 
     // V73 page 214 ("Jump to address")
     Jump,
+    Call,
 
-    Memb,
-    Memub,
-    Memh,
-    Memuh,
-    Memw,
-    Memd,
+    LoadMemb,
+    LoadMemub,
+    LoadMemh,
+    LoadMemuh,
+    LoadMemw,
+    LoadMemd,
+
+    StoreMemb,
+    StoreMemh,
+    StoreMemw,
+    StoreMemd,
+
+    Memb, Memub, Memh, Memuh, Memw, Memd,
 
     Membh,
     MemhFifo,
@@ -276,10 +291,42 @@ pub enum Opcode {
     CmpGt,
     CmpGtu,
 
+    JumpEq,
+    JumpNeq,
+    JumpGt,
+    JumpLe,
+    JumpGtu,
+    JumpLeu,
+    JumpBitSet,
+    JumpBitClear,
+
     Add,
     And,
     Sub,
     Or,
+
+    Tlbw,
+    Tlbr,
+    Tlbp,
+    TlbInvAsid,
+    Ctlbw,
+    Tlboc,
+}
+
+impl Opcode {
+    fn cmp_str(&self) -> Option<&'static str> {
+        match self {
+            Opcode::JumpEq => { Some("cmp.eq") },
+            Opcode::JumpNeq => { Some("!cmp.eq") },
+            Opcode::JumpGt => { Some("cmp.gt") },
+            Opcode::JumpLe => { Some("!cmp.gt") },
+            Opcode::JumpGtu => { Some("cmp.gtu") },
+            Opcode::JumpLeu => { Some("!cmp.gtu") },
+            Opcode::JumpBitSet => { Some("tstbit") },
+            Opcode::JumpBitClear => { Some("!tstbit") },
+            _ => None
+        }
+    }
 }
 
 /// TODO: don't know if this will be useful, but this is how V73 is described.. it also appears to
@@ -474,6 +521,7 @@ impl Default for Instruction {
             dest: None,
             predicate: None,
             negated: false,
+            branch_hinted: None,
             sources: [Operand::Nothing, Operand::Nothing, Operand::Nothing],
             sources_count: 0,
         }
@@ -510,17 +558,28 @@ pub enum Operand {
 
     /// `Rn`, a 32-bit register `R<reg>`
     Gpr { reg: u8 },
+    /// `Cn`, a 32-bit control register `C<reg>`
+    Cr { reg: u8 },
+    /// `Sn`, a 32-bit supervisor register `S<reg>`
+    Sr { reg: u8 },
+    /// `Rn.new`, the version of a 32-bit register `R<reg>` after being written in this instruction
+    /// packet.
+    GprNew { reg: u8 },
     /// `Rn.L`, low 16 bits of `R<reg>`
     GprLow { reg: u8 },
     /// `Rn.H`, high 16 bits of `R<reg>`
     GprHigh { reg: u8 },
     /// `Rn:m`, register pair forming a 64-bit location
     Gpr64b { reg_low: u8 },
+    /// `Cn:m`, control register pair forming a 64-bit location
+    Cr64b { reg_low: u8 },
+    /// `Sn:m`, control register pair forming a 64-bit location
+    Sr64b { reg_low: u8 },
 
     /// `Pn`, a predicate register
     PredicateReg { reg: u8 },
 
-    RegOffset { base: u8, offset: u32, },
+    RegOffset { base: u8, offset: u32 },
 
     RegShiftedReg { base: u8, index: u8, shift: u8 },
 
@@ -531,6 +590,10 @@ pub enum Operand {
     ImmI8 { imm: i8 },
 
     ImmI16 { imm: i16 },
+
+    ImmI32 { imm: i32 },
+
+    ImmU32 { imm: u32 },
 }
 
 impl Operand {
@@ -538,8 +601,31 @@ impl Operand {
         Self::Gpr { reg: num }
     }
 
-    fn gprpair(num: u8) -> Self {
-        Self::Gpr64b { reg_low: num }
+    fn cr(num: u8) -> Self {
+        Self::Cr { reg: num }
+    }
+
+    fn sr(num: u8) -> Self {
+        Self::Sr { reg: num }
+    }
+
+    fn gpr_new(num: u8) -> Self {
+        Self::GprNew { reg: num }
+    }
+
+    fn gprpair(num: u8) -> Result<Self, yaxpeax_arch::StandardDecodeError> {
+        operand_check!(num & 1 == 0);
+        Ok(Self::Gpr64b { reg_low: num })
+    }
+
+    fn crpair(num: u8) -> Result<Self, yaxpeax_arch::StandardDecodeError> {
+        operand_check!(num & 1 == 0);
+        Ok(Self::Cr64b { reg_low: num })
+    }
+
+    fn srpair(num: u8) -> Result<Self, yaxpeax_arch::StandardDecodeError> {
+        operand_check!(num & 1 == 0);
+        Ok(Self::Sr64b { reg_low: num })
     }
 
     fn pred(num: u8) -> Self {
@@ -560,6 +646,14 @@ impl Operand {
 
     fn imm_u16(num: u16) -> Self {
         Self::ImmU16 { imm: num }
+    }
+
+    fn imm_i32(num: i32) -> Self {
+        Self::ImmI32 { imm: num }
+    }
+
+    fn imm_u32(num: u32) -> Self {
+        Self::ImmU32 { imm: num }
     }
 }
 
@@ -649,6 +743,7 @@ trait DecodeHandler<T: Reader<<Hexagon as Arch>::Address, <Hexagon as Arch>::Wor
     fn on_dest_decoded(&mut self, _operand: Operand) -> Result<(), <Hexagon as Arch>::DecodeError> { Ok(()) }
     fn inst_predicated(&mut self, num: u8, negated: bool, pred_new: bool) -> Result<(), <Hexagon as Arch>::DecodeError> { Ok(()) }
     fn negate_result(&mut self) -> Result<(), <Hexagon as Arch>::DecodeError> { Ok(()) }
+    fn branch_hint(&mut self, hint_taken: bool) -> Result<(), <Hexagon as Arch>::DecodeError> { Ok(()) }
     fn on_word_read(&mut self, _word: <Hexagon as Arch>::Word) {}
 }
 
@@ -687,6 +782,16 @@ impl<T: yaxpeax_arch::Reader<<Hexagon as Arch>::Address, <Hexagon as Arch>::Word
         let mut inst = &mut self.instructions[self.instruction_count as usize];
         assert!(!inst.negated);
         inst.negated = true;
+        Ok(())
+    }
+    fn branch_hint(&mut self, hint_taken: bool) -> Result<(), <Hexagon as Arch>::DecodeError> {
+        let mut inst = &mut self.instructions[self.instruction_count as usize];
+        assert!(inst.branch_hinted.is_none());
+        if hint_taken {
+            inst.branch_hinted = Some(BranchHint::Taken);
+        } else {
+            inst.branch_hinted = Some(BranchHint::NotTaken);
+        }
         Ok(())
     }
     #[inline(always)]
@@ -818,6 +923,7 @@ fn decode_instruction<
 >(decoder: &<Hexagon as Arch>::Decoder, handler: &mut H, inst: u32, extender: Option<u32>) -> Result<(), <Hexagon as Arch>::DecodeError> {
     let iclass = (inst >> 28) & 0b1111;
 
+    use Opcode::*;
 
     // V73 Section 10.9
     // > A constant extender must be positioned in a packet immediately before the
@@ -836,11 +942,84 @@ fn decode_instruction<
     let min_op = (inst >> 21) & 0b111;
 
     match iclass {
+        0b0010 => {
+            if (inst >> 27) & 1 == 1 {
+                // everything at
+                // 0010 |1xxxxxxx.. is an undefined encoding
+                return Err(DecodeError::InvalidOpcode);
+            }
+
+            let hint_taken = (inst >> 13) & 1 == 1;
+            let op = (inst >> 22) & 0b11111;
+
+            let r_lo = (inst >> 1) & 0b111_1111;
+            let r_hi = (inst >> 20) & 0b11;
+            let r = (((r_hi << 7) | r_lo) << 2) as i16;
+            let r = r << 5 >> 5;
+
+            let sss = ((inst >> 16) & 0b111) as u8;
+
+            handler.on_dest_decoded(Operand::PCRel32 {
+                rel: r as i32
+            })?;
+
+            handler.branch_hint(hint_taken)?;
+
+            if op < 0b10000 {
+                // these are `if([!]cmp.op(Ns.new,Rt)) jump:[n]t #r9:2`
+                let ttttt = reg_b8(inst);
+
+                if op < 0b0110 {
+                    handler.on_source_decoded(Operand::GprNew { reg: sss })?;
+                    handler.on_source_decoded(Operand::gpr(ttttt))?;
+                } else {
+                    handler.on_source_decoded(Operand::gpr(ttttt))?;
+                    handler.on_source_decoded(Operand::GprNew { reg: sss })?;
+                }
+
+                static OPS: [Option<Opcode>; 16] = [
+                    Some(JumpEq), Some(JumpNeq), Some(JumpGt), Some(JumpLe),
+                    Some(JumpGtu), Some(JumpLeu), Some(JumpGt), Some(JumpLe),
+                    Some(JumpGtu), Some(JumpLeu), None, None,
+                    None, None, None, None,
+                ];
+
+                handler.on_opcode_decoded(decode_opcode!(OPS[op as usize]))?;
+            } else {
+                handler.on_source_decoded(Operand::GprNew { reg: sss })?;
+
+                if op < 0b10110 {
+                    let lllll = reg_b8(inst);
+                    static OPS: &[Opcode; 6] = &[
+                        JumpEq, JumpNeq, JumpGt, JumpLe,
+                        JumpGtu, JumpLeu
+                    ];
+                    handler.on_source_decoded(Operand::imm_u32(lllll as u8 as u32))?;
+                    handler.on_opcode_decoded(OPS[op as usize - 0b10000])?;
+                } else if op < 0b11000 {
+                    let opc = if op == 0b10110 {
+                        JumpBitSet
+                    } else {
+                        JumpBitClear
+                    };
+                    handler.on_source_decoded(Operand::imm_u32(0))?;
+                    handler.on_opcode_decoded(opc)?;
+                } else if op < 0b11100 {
+                    static OPS: &[Opcode; 4] = &[
+                        JumpEq, JumpNeq, JumpGt, JumpLe,
+                    ];
+                    handler.on_source_decoded(Operand::imm_i32(-1))?;
+                    handler.on_opcode_decoded(OPS[op as usize - 0b11000])?;
+                } else {
+                    return Err(DecodeError::InvalidOpcode);
+                }
+            }
+        }
         0b0011 => {
             let upper = reg_type >> 2;
             match upper {
                 0b00 => {
-                    // 00011 | 00xxxxxxx
+                    // 0011 | 00xxxxxxx
                     // everything under this is a predicated load
                     let nn = (inst >> 24) & 0b11;
 
@@ -857,17 +1036,184 @@ fn decode_instruction<
                     let op = (inst >> 21) & 0b111;
 
                     handler.inst_predicated(vv, negated, pred_new)?;
+
                     handler.on_source_decoded(Operand::RegShiftedReg { base: sssss, index: ttttt, shift: ii })?;
-                    handler.on_dest_decoded(Operand::Gpr { reg: ddddd })?;
+                    if op == 0b110 {
+                        handler.on_dest_decoded(Operand::gprpair(ddddd)?)?;
+                    } else {
+                        handler.on_dest_decoded(Operand::gpr(ddddd))?;
+                    }
 
                     use Opcode::*;
                     static OPCODES: [Option<Opcode>; 8] = [
-                        Some(Memb), Some(Memub), Some(Memh), Some(Memuh),
-                        Some(Memw), None,        Some(Memd), None,
+                        Some(LoadMemb), Some(LoadMemub), Some(LoadMemh), Some(LoadMemuh),
+                        Some(LoadMemw), None,        Some(LoadMemd), None,
                     ];
                     handler.on_opcode_decoded(OPCODES[op as usize].ok_or(DecodeError::InvalidOpcode)?)?;
                 }
+                0b01 => {
+                    // 00011 | 01xxxxxxx
+                    // everything under this is a predicated store
+                    let nn = (inst >> 24) & 0b11;
+
+                    let negated = nn & 1 == 1;
+                    let pred_new = nn >> 1 == 1;
+
+                    let ttttt = reg_b0(inst);
+                    let vv = ((inst >> 5) & 0b11) as u8;
+                    let i_lo = (inst >> 7) & 0b1;
+                    let uuuuu = reg_b8(inst);
+                    let i_hi = ((inst >> 13) & 0b1) << 1;
+                    let ii = (i_lo | i_hi) as u8;
+                    let sssss = reg_b16(inst);
+                    let op = (inst >> 21) & 0b111;
+
+                    handler.inst_predicated(vv, negated, pred_new)?;
+                    handler.on_dest_decoded(Operand::RegShiftedReg { base: sssss, index: uuuuu, shift: ii })?;
+
+                    if op == 0b101 {
+                        // more complicated procedure, and registers are `Nt.new`
+                        let op = (inst >> 3) & 0b11;
+                        let ttt = inst & 0b111;
+                        static OPCODES: [Option<Opcode>; 4] = [
+                            Some(StoreMemb), Some(StoreMemh),
+                            Some(StoreMemw), None,
+                        ];
+                        handler.on_opcode_decoded(decode_opcode!(OPCODES[op as usize]))?;
+                        handler.on_source_decoded(Operand::gpr_new(ttt as u8))?;
+                    } else {
+                        static OPCODES: [Option<Opcode>; 8] = [
+                            Some(StoreMemb), None, Some(StoreMemh), Some(StoreMemh),
+                            Some(StoreMemw), None,        Some(StoreMemd), None,
+                        ];
+                        handler.on_opcode_decoded(decode_opcode!(OPCODES[op as usize]))?;
+                        if op == 0b011 {
+                            handler.on_source_decoded(Operand::GprHigh { reg: ttttt })?;
+                        } else if op == 0b110 {
+                            handler.on_source_decoded(Operand::gpr(ttttt))?;
+                        } else {
+                            handler.on_source_decoded(Operand::gprpair(ttttt)?)?;
+                        }
+                    }
+                }
+                0b10 => {
+                    // 00011 | 10xxxxxxx
+                    // some predicated stores, but also some predicated loads
+                    let sssss = reg_b16(inst);
+
+                    let predicate_store = (inst >> 25) & 0b1 == 0;
+                    if predicate_store {
+                        let nn = (inst >> 23) & 0b11;
+
+                        let negated = nn & 1 == 1;
+                        let pred_new = nn >> 1 == 1;
+
+                        let l_lo = reg_b0(inst);
+                        let vv = ((inst >> 5) & 0b11) as u8;
+                        let iiiiii = (inst >> 7) & 0b11_1111;
+                        let l_hi = (((inst >> 13) & 0b1) << 5) as u8;
+                        let llllll = (l_lo | l_hi) as u8;
+                        let op = (inst >> 21) & 0b11;
+
+                        let negated = nn & 1 == 1;
+                        let pred_new = nn >> 1 == 1;
+
+                        handler.inst_predicated(vv, negated, pred_new)?;
+
+                        match op {
+                            0b00 => {
+                                handler.on_opcode_decoded(Opcode::StoreMemb)?;
+                                let offset = iiiiii;
+                                let imm = (llllll as i8) << 2 >> 2;
+                                handler.on_dest_decoded(Operand::RegOffset { base: sssss, offset })?;
+                                handler.on_source_decoded(Operand::imm_i8(imm))?;
+                            }
+                            0b01 => {
+                                handler.on_opcode_decoded(Opcode::StoreMemh)?;
+                                let offset = iiiiii << 1;
+                                let imm = (llllll as i16) << 10 >> 10;
+                                handler.on_dest_decoded(Operand::RegOffset { base: sssss, offset })?;
+                                handler.on_source_decoded(Operand::imm_i16(imm))?;
+                            }
+                            0b10 => {
+                                handler.on_opcode_decoded(Opcode::StoreMemw)?;
+                                let offset = iiiiii << 2;
+                                let imm = (llllll as i32) << 26 >> 26;
+                                handler.on_dest_decoded(Operand::RegOffset { base: sssss, offset })?;
+                                handler.on_source_decoded(Operand::imm_i32(imm))?;
+                            }
+                            _ => {
+                                return Err(DecodeError::InvalidOpcode);
+                            }
+                        }
+                    } else {
+                        // op determined by min_op
+                        let store = (inst >> 24) & 1 == 1;
+
+                        let reg_low = reg_b0(inst);
+                        let reg_mid = reg_b8(inst);
+                        let sssss = reg_b16(inst);
+
+                        let i_lo = ((inst >> 7) & 1) as u8;
+                        let i_hi = (((inst >> 13) & 0b1) << 1) as u8;
+                        let ii = i_hi | i_lo;
+
+                        if store {
+                            // StoreMem*
+                            handler.on_dest_decoded(Operand::RegShiftedReg { base: sssss, index: reg_mid, shift: ii })?;
+                            match min_op {
+                                0b010 => {
+                                    handler.on_opcode_decoded(Opcode::StoreMemh)?;
+                                    handler.on_source_decoded(Operand::gpr(reg_low))?;
+                                },
+                                0b011 => {
+                                    handler.on_opcode_decoded(Opcode::StoreMemh)?;
+                                    handler.on_source_decoded(Operand::GprHigh { reg: reg_low})?;
+                                },
+                                0b100 => {
+                                    handler.on_opcode_decoded(Opcode::StoreMemb)?;
+                                    handler.on_source_decoded(Operand::gprpair(reg_low)?)?;
+                                }
+                                0b101 => {
+                                    // more complicated procedure, and registers are `Nt.new`
+                                    let op = (inst >> 3) & 0b11;
+                                    let ttt = inst & 0b111;
+                                    static OPCODES: [Option<Opcode>; 4] = [
+                                        Some(StoreMemb), Some(StoreMemh),
+                                        Some(StoreMemw), None,
+                                    ];
+                                    handler.on_opcode_decoded(decode_opcode!(OPCODES[op as usize]))?;
+                                    handler.on_source_decoded(Operand::gpr_new(ttt as u8))?;
+                                },
+                                0b0110 => {
+                                    handler.on_opcode_decoded(Opcode::StoreMemd)?;
+                                    handler.on_source_decoded(Operand::gprpair(reg_low)?)?;
+                                }
+                                _ => {
+                                    return Err(DecodeError::InvalidOpcode);
+                                }
+                            }
+                        } else {
+                            // LoadMem*
+                            static OPCODES: [Option<Opcode>; 8] = [
+                                Some(LoadMemb), Some(LoadMemub), Some(LoadMemh), Some(LoadMemh),
+                                Some(LoadMemw), None,        Some(LoadMemd), None,
+                            ];
+
+                            handler.on_opcode_decoded(decode_opcode!(OPCODES[min_op as usize]))?;
+                            handler.on_source_decoded(Operand::RegShiftedReg { base: sssss, index: reg_mid, shift: ii })?;
+                            if min_op == 0b001 || min_op == 0b011 || min_op == 0b110 {
+                                handler.on_dest_decoded(Operand::gprpair(reg_low)?)?;
+                            } else {
+                                handler.on_dest_decoded(Operand::gpr(reg_low))?;
+                            }
+                        }
+                    }
+                }
                 other => {
+                    // 0b11, so bits are like 0011|11xxxx
+                    // these are all stores to Rs+#u6:N, shift is determined by op size.
+                    // the first few are stores of immediates, most others operate on registers.
                     panic!("TODO: other: {}", other);
                 }
             }
@@ -875,10 +1221,32 @@ fn decode_instruction<
         0b0101 => {
             let majop = (inst >> 25) & 0b111;
             match majop {
+                0b000 => {
+                    // 0 1 0 1 | 0 0 0 ...
+                    // call to register, may be predicated
+                    panic!("TODO");
+                },
+                0b000 => {
+                    // 0 1 0 1 | 0 0 1 ...
+                    // jump to register, may be predicated
+                    panic!("TODO");
+                },
                 0b100 => {
                     // V73 Jump to address
                     // 0 1 0 1 | 1 0 0 i...
                     handler.on_opcode_decoded(Opcode::Jump)?;
+                    let imm = ((inst >> 1) & 0x7fff) | ((inst >> 3) & 0xff8000);
+                    let imm = ((imm as i32) << 10) >> 10;
+                    handler.on_source_decoded(Operand::PCRel32 { rel: imm & !0b11 })?;
+                },
+                0b101 => {
+                    // V73 Call to address
+                    // 0 1 0 1 | 1 0 1 i...
+                    if inst & 0 != 0 {
+                        // unlike jump, for some reason, the last bit is defined to be 0
+                        return Err(DecodeError::InvalidOpcode);
+                    }
+                    handler.on_opcode_decoded(Opcode::Call)?;
                     let imm = ((inst >> 1) & 0x7fff) | ((inst >> 3) & 0xff8000);
                     let imm = ((imm as i32) << 10) >> 10;
                     handler.on_source_decoded(Operand::PCRel32 { rel: imm & !0b11 })?;
@@ -888,6 +1256,136 @@ fn decode_instruction<
                 }
             }
         },
+        0b0110 => {
+            let opbits = (inst >> 21) & 0b1111111;
+
+            match opbits {
+                0b0010001 => {
+                    let sssss = reg_b16(inst);
+                    let ddddd = reg_b0(inst);
+                    handler.on_opcode_decoded(Opcode::TransferRegister)?;
+                    handler.on_source_decoded(Operand::gpr(sssss))?;
+                    handler.on_dest_decoded(Operand::cr(ddddd))?;
+                }
+                0b0111000 => {
+                    // not in V73! store to supervisor register?
+                    let sssss = reg_b16(inst);
+                    let ddddddd = inst & 0b111_1111;
+                    handler.on_opcode_decoded(Opcode::TransferRegister)?;
+                    handler.on_dest_decoded(Operand::sr(ddddddd as u8))?;
+                    handler.on_source_decoded(Operand::gpr(sssss))?;
+                }
+                0b1101000 => {
+                    // not in V73! store to supervisor register?
+                    let sssss = reg_b16(inst);
+                    let ddddddd = inst & 0b111_1111;
+                    handler.on_opcode_decoded(Opcode::TransferRegister)?;
+                    handler.on_dest_decoded(Operand::srpair(ddddddd as u8)?)?;
+                    handler.on_source_decoded(Operand::gprpair(sssss)?)?;
+                }
+                0b1110100 | 0b1110101 |
+                0b1110110 | 0b1110111 => {
+                    // not in V73! load supervisor register?
+                    let sssss = reg_b0(inst);
+                    let ddddddd = (inst >> 16) & 0b111_1111;
+                    handler.on_opcode_decoded(Opcode::TransferRegister)?;
+                    handler.on_source_decoded(Operand::sr(ddddddd as u8))?;
+                    handler.on_dest_decoded(Operand::gpr(sssss))?;
+                }
+                0b1111000 | 0b1111001 |
+                0b1111010 | 0b1111011 => {
+                    // not in V73! load supervisor register?
+                    let sssss = reg_b0(inst);
+                    let ddddddd = (inst >> 16) & 0b111_1111;
+                    handler.on_opcode_decoded(Opcode::TransferRegister)?;
+                    handler.on_source_decoded(Operand::srpair(ddddddd as u8)?)?;
+                    handler.on_dest_decoded(Operand::gprpair(sssss)?)?;
+                }
+                0b0011001 => {
+                    let sssss = reg_b16(inst);
+                    let ddddd = reg_b0(inst);
+                    handler.on_opcode_decoded(Opcode::TransferRegister)?;
+                    handler.on_source_decoded(Operand::gprpair(sssss)?)?;
+                    handler.on_dest_decoded(Operand::crpair(ddddd)?)?;
+                }
+                0b1000000 => {
+                    let sssss = reg_b16(inst);
+                    let ddddd = reg_b0(inst);
+                    handler.on_opcode_decoded(Opcode::TransferRegister)?;
+                    handler.on_source_decoded(Operand::crpair(ddddd)?)?;
+                    handler.on_dest_decoded(Operand::gprpair(sssss)?)?;
+                }
+                0b1010000 => {
+                    let sssss = reg_b16(inst);
+                    let ddddd = reg_b0(inst);
+                    handler.on_opcode_decoded(Opcode::TransferRegister)?;
+                    handler.on_source_decoded(Operand::cr(ddddd))?;
+                    handler.on_dest_decoded(Operand::gpr(sssss))?;
+                }
+                0b1010010 => {
+                    if (inst >> 16) & 0b11111 != 0b01001 {
+                        // TODO: this is checking for register number 9 aka PC.
+                        // if other register numbers are specified here, can you add from other
+                        // control registers into a GPR?
+                        return Err(DecodeError::InvalidOperand);
+                    }
+
+                    let iiiiii = (inst >> 7) & 0b111111;
+                    let ddddd = reg_b0(inst);
+                    handler.on_opcode_decoded(Opcode::Add)?;
+                    handler.on_source_decoded(Operand::cr(9))?;
+                    handler.on_source_decoded(Operand::imm_u8(iiiiii as u8))?;
+                    handler.on_dest_decoded(Operand::gpr(ddddd))?;
+                }
+                0b1100000 => {
+                    opcode_check!(inst & 0x2000 == 0);
+                    let sssss = reg_b16(inst);
+                    let ttttt = reg_b8(inst);
+                    handler.on_opcode_decoded(Opcode::Tlbw)?;
+                    handler.on_source_decoded(Operand::gprpair(sssss)?)?;
+                    handler.on_source_decoded(Operand::gpr(ttttt))?;
+                }
+                0b1100010 => {
+                    let sssss = reg_b16(inst);
+                    let ddddd = reg_b0(inst);
+                    handler.on_opcode_decoded(Opcode::Tlbr)?;
+                    handler.on_source_decoded(Operand::gpr(sssss))?;
+                    handler.on_dest_decoded(Operand::gprpair(ddddd)?)?;
+                }
+                0b1100100 => {
+                    let sssss = reg_b16(inst);
+                    let ddddd = reg_b0(inst);
+                    handler.on_opcode_decoded(Opcode::Tlbp)?;
+                    handler.on_source_decoded(Operand::gpr(sssss))?;
+                    handler.on_dest_decoded(Operand::gpr(ddddd))?;
+                }
+                0b1100101 => {
+                    let sssss = reg_b16(inst);
+                    handler.on_opcode_decoded(Opcode::TlbInvAsid)?;
+                    handler.on_source_decoded(Operand::gpr(sssss))?;
+                }
+                0b1100110 => {
+                    opcode_check!(inst & 0x2000 == 0);
+                    let sssss = reg_b16(inst);
+                    let ttttt = reg_b8(inst);
+                    let ddddd = reg_b0(inst);
+                    handler.on_opcode_decoded(Opcode::Ctlbw)?;
+                    handler.on_source_decoded(Operand::gprpair(sssss)?)?;
+                    handler.on_source_decoded(Operand::gpr(ttttt))?;
+                    handler.on_dest_decoded(Operand::gpr(ddddd))?;
+                }
+                0b1100111 => {
+                    let sssss = reg_b16(inst);
+                    let ddddd = reg_b0(inst);
+                    handler.on_opcode_decoded(Opcode::Tlboc)?;
+                    handler.on_source_decoded(Operand::gprpair(sssss)?)?;
+                    handler.on_dest_decoded(Operand::gpr(ddddd))?;
+                }
+                _ => {
+                    eprintln!("!!! TODO: {:07b} !!!", opbits);
+                }
+            }
+        }
         0b0111 => {
             match reg_type {
             0b0000 => {
@@ -960,8 +1458,7 @@ fn decode_instruction<
                     let ddddd = reg_b0(inst);
 
                     let op = if min_op & 0b010 == 0 {
-                        operand_check!(ddddd & 1 == 0);
-                        handler.on_dest_decoded(Operand::gprpair(ddddd))?;
+                        handler.on_dest_decoded(Operand::gprpair(ddddd)?)?;
                         Opcode::Combine
                     } else {
                         handler.on_dest_decoded(Operand::gpr(ddddd))?;
@@ -1120,7 +1617,7 @@ fn decode_instruction<
                 let l = l_lo | (l_hi << 1);
 
                 handler.on_opcode_decoded(Opcode::Combine)?;
-                handler.on_dest_decoded(Operand::gprpair(ddddd))?;
+                handler.on_dest_decoded(Operand::gprpair(ddddd)?)?;
                 handler.on_source_decoded(Operand::imm_i8(i))?;
                 if min_op & 0b100 == 0 {
                     handler.on_source_decoded(Operand::imm_i8(l))?;
@@ -1194,6 +1691,23 @@ fn decode_instruction<
                 Some(Memw), None, Some(Memd), None,
             ];
             handler.on_opcode_decoded(OPCODES[op as usize].ok_or(DecodeError::InvalidOpcode)?)?;
+        }
+        0b1010 => {
+            eprintln!("TODO: 1010");
+        }
+        0b1011 => {
+            handler.on_opcode_decoded(Opcode::Add)?;
+
+            let ddddd = reg_b0(inst);
+            let sssss = reg_b16(inst);
+
+            let i_hi = (inst >> 21) & 0b111_1111;
+            let i_lo = (inst >> 5) & 0b1_1111_1111;
+            let i = (i_hi << 9) | i_lo;
+
+            handler.on_dest_decoded(Operand::gpr(ddddd))?;
+            handler.on_source_decoded(Operand::gpr(sssss))?;
+            handler.on_source_decoded(Operand::imm_i16(i as i16))?;
         }
         _ => {
             eprintln!("iclass: {:04b}", iclass);

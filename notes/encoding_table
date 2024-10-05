@@ -136,6 +136,12 @@ A L I A S     A L I A S     A L I A S    A L I A S     A L I A S   | Rd=zxtb(Rs)
 |0 1 1 0|1 0 1 1 0 0 0|1 - - s s| P P |1 - - - t t 1 - -|1 - - d d| Pd=!fastcorner9(Ps,Pt)      - CR/slot 3
 |0 1 1 0|1 0 1 1 1 0 0|0 - - s s| P P |0 - - - - - - - -|- - - d d| Pd=any8(Ps)                 - CR/slot 3
 |0 1 1 0|1 0 1 1 1 0 1|0 - - s s| P P |0 - - - - - - - -|- - - d d| Pd=all8(Ps)                 - CR/slot 3
+|0 1 1 0|1 1 0 0 0 0 0|s s s s s| P P |0 t t t t t - - -|- - - - -| tlbw(Rss,Rt)                - SYSTEM/slot 3
+|0 1 1 0|1 1 0 0 0 1 0|s s s s s| P P |- - - - - - - - -|d d d d d| Rdd=tlbr(Rs)                - SYSTEM/slot 3
+|0 1 1 0|1 1 0 0 1 0 0|s s s s s| P P |- - - - - - - - -|d d d d d| Rd=tlbp(Rs)                 - SYSTEM/slot 3
+|0 1 1 0|1 1 0 0 1 0 1|s s s s s| P P |- - - - - - - - -|- - - - -| tlbinvasid(Rs)              - SYSTEM/slot 3
+|0 1 1 0|1 1 0 0 1 1 0|s s s s s| P P |0 t t t t t - - -|d d d d d| Rd=ctlbw(Rss,Rt)            - SYSTEM/slot 3
+|0 1 1 0|1 1 0 0 1 1 1|s s s s s| P P |- - - - - - - - -|d d d d d| Rd=tlboc(Rss)               - SYSTEM/slot 3
 |0 1 1 0|0 0 0 0 0 0 0|s s s s s| P P |- i i i i i - - -|i i - - -| loop0(#r7:2,Rs)             - CR/slot 3
 |0 1 1 0|0 0 0 0 0 0 1|s s s s s| P P |- i i i i i - - -|i i - - -| loop1(#r7:2,Rs)             - CR/slot 3
 |0 1 1 0|1 0 0 1 0 0 0|l l l l l| P P |- i i i i i l l l|i i - l l| loop1(#r7:2,#U10)           - CR/slot 3
