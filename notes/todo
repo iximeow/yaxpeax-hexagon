@@ -1,79 +1,79 @@
 A L I A S     A L I A S     A L I A S    A L I A S     A L I A S   | Rd=neg(Rs)                 -> Rd=sub(#0,Rs)
 A L I A S     A L I A S     A L I A S    A L I A S     A L I A S   | Rd=zxtb(Rs)                -> Rd=and(Rs,#255)
-|0 0 0 1|0 0 0 0 0 0 i|i s s s s| P P |0 l l l l l i i i|i i i i -| p0=cmp.eq(Rs,#U5); if (p0.new) jump:nt #r9:2         - J/slot 0,1,2,3
-|0 0 0 1|0 0 0 0 0 0 i|i s s s s| P P |1 l l l l l i i i|i i i i -| p0=cmp.eq(Rs,#U5); if (p0.new) jump:t #r9:2         - J/slot 0,1,2,3
-|0 0 0 1|0 0 0 0 0 1 i|i s s s s| P P |0 l l l l l i i i|i i i i -| p0=cmp.eq(Rs,#U5); if (!p0.new) jump:nt #r9:2         - J/slot 0,1,2,3
-|0 0 0 1|0 0 0 0 0 1 i|i s s s s| P P |1 l l l l l i i i|i i i i -| p0=cmp.eq(Rs,#U5); if (!p0.new) jump:t #r9:2         - J/slot 0,1,2,3
-|0 0 0 1|0 0 0 0 1 0 i|i s s s s| P P |0 l l l l l i i i|i i i i -| p0=cmp.gt(Rs,#U5); if (p0.new) jump:nt #r9:2         - J/slot 0,1,2,3
-|0 0 0 1|0 0 0 0 1 0 i|i s s s s| P P |1 l l l l l i i i|i i i i -| p0=cmp.gt(Rs,#U5); if (p0.new) jump:t #r9:2         - J/slot 0,1,2,3
-|0 0 0 1|0 0 0 0 1 1 i|i s s s s| P P |0 l l l l l i i i|i i i i -| p0=cmp.gt(Rs,#U5); if (!p0.new) jump:nt #r9:2         - J/slot 0,1,2,3
-|0 0 0 1|0 0 0 0 1 1 i|i s s s s| P P |1 l l l l l i i i|i i i i -| p0=cmp.gt(Rs,#U5); if (!p0.new) jump:t #r9:2         - J/slot 0,1,2,3
-|0 0 0 1|0 0 0 1 0 0 i|i s s s s| P P |0 l l l l l i i i|i i i i -| p0=cmp.gtu(Rs,#U5); if (p0.new) jump:nt #r9:2         - J/slot 0,1,2,3
-|0 0 0 1|0 0 0 1 0 0 i|i s s s s| P P |1 l l l l l i i i|i i i i -| p0=cmp.gtu(Rs,#U5); if (p0.new) jump:t #r9:2         - J/slot 0,1,2,3
-|0 0 0 1|0 0 0 1 0 1 i|i s s s s| P P |0 l l l l l i i i|i i i i -| p0=cmp.gtu(Rs,#U5); if (!p0.new) jump:nt #r9:2         - J/slot 0,1,2,3
-|0 0 0 1|0 0 0 1 0 1 i|i s s s s| P P |1 l l l l l i i i|i i i i -| p0=cmp.gtu(Rs,#U5); if (!p0.new) jump:t #r9:2         - J/slot 0,1,2,3
-|0 0 0 1|0 0 0 1 1 0 i|i s s s s| P P |0 - - - 0 0 i i i|i i i i -| p0=cmp.eq(Rs,#-1); if (p0.new) jump:nt #r9:2        - J/slot 0,1,2,3
-|0 0 0 1|0 0 0 1 1 0 i|i s s s s| P P |0 - - - 0 1 i i i|i i i i -| p0=cmp.gt(Rs,#-1); if (p0.new) jump:nt #r9:2        - J/slot 0,1,2,3
-|0 0 0 1|0 0 0 1 1 0 i|i s s s s| P P |0 - - - 1 1 i i i|i i i i -| p0=tstbit(Rs,#0); if (p0.new) jump:nt #r9:2         - J/slot 0,1,2,3
-|0 0 0 1|0 0 0 1 1 0 i|i s s s s| P P |1 - - - 0 0 i i i|i i i i -| p0=cmp.eq(Rs,#-1); if (p0.new) jump:t #r9:2         - J/slot 0,1,2,3
-|0 0 0 1|0 0 0 1 1 0 i|i s s s s| P P |1 - - - 0 1 i i i|i i i i -| p0=cmp.gt(Rs,#-1); if (p0.new) jump:t #r9:2         - J/slot 0,1,2,3
-|0 0 0 1|0 0 0 1 1 0 i|i s s s s| P P |1 - - - 1 1 i i i|i i i i -| p0=tstbit(Rs,#0); if (p0.new) jump:t #r9:2          - J/slot 0,1,2,3
-|0 0 0 1|0 0 0 1 1 1 i|i s s s s| P P |0 - - - 0 0 i i i|i i i i -| p0=cmp.eq(Rs,#-1); if (!p0.new) jump:nt #r9:2        - J/slot 0,1,2,3
-|0 0 0 1|0 0 0 1 1 1 i|i s s s s| P P |0 - - - 0 1 i i i|i i i i -| p0=cmp.gt(Rs,#-1); if (!p0.new) jump:nt #r9:2        - J/slot 0,1,2,3
-|0 0 0 1|0 0 0 1 1 1 i|i s s s s| P P |0 - - - 1 1 i i i|i i i i -| p0=tstbit(Rs,#0); if (!p0.new) jump:nt #r9:2         - J/slot 0,1,2,3
-|0 0 0 1|0 0 0 1 1 1 i|i s s s s| P P |1 - - - 0 0 i i i|i i i i -| p0=cmp.eq(Rs,#-1); if (!p0.new) jump:t #r9:2         - J/slot 0,1,2,3
-|0 0 0 1|0 0 0 1 1 1 i|i s s s s| P P |1 - - - 0 1 i i i|i i i i -| p0=cmp.gt(Rs,#-1); if (!p0.new) jump:t #r9:2         - J/slot 0,1,2,3
-|0 0 0 1|0 0 0 1 1 1 i|i s s s s| P P |1 - - - 1 1 i i i|i i i i -| p0=tstbit(Rs,#0); if (!p0.new) jump:t #r9:2          - J/slot 0,1,2,3
-|0 0 0 1|0 0 1 0 0 0 i|i s s s s| P P |0 l l l l l i i i|i i i i -| p1=cmp.eq(Rs,#U5); if (p0.new) jump:nt #r9:2         - J/slot 0,1,2,3
-|0 0 0 1|0 0 1 0 0 0 i|i s s s s| P P |1 l l l l l i i i|i i i i -| p1=cmp.eq(Rs,#U5); if (p0.new) jump:t #r9:2         - J/slot 0,1,2,3
-|0 0 0 1|0 0 1 0 0 1 i|i s s s s| P P |0 l l l l l i i i|i i i i -| p1=cmp.eq(Rs,#U5); if (!p0.new) jump:nt #r9:2         - J/slot 0,1,2,3
-|0 0 0 1|0 0 1 0 0 1 i|i s s s s| P P |1 l l l l l i i i|i i i i -| p1=cmp.eq(Rs,#U5); if (!p0.new) jump:t #r9:2         - J/slot 0,1,2,3
-|0 0 0 1|0 0 1 0 1 0 i|i s s s s| P P |0 l l l l l i i i|i i i i -| p1=cmp.gt(Rs,#U5); if (p0.new) jump:nt #r9:2         - J/slot 0,1,2,3
-|0 0 0 1|0 0 1 0 1 0 i|i s s s s| P P |1 l l l l l i i i|i i i i -| p1=cmp.gt(Rs,#U5); if (p0.new) jump:t #r9:2         - J/slot 0,1,2,3
-|0 0 0 1|0 0 1 0 1 1 i|i s s s s| P P |0 l l l l l i i i|i i i i -| p1=cmp.gt(Rs,#U5); if (!p0.new) jump:nt #r9:2         - J/slot 0,1,2,3
-|0 0 0 1|0 0 1 0 1 1 i|i s s s s| P P |1 l l l l l i i i|i i i i -| p1=cmp.gt(Rs,#U5); if (!p0.new) jump:t #r9:2         - J/slot 0,1,2,3
-|0 0 0 1|0 0 1 1 0 0 i|i s s s s| P P |0 l l l l l i i i|i i i i -| p1=cmp.gtu(Rs,#U5); if (p0.new) jump:nt #r9:2         - J/slot 0,1,2,3
-|0 0 0 1|0 0 1 1 0 0 i|i s s s s| P P |1 l l l l l i i i|i i i i -| p1=cmp.gtu(Rs,#U5); if (p0.new) jump:t #r9:2         - J/slot 0,1,2,3
-|0 0 0 1|0 0 1 1 0 1 i|i s s s s| P P |0 l l l l l i i i|i i i i -| p1=cmp.gtu(Rs,#U5); if (!p0.new) jump:nt #r9:2         - J/slot 0,1,2,3
-|0 0 0 1|0 0 1 1 0 1 i|i s s s s| P P |1 l l l l l i i i|i i i i -| p1=cmp.gtu(Rs,#U5); if (!p0.new) jump:t #r9:2         - J/slot 0,1,2,3
-|0 0 0 1|0 0 1 1 1 0 i|i s s s s| P P |0 - - - 0 0 i i i|i i i i -| p1=cmp.eq(Rs,#-1); if (p1.new) jump:nt #r9:2        - J/slot 0,1,2,3
-|0 0 0 1|0 0 1 1 1 0 i|i s s s s| P P |0 - - - 0 1 i i i|i i i i -| p1=cmp.gt(Rs,#-1); if (p1.new) jump:nt #r9:2        - J/slot 0,1,2,3
-|0 0 0 1|0 0 1 1 1 0 i|i s s s s| P P |0 - - - 1 1 i i i|i i i i -| p1=tstbit(Rs,#0); if (p1.new) jump:nt #r9:2         - J/slot 0,1,2,3
-|0 0 0 1|0 0 1 1 1 0 i|i s s s s| P P |1 - - - 0 0 i i i|i i i i -| p1=cmp.eq(Rs,#-1); if (p1.new) jump:t #r9:2         - J/slot 0,1,2,3
-|0 0 0 1|0 0 1 1 1 0 i|i s s s s| P P |1 - - - 0 1 i i i|i i i i -| p1=cmp.gt(Rs,#-1); if (p1.new) jump:t #r9:2         - J/slot 0,1,2,3
-|0 0 0 1|0 0 1 1 1 0 i|i s s s s| P P |1 - - - 1 1 i i i|i i i i -| p1=tstbit(Rs,#0); if (p1.new) jump:t #r9:2          - J/slot 0,1,2,3
-|0 0 0 1|0 0 1 1 1 1 i|i s s s s| P P |0 - - - 0 0 i i i|i i i i -| p1=cmp.eq(Rs,#-1); if (!p1.new) jump:nt #r9:2        - J/slot 0,1,2,3
-|0 0 0 1|0 0 1 1 1 1 i|i s s s s| P P |0 - - - 0 1 i i i|i i i i -| p1=cmp.gt(Rs,#-1); if (!p1.new) jump:nt #r9:2        - J/slot 0,1,2,3
-|0 0 0 1|0 0 1 1 1 1 i|i s s s s| P P |0 - - - 1 1 i i i|i i i i -| p1=tstbit(Rs,#0); if (!p1.new) jump:nt #r9:2         - J/slot 0,1,2,3
-|0 0 0 1|0 0 1 1 1 1 i|i s s s s| P P |1 - - - 0 0 i i i|i i i i -| p1=cmp.eq(Rs,#-1); if (!p1.new) jump:t #r9:2         - J/slot 0,1,2,3
-|0 0 0 1|0 0 1 1 1 1 i|i s s s s| P P |1 - - - 0 1 i i i|i i i i -| p1=cmp.gt(Rs,#-1); if (!p1.new) jump:t #r9:2         - J/slot 0,1,2,3
-|0 0 0 1|0 0 1 1 1 1 i|i s s s s| P P |1 - - - 1 1 i i i|i i i i -| p1=tstbit(Rs,#0); if (!p1.new) jump:t #r9:2          - J/slot 0,1,2,3
-|0 0 0 1|0 1 0 0 0 0 i|i s s s s| P P |0 0 t t t t i i i|i i i i -| p0=cmp.eq(Rs,Rt); if (p0.new) jump:nt #r9:2          - J/slot 0,1,2,3
-|0 0 0 1|0 1 0 0 0 0 i|i s s s s| P P |0 1 t t t t i i i|i i i i -| p1=cmp.eq(Rs,Rt); if (p1.new) jump:nt #r9:2          - J/slot 0,1,2,3
-|0 0 0 1|0 1 0 0 0 0 i|i s s s s| P P |1 0 t t t t i i i|i i i i -| p0=cmp.eq(Rs,Rt); if (p0.new) jump:t #r9:2          - J/slot 0,1,2,3
-|0 0 0 1|0 1 0 0 0 0 i|i s s s s| P P |1 1 t t t t i i i|i i i i -| p1=cmp.eq(Rs,Rt); if (p1.new) jump:t #r9:2          - J/slot 0,1,2,3
-|0 0 0 1|0 1 0 0 0 1 i|i s s s s| P P |0 0 t t t t i i i|i i i i -| p0=cmp.eq(Rs,Rt); if (!p0.new) jump:nt #r9:2          - J/slot 0,1,2,3
-|0 0 0 1|0 1 0 0 0 1 i|i s s s s| P P |0 1 t t t t i i i|i i i i -| p1=cmp.eq(Rs,Rt); if (!p1.new) jump:nt #r9:2          - J/slot 0,1,2,3
-|0 0 0 1|0 1 0 0 0 1 i|i s s s s| P P |1 0 t t t t i i i|i i i i -| p0=cmp.eq(Rs,Rt); if (!p0.new) jump:t #r9:2          - J/slot 0,1,2,3
-|0 0 0 1|0 1 0 0 0 1 i|i s s s s| P P |1 1 t t t t i i i|i i i i -| p1=cmp.eq(Rs,Rt); if (!p1.new) jump:t #r9:2          - J/slot 0,1,2,3
-|0 0 0 1|0 1 0 0 1 0 i|i s s s s| P P |0 0 t t t t i i i|i i i i -| p0=cmp.gt(Rs,Rt); if (p0.new) jump:nt #r9:2          - J/slot 0,1,2,3
-|0 0 0 1|0 1 0 0 1 0 i|i s s s s| P P |0 1 t t t t i i i|i i i i -| p1=cmp.gt(Rs,Rt); if (p1.new) jump:nt #r9:2          - J/slot 0,1,2,3
-|0 0 0 1|0 1 0 0 1 0 i|i s s s s| P P |1 0 t t t t i i i|i i i i -| p0=cmp.gt(Rs,Rt); if (p0.new) jump:t #r9:2          - J/slot 0,1,2,3
-|0 0 0 1|0 1 0 0 1 0 i|i s s s s| P P |1 1 t t t t i i i|i i i i -| p1=cmp.gt(Rs,Rt); if (p1.new) jump:t #r9:2          - J/slot 0,1,2,3
-|0 0 0 1|0 1 0 0 1 1 i|i s s s s| P P |0 0 t t t t i i i|i i i i -| p0=cmp.gt(Rs,Rt); if (!p0.new) jump:nt #r9:2          - J/slot 0,1,2,3
-|0 0 0 1|0 1 0 0 1 1 i|i s s s s| P P |0 1 t t t t i i i|i i i i -| p1=cmp.gt(Rs,Rt); if (!p1.new) jump:nt #r9:2          - J/slot 0,1,2,3
-|0 0 0 1|0 1 0 0 1 1 i|i s s s s| P P |1 0 t t t t i i i|i i i i -| p0=cmp.gt(Rs,Rt); if (!p0.new) jump:t #r9:2          - J/slot 0,1,2,3
-|0 0 0 1|0 1 0 0 1 1 i|i s s s s| P P |1 1 t t t t i i i|i i i i -| p1=cmp.gt(Rs,Rt); if (!p1.new) jump:t #r9:2          - J/slot 0,1,2,3
-|0 0 0 1|0 1 0 1 0 0 i|i s s s s| P P |0 0 t t t t i i i|i i i i -| p0=cmp.gtu(Rs,Rt); if (p0.new) jump:nt #r9:2          - J/slot 0,1,2,3
-|0 0 0 1|0 1 0 1 0 0 i|i s s s s| P P |0 1 t t t t i i i|i i i i -| p1=cmp.gtu(Rs,Rt); if (p1.new) jump:nt #r9:2          - J/slot 0,1,2,3
-|0 0 0 1|0 1 0 1 0 0 i|i s s s s| P P |1 0 t t t t i i i|i i i i -| p0=cmp.gtu(Rs,Rt); if (p0.new) jump:t #r9:2          - J/slot 0,1,2,3
-|0 0 0 1|0 1 0 1 0 0 i|i s s s s| P P |1 1 t t t t i i i|i i i i -| p1=cmp.gtu(Rs,Rt); if (p1.new) jump:t #r9:2          - J/slot 0,1,2,3
-|0 0 0 1|0 1 0 1 0 1 i|i s s s s| P P |0 0 t t t t i i i|i i i i -| p0=cmp.gtu(Rs,Rt); if (!p0.new) jump:nt #r9:2          - J/slot 0,1,2,3
-|0 0 0 1|0 1 0 1 0 1 i|i s s s s| P P |0 1 t t t t i i i|i i i i -| p1=cmp.gtu(Rs,Rt); if (!p1.new) jump:nt #r9:2          - J/slot 0,1,2,3
-|0 0 0 1|0 1 0 1 0 1 i|i s s s s| P P |1 0 t t t t i i i|i i i i -| p0=cmp.gtu(Rs,Rt); if (!p0.new) jump:t #r9:2          - J/slot 0,1,2,3
-|0 0 0 1|0 1 0 1 0 1 i|i s s s s| P P |1 1 t t t t i i i|i i i i -| p1=cmp.gtu(Rs,Rt); if (!p1.new) jump:t #r9:2          - J/slot 0,1,2,3
-|0 0 0 1|0 1 1 0 - - i|i d d d d| P P |l l l l l l i i i|i i i i -| Rd=#U6; jump #r9:2   - J/slot 2,3
-|0 0 0 1|0 1 1 1 - - i|i s s s s| P P |- - d d d d i i i|i i i i -| Rd=Rs; jump #r9:2   - J/slot 2,3
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -453,24 +453,24 @@ A L I A S     A L I A S     A L I A S    A L I A S     A L I A S   | Rd=zxtb(Rs)
 
 
 
-|1 0 0 0|0 0 0 0|1 0 0|s s s s s| P P |- - - - - -|1 0 0|d d d d d| Rdd=not(Rss)                 - XTYPE ALU/slot 2,3
-|1 0 0 0|0 0 0 0|1 0 0|s s s s s| P P |- - - - - -|1 0 1|d d d d d| Rdd=neg(Rss)                 - XTYPE ALU/slot 2,3
-|1 0 0 0|0 0 0 0|1 0 0|s s s s s| P P |- - - - - -|1 1 0|d d d d d| Rdd=abs(Rss)          - XTYPE ALU/slot 2,3
-|1 0 0 0|0 0 0 0|1 0 0|s s s s s| P P |- - - - - -|1 1 1|d d d d d| Rdd=vconj(Rss):sat                 - XTYPE COMPLEX/slot 2,3
-|1 0 0 0|0 0 0 0|1 0 0|s s s s s| P P |0 0 i i i i|0 0 0|d d d d d| Rdd=vasrh(Rss,#u4)                 - XTYPE PERM/slot 2,3
-|1 0 0 0|0 0 0 0|1 0 0|s s s s s| P P |0 0 i i i i|0 0 1|d d d d d| Rdd=vlsrh(Rss,#u4)                 - XTYPE PERM/slot 2,3
-|1 0 0 0|0 0 0 0|1 0 0|s s s s s| P P |0 0 i i i i|0 1 0|d d d d d| Rdd=vaslh(Rss,#u4)                 - XTYPE PERM/slot 2,3
-|1 0 0 0|0 0 0 0|1 1 0|s s s s s| P P |- - - - - -|1 0 0|d d d d d| Rdd=deinterleave(Rss)                 - XTYPE ALU/slot 2,3
-|1 0 0 0|0 0 0 0|1 1 0|s s s s s| P P |- - - - - -|1 0 1|d d d d d| Rdd=interleave(Rss)                 - XTYPE ALU/slot 2,3
-|1 0 0 0|0 0 0 0|1 1 0|s s s s s| P P |- - - - - -|1 1 0|d d d d d| Rdd=brev(Rss)                 - XTYPE ALU/slot 2,3
-|1 0 0 0|0 0 0 0|1 1 0|s s s s s| P P |i i i i i i|1 1 1|d d d d d| Rdd=asr(Rss,#u6):rnd                 - XTYPE PERM/slot 2,3
-|1 0 0 0|0 0 0 0|1 1 1|s s s s s| P P |0 - - - - -|0 0 0|d d d d d| Rdd=convert_df2d(Rss)                 - XTYPE FP/slot 2,3
-|1 0 0 0|0 0 0 0|1 1 1|s s s s s| P P |0 - - - - -|0 0 1|d d d d d| Rdd=convert_df2ud(Rss)                 - XTYPE FP/slot 2,3
-|1 0 0 0|0 0 0 0|1 1 1|s s s s s| P P |0 - - - - -|0 1 0|d d d d d| Rdd=convert_ud2df(Rss)                 - XTYPE FP/slot 2,3
-|1 0 0 0|0 0 0 0|1 1 1|s s s s s| P P |0 - - - - -|0 1 1|d d d d d| Rdd=convert_d2df(Rss)                 - XTYPE FP/slot 2,3
-|1 0 0 0|0 0 0 0|1 1 1|s s s s s| P P |0 - - - - -|1 1 0|d d d d d| Rdd=convert_df2d(Rss):chop                 - XTYPE FP/slot 2,3
-|1 0 0 0|0 0 0 0|1 1 1|s s s s s| P P |0 - - - - -|1 1 1|d d d d d| Rdd=convert_df2ud(Rss):chop                 - XTYPE FP/slot 2,3
-|1 0 0 0|0 0 0 1|l l l|s s s s s| P P |i i i i i i|l l l|d d d d d| Rdd=extractu(Rss,#u6,#U6)                 - XTYPE ALU/slot 2,3
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 |1 0 0 0|0 0 1 0|0 0 -|s s s s s| P P |i i i i i i|0 0 0|x x x x x| Rxx-=asr(Rss,#u6)                 - XTYPE PERM/slot 2,3
 |1 0 0 0|0 0 1 0|0 0 -|s s s s s| P P |i i i i i i|0 0 1|x x x x x| Rxx-=lss(Rss,#u6)                 - XTYPE PERM/slot 2,3
 |1 0 0 0|0 0 1 0|0 0 -|s s s s s| P P |i i i i i i|0 1 0|x x x x x| Rxx-=asl(Rss,#u6)                 - XTYPE PERM/slot 2,3
@@ -615,7 +615,7 @@ A L I A S     A L I A S     A L I A S    A L I A S     A L I A S   | Rd=zxtb(Rs)
 |1 0 0 0|1 1 1 0|1 0 -|s s s s s| P P |0 i i i i i|0 0 1|x x x x x| Rx^=lsr(Rs,#u5)                 - XTYPE PERM/slot 2,3
 |1 0 0 0|1 1 1 0|1 0 -|s s s s s| P P |0 i i i i i|0 1 0|x x x x x| Rx^=asl(Rs,#u5)                 - XTYPE PERM/slot 2,3
 |1 0 0 0|1 1 1 0|1 0 -|s s s s s| P P |0 i i i i i|0 1 1|x x x x x| Rx^=rol(Rs,#u5)                 - XTYPE PERM/slot 2,3
-|1 0 0 0|1 1 1 1|0 l l|s s s s s| P P |0 i i i i i|l l l|x x x x x| Rx=insert(Rs,#u5,#U5)                 - XTYPE ALU/slot 2,3
+
 |1 0 0 1|0 0 0 0 0 0 0|s s s s s| P P |0 - - - - - - - -|d d d d d| Rdd=deallocframe(Rs):raw            - LD/slot 0,1
 |1 0 0 1|0 0 0 0 1 0 1|s s s s s| P P |- t t t t t - - -|- 0 0 d d| memw_locked(Rs,Pd)=Rt     - SYSTEM/slot 0
 |1 0 0 1|0 0 0 0 1 1 1|s s s s s| P P |0 t t t t t - - -|- 0 0 d d| memd_locked(Rs,Pd)=Rtt     - SYSTEM/slot 0

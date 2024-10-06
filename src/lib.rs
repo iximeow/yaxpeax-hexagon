@@ -130,6 +130,15 @@ impl LoopEnd {
 /// but such bit patterns may exist. invalid packets likely mean the disassembler has walked into
 /// invalid code, but should be decoded and shown as-is; the application using `yaxpeax-hexagon`
 /// must decide what to do with bogus instruction packets.
+///
+/// duplex instructions are decoded into a pair of [`Instruction`] in their enclosing packet.
+/// instruction packets with a duplex instruction may have no more than two other instructions in
+/// the packet; from V73 `Section 10.3 Duplexes`:
+/// > An instruction packet can contain one duplex and up to two other (non-duplex) instructions.
+/// > The duplex must always appear as the last word in a packet.
+///
+/// even with duplex instructions in bundles, `InstructionPacket` will hold no more than four
+/// `Instruction`.
 #[derive(Debug, Copy, Clone, Default)]
 pub struct InstructionPacket {
     /// each packet has up to four instructions (V73 Section 1.1.3)
@@ -142,6 +151,47 @@ pub struct InstructionPacket {
     loop_effect: LoopEnd,
 }
 
+/// a decoded `hexagon` instruction. this is only one of potentially several instructions in an
+/// [`InstructionPacket`].
+///
+/// `Instruction` has some noteworthy quirks, as `hexagon` instructions can have ... varied shapes.
+///
+/// a general rule that is upheld by an instruction described by `Instruction` is that any operand
+/// between parentheses is recorded as a "source", and operands not in parentheses are recorded as
+/// "destination". for the simplest instructions, `opcode(operand)` or `opcode(op0, op1, ...)`,
+/// there will be no destination, and all operands are in `sources`. for an instruction like
+/// `R4 = add(R3, R5)`, `R4` is recorded as a destination, with `R3` and `R5` recorded as sources.
+///
+/// an exception to the above are stores, which look something like
+/// ```text
+/// memh(R4 + R2<<3) = R30
+/// ```
+/// in these cases the the operands are an `Operand::RegShiftedReg` describing the operand in
+/// parentheses, and an `Operand::Gpr` describing the source of the store on the right-hand side.
+///
+/// some instructions are more complex while not, themselves, duplex instructions. some conditional
+/// branches set a predicate, while others only compare with a new register value and leave
+/// predicate registers unaffected. the former look like
+/// ```text
+/// p0 = cmp.gtu(R15, #40); if (!p0.new) jump:t #354
+/// ```
+/// while the latter look like
+/// ```text
+/// if (cmp.eq(R4.new, R2)) jump:t #812
+/// ```
+///
+/// in the former case, there are two "destinations", `p0` and `PCRel32` for the jump target. `p0`
+/// is even used as a source later in the instruction. in the latter case there is only one
+/// destination (again, `PCRel32`), but the instruction is still more complex than a simple
+/// `result=op(src, src, src)` style.
+///
+/// to describe this, `yaxpeax-hexagon` has special rules for rendering several categories of
+/// instruction, and best effort is taken to describe special operand rules on the corresponding
+/// variant of `Instruction` that would be used with such special instructions.
+///
+/// additionally, useful excerpts from the `hexagon` manual to understand the meaning of
+/// disassembly listings either in this crate or test files are included below.
+///
 /// V5x Section 1.7.2 describes register access syntax. paraphrased:
 ///
 /// registers may be written as `Rds[.elst]`.
@@ -192,10 +242,20 @@ pub struct InstructionPacket {
 /// > that comprise a duplex are encoded as 13-bit fields in the duplex.
 /// >
 /// > The sub-instructions in a duplex always execute in slot 0 and slot 1.
+///
+/// the representation of duplex instructions are described in more detail in
+/// [`InstructionPacket`].
 #[derive(Debug, Copy, Clone)]
 pub struct Instruction {
     opcode: Opcode,
     dest: Option<Operand>,
+    // an alternate destination operand for the handful of instructions that write to two
+    // destinations. in all cases, these are very close to duplex instructions (some operation;
+    // some other related operation), but it's not clear if instruction packets would error if
+    // these instruction cohabitate with three other instructions in a packet. for duplex
+    // instructions, it is simply an error to have duplex + 3 more slots, so duplex can be much
+    // more simply decoded into a series of instrucitons..
+    alt_dest: Option<Operand>,
     flags: InstFlags,
 
     sources: [Operand; 3],
@@ -223,6 +283,7 @@ struct InstFlags {
     branch_hint: Option<BranchHint>,
     negated: bool,
     saturate: bool,
+    chop: bool,
     rounded: Option<RoundingMode>,
 }
 
@@ -233,6 +294,7 @@ impl Default for InstFlags {
             branch_hint: None,
             negated: false,
             saturate: false,
+            chop: false,
             rounded: None,
         }
     }
@@ -312,12 +374,16 @@ pub enum Opcode {
     Aslh,
     Asrh,
     TransferRegister,
+    /// the register to be transferred to is recorded in `alt_dest`. the jump target is in `dest`.
+    TransferRegisterJump,
     Zxtb,
     Sxtb,
     Zxth,
     Sxth,
 
     TransferImmediate,
+    /// the register to be transferred to is recorded in `alt_dest`. the jump target is in `dest`.
+    TransferImmediateJump,
 
     Mux,
 
@@ -334,6 +400,11 @@ pub enum Opcode {
     JumpLeu,
     JumpBitSet,
     JumpBitClear,
+
+    TestClrJump,
+    CmpEqJump,
+    CmpGtJump,
+    CmpGtuJump,
 
     Add,
     And,
@@ -355,16 +426,36 @@ pub enum Opcode {
     Vsatwuh,
     Vsatwh,
     Vsathb,
-    Vasrh,
 
     Vabsh,
     Vabsw,
     Vasrw,
+    Vasrh,
     Vlsrw,
+    Vlsrh,
     Vaslw,
+    Vaslh,
+
+    Not,
+    Neg,
+    Abs,
+    Vconj,
+
+    Deinterleave,
+    Interleave,
+    Brev,
+
+    ConvertDf2d,
+    ConvertDf2ud,
+    ConvertUd2df,
+    ConvertD2df,
+
+    Extractu,
+    Insert,
 }
 
 impl Opcode {
+    // TODO: move to cfg(fmt)
     fn cmp_str(&self) -> Option<&'static str> {
         match self {
             Opcode::JumpEq => { Some("cmp.eq") },
@@ -375,6 +466,10 @@ impl Opcode {
             Opcode::JumpLeu => { Some("!cmp.gtu") },
             Opcode::JumpBitSet => { Some("tstbit") },
             Opcode::JumpBitClear => { Some("!tstbit") },
+            Opcode::CmpEqJump => { Some("cmp.eq") },
+            Opcode::CmpGtJump => { Some("cmp.gt") },
+            Opcode::CmpGtuJump => { Some("cmp.gtu") },
+            Opcode::TestClrJump => { Some("tstbit") },
             _ => None
         }
     }
@@ -562,14 +657,12 @@ impl PartialEq for Instruction {
     }
 }
 
-impl Instruction {
-}
-
 impl Default for Instruction {
     fn default() -> Instruction {
         Instruction {
             opcode: Opcode::BUG,
             dest: None,
+            alt_dest: None,
             flags: InstFlags::default(),
             sources: [Operand::Nothing, Operand::Nothing, Operand::Nothing],
             sources_count: 0,
@@ -648,6 +741,15 @@ pub enum Operand {
 impl Operand {
     fn gpr(num: u8) -> Self {
         Self::Gpr { reg: num }
+    }
+
+    /// decode a 4-bit `num` into a full register, according to
+    /// `Table 10-3 Sub-instruction registers`
+    fn gpr_4b(num: u8) -> Self {
+        debug_assert!(num < 0b10000);
+        // the whole table can be described as "pick bit 3, move it left by one"
+        let decoded = (num & 0b111) | ((num & 0b1000) << 1);
+        Self::Gpr { reg: decoded }
     }
 
     fn cr(num: u8) -> Self {
@@ -795,6 +897,7 @@ trait DecodeHandler<T: Reader<<Hexagon as Arch>::Address, <Hexagon as Arch>::Wor
     fn saturate(&mut self) -> Result<(), <Hexagon as Arch>::DecodeError> { Ok(()) }
     fn branch_hint(&mut self, hint_taken: bool) -> Result<(), <Hexagon as Arch>::DecodeError> { Ok(()) }
     fn rounded(&mut self, mode: RoundingMode) -> Result<(), <Hexagon as Arch>::DecodeError> { Ok(()) }
+    fn chop(&mut self) -> Result<(), <Hexagon as Arch>::DecodeError> { Ok(()) }
     fn on_word_read(&mut self, _word: <Hexagon as Arch>::Word) {}
 }
 
@@ -819,8 +922,12 @@ impl<T: yaxpeax_arch::Reader<<Hexagon as Arch>::Address, <Hexagon as Arch>::Word
     }
     fn on_dest_decoded(&mut self, operand: Operand) -> Result<(), <Hexagon as Arch>::DecodeError> {
         let mut inst = &mut self.instructions[self.instruction_count as usize];
-        assert!(inst.dest.is_none());
-        inst.dest = Some(operand);
+        if inst.dest.is_some() {
+            assert!(inst.alt_dest.is_none());
+            inst.alt_dest = Some(operand);
+        } else {
+            inst.dest = Some(operand);
+        }
         Ok(())
     }
     fn inst_predicated(&mut self, num: u8, negated: bool, pred_new: bool) -> Result<(), <Hexagon as Arch>::DecodeError> {
@@ -856,6 +963,12 @@ impl<T: yaxpeax_arch::Reader<<Hexagon as Arch>::Address, <Hexagon as Arch>::Word
         let mut flags = &mut self.instructions[self.instruction_count as usize].flags;
         assert!(flags.rounded.is_none());
         flags.rounded = Some(mode);
+        Ok(())
+    }
+    fn chop(&mut self) -> Result<(), <Hexagon as Arch>::DecodeError> {
+        let mut flags = &mut self.instructions[self.instruction_count as usize].flags;
+        assert!(!flags.chop);
+        flags.chop = true;
         Ok(())
     }
     #[inline(always)]
@@ -1006,12 +1119,89 @@ fn decode_instruction<
     let min_op = (inst >> 21) & 0b111;
 
     match iclass {
-        0b0010 => {
-            if (inst >> 27) & 1 == 1 {
-                // everything at
-                // 0010 |1xxxxxxx.. is an undefined encoding
-                return Err(DecodeError::InvalidOpcode);
+        0b0001 => {
+            // everything at
+            // 0001 |1xxxxxxx.. is an undefined encoding
+            opcode_check!((inst >> 27) & 1 == 0);
+
+            let opbits = (inst >> 22) & 0b11111;
+            let ssss = (inst >> 16) & 0b1111;
+            let dddd = (inst >> 8) & 0b1111;
+            let i_hi = (inst >> 20) & 0b11;
+            let i_lo = (inst >> 1) & 0b111_1111;
+            let i9 = ((i_hi << 7) | i_lo) as i32;
+            let i9 = i9 << 23 >> 23;
+
+            if opbits < 0b11000 {
+                // one of a few kinds of compare+jump
+                opcode_check!(opbits <= 0b10110);
+
+                handler.on_dest_decoded(Operand::PCRel32 { rel: i9 << 2 })?;
+                handler.on_source_decoded(Operand::gpr_4b(ssss as u8));
+
+                // TODO: might be nice to push negation through to the opcode. "TestJumpClr" being
+                // used for `p1=tstbit(Rs,#0); if (!p1.new) jump:t` is a very confusing way to say
+                // "TestJumpSet".
+
+                let hint_taken = (inst >> 13) & 1 == 1;
+                handler.branch_hint(hint_taken)?;
+
+                let negated = opbits & 1 == 1;
+
+                static HIGH_OPS: [Option<Opcode>; 4] = [
+                    Some(CmpEqJump), Some(CmpGtJump),
+                    Some(CmpGtuJump), None,
+                ];
+
+                if opbits < 0b10000 {
+                    // among other things, predicate register selected by bit a higher bit
+                    let p = (opbits >> 3) & 1;
+                    handler.inst_predicated(p as u8, negated, true)?;
+
+                    if let Some(opc) = HIGH_OPS[((opbits as usize) >> 1) & 0b11] {
+                        handler.on_opcode_decoded(opc)?;
+                        let lllll = (inst >> 8) & 0b11111;
+                        handler.on_source_decoded(Operand::imm_u32(lllll))?;
+                    } else {
+                        const LOW_OPS: [Option<Opcode>; 4] = [
+                            Some(CmpEqJump), Some(CmpGtJump),
+                            None, Some(TestClrJump),
+                        ];
+                        let low_opbits = (inst as usize >> 8) & 0b11;
+                        handler.on_opcode_decoded(decode_opcode!(LOW_OPS[low_opbits]))?;
+                        if low_opbits == 0b11 {
+                            handler.on_source_decoded(Operand::imm_u8(0))?;
+                        } else {
+                            handler.on_source_decoded(Operand::imm_i32(-1))?;
+                        }
+                    }
+                } else {
+                    // predicate picked by one of the lowest bits now...
+                    let p = (inst >> 12) & 1;
+                    handler.inst_predicated(p as u8, negated, true)?;
+                    let tttt = inst >> 8 & 0b1111;
+                    handler.on_opcode_decoded(decode_opcode!(HIGH_OPS[((opbits as usize) >> 1) & 0b11]))?;
+                    handler.on_source_decoded(Operand::gpr_4b(tttt as u8))?;
+                }
+            } else {
+                handler.on_dest_decoded(Operand::PCRel32 { rel: i9 << 2 })?;
+                if opbits < 0b11100 {
+                    let llllll = (inst >> 8) & 0b11_1111;
+                    // this one breaks the pattern, uses the otherwise-ssss field as dddd
+                    handler.on_opcode_decoded(Opcode::TransferImmediateJump)?;
+                    handler.on_source_decoded(Operand::imm_u32(llllll))?;
+                    handler.on_dest_decoded(Operand::gpr_4b(ssss as u8))?;
+                } else {
+                    handler.on_opcode_decoded(Opcode::TransferRegisterJump)?;
+                    handler.on_source_decoded(Operand::gpr_4b(ssss as u8));
+                    handler.on_dest_decoded(Operand::gpr_4b(dddd as u8))?;
+                }
             }
+        }
+        0b0010 => {
+            // everything at
+            // 0010 |1xxxxxxx.. is an undefined encoding
+            opcode_check!((inst >> 27) & 1 == 0);
 
             let hint_taken = (inst >> 13) & 1 == 1;
             let op = (inst >> 22) & 0b11111;
@@ -1768,11 +1958,74 @@ fn decode_instruction<
                                 }
                             }
                         }
-                        _ => {
-//                            todo!("the rest");
+                        0b011 |
+                        0b101 => {
+                            return Err(DecodeError::InvalidOpcode);
+                        }
+                        0b100 => {
+                            static OPS: [Option<Opcode>; 8] = [
+                                Some(Vasrh), Some(Vlsrh), Some(Vaslh), None,
+                                Some(Not), Some(Neg), Some(Abs), Some(Vconj),
+                            ];
+                            handler.on_opcode_decoded(decode_opcode!(OPS[op_low as usize]))?;
+                            if op_low < 0b100 {
+                                operand_check!(inst & 0x3000 == 0);
+                                handler.on_source_decoded(Operand::imm_u8(iiiiii))?;
+                            } else {
+                                if op_low == 0b111 {
+                                    handler.saturate()?;
+                                }
+                            }
+                        },
+                        0b110 => {
+                            static OPS: [Option<Opcode>; 8] = [
+                                None, None, None, None,
+                                Some(Deinterleave), Some(Interleave), Some(Brev), Some(Asr),
+                            ];
+                            handler.on_opcode_decoded(decode_opcode!(OPS[op_low as usize]))?;
+                            if op_low == 0b111 {
+                                handler.rounded(RoundingMode::Round)?;
+                                handler.on_source_decoded(Operand::imm_u8(iiiiii))?;
+                            }
+                        }
+                        other => {
+                            debug_assert!(other == 0b111);
+
+                            static OPS: [Option<Opcode>; 8] = [
+                                Some(ConvertDf2d), Some(ConvertDf2ud), Some(ConvertUd2df), Some(ConvertD2df),
+                                None, None, Some(ConvertDf2d), Some(ConvertDf2ud),
+                            ];
+                            handler.on_opcode_decoded(decode_opcode!(OPS[op_low as usize]))?;
+                            opcode_check!(inst & 0x2000 == 0);
+                            if op_low >= 0b100 {
+                                handler.chop()?;
+                            }
                         }
                     }
                 },
+                0b0001 => {
+                    handler.on_source_decoded(Operand::gprpair(sssss)?)?;
+                    handler.on_dest_decoded(Operand::gprpair(ddddd)?)?;
+                    handler.on_opcode_decoded(Opcode::Extractu)?;
+                    handler.on_source_decoded(Operand::imm_u8(iiiiii))?;
+
+                    let l_low = ((inst >> 5) & 0b111) as u8;
+                    let l_high = ((inst >> 21) & 0b111) as u8;
+                    let llllll = (l_high << 3) | l_low;
+                    handler.on_source_decoded(Operand::imm_u8(llllll))?;
+                }
+                0b1111 => {
+                    opcode_check!(inst & 0x00102000 == 0);
+                    handler.on_source_decoded(Operand::gpr(sssss))?;
+                    handler.on_dest_decoded(Operand::gpr(ddddd))?;
+                    handler.on_opcode_decoded(Opcode::Insert)?;
+                    handler.on_source_decoded(Operand::imm_u8(iiiiii))?;
+
+                    let l_low = ((inst >> 5) & 0b111) as u8;
+                    let l_high = ((inst >> 21) & 0b111) as u8;
+                    let llllll = (l_high << 3) | l_low;
+                    handler.on_source_decoded(Operand::imm_u8(llllll))?;
+                }
                 _ => {
                 //    todo!("the rest");
                 }

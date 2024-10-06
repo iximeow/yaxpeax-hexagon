@@ -24,6 +24,35 @@ impl fmt::Display for InstructionPacket {
 
 impl fmt::Display for Instruction {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        // handle cmp+jump first; this includes elements that would be misformatted below (like
+        // predication)
+        static COMPARE_JUMPS: &[Opcode] = &[
+            Opcode::CmpEqJump, Opcode::CmpGtJump,
+            Opcode::CmpGtuJump, Opcode::TestClrJump,
+        ];
+        if COMPARE_JUMPS.contains(&self.opcode) {
+            let predicate = self.flags.predicate.as_ref().unwrap();
+            let preg = Operand::pred(predicate.num());
+
+            use crate::BranchHint;
+            let hint_label = match self.flags.branch_hint.unwrap() {
+                BranchHint::Taken => { "t" },
+                BranchHint::NotTaken => { "nt" },
+            };
+
+            write!(f, "{} = {}({}, {}); if ({}{}.new) jump:{} {}",
+                preg,
+                self.opcode.cmp_str().unwrap(),
+                self.sources[0],
+                self.sources[1],
+                if predicate.negated() { "!" } else { "" },
+                preg,
+                hint_label,
+                self.dest.as_ref().unwrap(),
+            )?;
+            return Ok(());
+        }
+
         if let Some(predication) = self.flags.predicate {
             write!(f, "if ({}P{}{}) ",
                 if predication.negated() { "!" } else { "" },
@@ -52,6 +81,16 @@ impl fmt::Display for Instruction {
             write!(f, "{}({}) = {}",
                 self.opcode, self.dest.expect("TODO: unreachable; store has a destination"),
                 self.sources[0]
+            )?;
+            return Ok(());
+        }
+
+        // TransferRegisterJump and TransferImmediateJump also have special display rules...
+        if self.opcode == Opcode::TransferRegisterJump || self.opcode == Opcode::TransferImmediateJump {
+            write!(f, "{} = {}; jump {}",
+                self.alt_dest.as_ref().unwrap(),
+                self.sources[0],
+                self.dest.as_ref().unwrap(),
             )?;
             return Ok(());
         }
@@ -101,6 +140,9 @@ impl fmt::Display for Instruction {
 
         if let Some(mode) = self.flags.rounded {
             write!(f, "{}", mode.as_label())?;
+        }
+        if self.flags.chop {
+            f.write_str(":chop")?;
         }
         if self.flags.saturate {
             f.write_str(":sat")?;
@@ -167,6 +209,11 @@ impl fmt::Display for Opcode {
             Opcode::JumpBitSet => { f.write_str("tstbit+jump") },
             Opcode::JumpBitClear => { f.write_str("!tstbit+jump") },
 
+            Opcode::CmpEqJump => { f.write_str("p=cmp.eq+if(p.new)jump") },
+            Opcode::CmpGtJump => { f.write_str("p=cmp.gt+if(p.new)jump") },
+            Opcode::CmpGtuJump => { f.write_str("p=cmp.gtu+if(p.new)jump") },
+            Opcode::TestClrJump => { f.write_str("p=tstbit+if(p.new)jump") },
+
             Opcode::Tlbw => { f.write_str("tlbw") },
             Opcode::Tlbr => { f.write_str("tlbr") },
             Opcode::Tlbp => { f.write_str("tlbp") },
@@ -188,7 +235,29 @@ impl fmt::Display for Opcode {
             Opcode::Vabsw => { f.write_str("vabsw") },
             Opcode::Vasrw => { f.write_str("vasrw") },
             Opcode::Vlsrw => { f.write_str("vlsrw") },
+            Opcode::Vlsrh => { f.write_str("vlsrh") },
             Opcode::Vaslw => { f.write_str("vaslw") },
+            Opcode::Vaslh => { f.write_str("vaslh") },
+
+            Opcode::Not => { f.write_str("not") },
+            Opcode::Neg => { f.write_str("neg") },
+            Opcode::Abs => { f.write_str("abs") },
+            Opcode::Vconj => { f.write_str("vconj") },
+
+            Opcode::Deinterleave => { f.write_str("deinterleave") },
+            Opcode::Interleave => { f.write_str("interleave") },
+            Opcode::Brev => { f.write_str("brev") },
+
+            Opcode::ConvertDf2d => { f.write_str("convert_df2d") },
+            Opcode::ConvertDf2ud => { f.write_str("convert_df2ud") },
+            Opcode::ConvertUd2df => { f.write_str("convert_ud2df") },
+            Opcode::ConvertD2df => { f.write_str("convert_d2df") },
+
+            Opcode::Extractu => { f.write_str("extractu") },
+            Opcode::Insert => { f.write_str("insert") },
+
+            Opcode::TransferRegisterJump => { f.write_str("transferregisterjump") }
+            Opcode::TransferImmediateJump => { f.write_str("transferimmediatejump") }
         }
     }
 }
