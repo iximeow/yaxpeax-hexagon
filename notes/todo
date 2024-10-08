@@ -297,39 +297,39 @@ A L I A S     A L I A S     A L I A S    A L I A S     A L I A S   | Rd=zxtb(Rs)
 |0 1 0 0|1 i i 1 0 1 1|i i i i i| P P |i i i i i i i i i|d d d d d| Rdd=memuh(gp+#u16:3)    - LD/slot 0,1
 |0 1 0 0|1 i i 1 1 0 0|i i i i i| P P |i i i i i i i i i|d d d d d| Rd=memw(gp+#u16:3)    - LD/slot 0,1
 |0 1 0 0|1 i i 1 1 1 0|i i i i i| P P |i i i i i i i i i|d d d d d| Rdd=memd(gp+#u16:3)    - LD/slot 0,1
-|0 1 0 1|0 0 0 0 1 0 1|s s s s s| P P |- - - - - - - - -|- - - - -| callr Rs                    - CR/slot 2
-|0 1 0 1|0 0 0 0 1 1 0|s s s s s| P P |- - - - - - - - -|- - - - -| callrh Rs                   - CR/slot 2
-|0 1 0 1|0 0 0 1 0 0 0|s s s s s| P P |- - - - u u - - -|- - - - -| if (Pu) callr Rs            - CR/slot 2
-|0 1 0 1|0 0 0 1 0 0 1|s s s s s| P P |- - - - u u - - -|- - - - -| if (!Pu) callr Rs           - CR/slot 2
-|0 1 0 1|0 0 1 0 1 0 0|s s s s s| P P |- - - - - - - - -|- - - - -| jumpr Rs                    - CR/slot 2
-|0 1 0 1|0 0 1 0 1 0 1|s s s s s| P P |- - - - - - - - -|- - - - -| hintjr(Rs)                  - CR/slot 2,3
-|0 1 0 1|0 0 1 0 1 1 0|s s s s s| P P |- - - - - - - - -|- - - - -| jumprh Rs                   - CR/slot 2
-|0 1 0 1|0 0 1 1 0 1 0|s s s s s| P P |- 0 0 - u u - - -|- - - - -| if (Pu) jumpr:nt Rs         - CR/slot 2
-|0 1 0 1|0 0 1 1 0 1 0|s s s s s| P P |- 0 1 - u u - - -|- - - - -| if (Pu.new) jumpr:nt Rs     - CR/slot 2
-|0 1 0 1|0 0 1 1 0 1 0|s s s s s| P P |- 1 0 - u u - - -|- - - - -| if (Pu) jumpr:t Rs          - CR/slot 2
-|0 1 0 1|0 0 1 1 0 1 0|s s s s s| P P |- 1 1 - u u - - -|- - - - -| if (Pu.new) jumpr:t Rs      - CR/slot 2
-|0 1 0 1|0 0 1 1 0 1 1|s s s s s| P P |- 0 0 - u u - - -|- - - - -| if (!Pu) jumpr:nt Rs        - CR/slot 2
-|0 1 0 1|0 0 1 1 0 1 1|s s s s s| P P |- 0 1 - u u - - -|- - - - -| if (!Pu.new) jumpr:nt Rs    - CR/slot 2
-|0 1 0 1|0 0 1 1 0 1 1|s s s s s| P P |- 1 0 - u u - - -|- - - - -| if (!Pu) jumpr:t Rs         - CR/slot 2
-|0 1 0 1|0 0 1 1 0 1 1|s s s s s| P P |- 1 1 - u u - - -|- - - - -| if (!Pu.new) jumpr:t Rs     - CR/slot 2
-|0 1 0 1|0 1 0 0 0 0 -|- - - - -| P P |- i i i i i - - -|i i i - -| trap0(#u8)          - SYSTEM/slot 2
-|0 1 0 1|0 1 0 0 0 1 -|- - - i i| P P |- i i i i i - - -|i i i - -| pause(#u10)          - SYSTEM/slot 2
-|0 1 0 1|0 1 0 0 1 0 -|x x x x x| P P |- i i i i i - - -|i i i - -| trap1(Rx,#u8)          - SYSTEM/slot 2
-|0 1 0 1|0 1 1 0 1 1 0|s s s s s| P P |0 0 0 - - - - - -|- - - - -| icinva(Rs)     - SYSTEM/slot 2
-|0 1 0 1|0 1 1 1 1 1 0|0 0 0 0 0| P P |0 - - - 0 0 0 0 0|0 0 0 1 0| isync          - SYSTEM/slot 2
-|0 1 0 1|0 1 1 1 1 1 1|x x x x x| P P |0 1 - - - - 0 0 0|- - - - -| unpause          - SYSTEM/slot 2
-|0 1 0 1|1 0 0 i i i i|i i i i i| P P |i i i i i i i i i|i i i i -| jump #r22:2                 - J/slot 0,1,2,3
-|0 1 0 1|1 0 1 i i i i|i i i i i| P P |i i i i i i i i i|i i i i 0| call #r22:2                 - CR/slot 2,3
-|0 1 0 1|1 1 0 0 i i 0|i i i i i| P P |i 0 0 - u u i i i|i i i i -| if (Pu) jump:nt #r15:2      - J/slot 0,1,2,3
-|0 1 0 1|1 1 0 0 i i 0|i i i i i| P P |i 0 1 - u u i i i|i i i i -| if (Pu.new) jump:nt #r15:2  - J/slot 0,1,2,3
-|0 1 0 1|1 1 0 0 i i 0|i i i i i| P P |i 1 0 - u u i i i|i i i i -| if (Pu) jump:t #r15:2       - J/slot 0,1,2,3
-|0 1 0 1|1 1 0 0 i i 0|i i i i i| P P |i 1 1 - u u i i i|i i i i -| if (Pu.new) jump:t #r15:2   - J/slot 0,1,2,3
-|0 1 0 1|1 1 0 0 i i 1|i i i i i| P P |i 0 0 - u u i i i|i i i i -| if (!Pu) jump:nt #r15:2     - J/slot 0,1,2,3
-|0 1 0 1|1 1 0 0 i i 1|i i i i i| P P |i 0 1 - u u i i i|i i i i -| if (!Pu.new) jump:nt #r15:2 - J/slot 0,1,2,3
-|0 1 0 1|1 1 0 0 i i 1|i i i i i| P P |i 1 0 - u u i i i|i i i i -| if (!Pu) jump:t #r15:2      - J/slot 0,1,2,3
-|0 1 0 1|1 1 0 0 i i 1|i i i i i| P P |i 1 1 - u u i i i|i i i i -| if (!Pu.new) jump:t #r15:2  - J/slot 0,1,2,3
-|0 1 0 1|1 1 0 1 i i 0|i i i i i| P P |i - 0 - u u i i i|i i i i -| if (Pu) call #r15:2         - CR/slot 2,3
-|0 1 0 1|1 1 0 1 i i 1|i i i i i| P P |i - 0 - u u i i i|i i i i -| if (!Pu) call #r15:2        - CR/slot 2,3
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 |0 1 1 0|0 0 0 0 0 0 0|s s s s s| P P |- i i i i i - - -|i i - - -| loop0(#r7:2,Rs)             - CR/slot 3
 |0 1 1 0|0 0 0 0 0 0 1|s s s s s| P P |- i i i i i - - -|i i - - -| loop1(#r7:2,Rs)             - CR/slot 3
 |0 1 1 0|0 0 0 0 1 0 1|s s s s s| P P |- i i i i i - - -|i i - - -| p3=sp1loop0(#r7:2,Rs)       - CR/slot 3
@@ -1417,9 +1417,9 @@ A L I A S     A L I A S     A L I A S    A L I A S     A L I A S   | Rd=zxtb(Rs)
 |1 1 1 0|1 1 1 1|1 1 0|s s s s s| P P |0 t t t t t|0 0 1|x x x x x| Rx|=xor(Rs,Rt)                 - XTYPE ALU/slot 2,3
 |1 1 1 0|1 1 1 1|1 1 0|s s s s s| P P |0 t t t t t|0 1 0|x x x x x| Rx^=and(Rs,Rt)                 - XTYPE ALU/slot 2,3
 |1 1 1 0|1 1 1 1|1 1 0|s s s s s| P P |0 t t t t t|0 1 1|x x x x x| Rx^=or(Rs,Rt)                 - XTYPE ALU/slot 2,3
-|1 1 1 1|0 0 0 1 0 0 0|s s s s s| P P |- t t t t t - - -|d d d d d| Rd=and(Rs,Rt)               - ALU32/slots 0 1 2 3
-|1 1 1 1|0 0 0 1 0 0 1|s s s s s| P P |- t t t t t - - -|d d d d d| Rd=or(Rs,Rt)                - ALU32/slots 0 1 2 3
-|1 1 1 1|0 0 0 1 0 1 1|s s s s s| P P |- t t t t t - - -|d d d d d| Rd=xor(Rs,Rt)               - ALU32/slots 0 1 2 3
+test |1 1 1 1|0 0 0 1 0 0 0|s s s s s| P P |- t t t t t - - -|d d d d d| Rd=and(Rs,Rt)               - ALU32/slots 0 1 2 3
+test |1 1 1 1|0 0 0 1 0 0 1|s s s s s| P P |- t t t t t - - -|d d d d d| Rd=or(Rs,Rt)                - ALU32/slots 0 1 2 3
+test |1 1 1 1|0 0 0 1 0 1 1|s s s s s| P P |- t t t t t - - -|d d d d d| Rd=xor(Rs,Rt)               - ALU32/slots 0 1 2 3
 |1 1 1 1|0 0 0 1 1 0 0|s s s s s| P P |- t t t t t - - -|d d d d d| Rd=and(Rt,~Rs)              - ALU32/slots 0 1 2 3
 |1 1 1 1|0 0 0 1 1 0 1|s s s s s| P P |- t t t t t - - -|d d d d d| Rd=and(Rt,~Rs)              - ALU32/slots 0 1 2 3
 |1 1 1 1|0 0 1 0 - 0 0|s s s s s| P P |- t t t t t - - -|0 0 0 d d| Pd=cmp.eq(Rs,Rt)            - ALU32 PRED/slots 0 1 2 3
@@ -1428,10 +1428,10 @@ A L I A S     A L I A S     A L I A S    A L I A S     A L I A S   | Rd=zxtb(Rs)
 |1 1 1 1|0 0 1 0 - 1 0|s s s s s| P P |- t t t t t - - -|1 0 0 d d| Pd=!cmp.gt(Rs,Rt)           - ALU32 PRED/slots 0 1 2 3
 |1 1 1 1|0 0 1 0 - 1 1|s s s s s| P P |- t t t t t - - -|0 0 0 d d| Pd=cmp.gtu(Rs,Rt)           - ALU32 PRED/slots 0 1 2 3
 |1 1 1 1|0 0 1 0 - 1 1|s s s s s| P P |- t t t t t - - -|1 0 0 d d| Pd=!cmp.gtu(Rs,Rt)          - ALU32 PRED/slots 0 1 2 3
-|1 1 1 1|0 0 1 1 0 0 0|s s s s s| P P |- t t t t t - - -|d d d d d| Rd=add(Rs,Rt)               - ALU32/slots 0 1 2 3
-|1 1 1 1|0 0 1 1 0 0 1|s s s s s| P P |- t t t t t - - -|d d d d d| Rd=sub(Rt,Rs)               - ALU32/slots 0 1 2 3
-|1 1 1 1|0 0 1 1 0 1 0|s s s s s| P P |- t t t t t - - -|1 0 0 d d| Rd=cmp.eq(Rs,Rt)            - ALU32 PRED/slots 0 1 2 3
-|1 1 1 1|0 0 1 1 0 1 1|s s s s s| P P |- t t t t t - - -|1 0 0 d d| Rd=!cmp.eq(Rs,Rt)           - ALU32 PRED/slots 0 1 2 3
+test |1 1 1 1|0 0 1 1 0 0 0|s s s s s| P P |- t t t t t - - -|d d d d d| Rd=add(Rs,Rt)               - ALU32/slots 0 1 2 3
+test |1 1 1 1|0 0 1 1 0 0 1|s s s s s| P P |- t t t t t - - -|d d d d d| Rd=sub(Rt,Rs)               - ALU32/slots 0 1 2 3
+test |1 1 1 1|0 0 1 1 0 1 0|s s s s s| P P |- t t t t t - - -|d d d d d| Rd=cmp.eq(Rs,Rt)            - ALU32 PRED/slots 0 1 2 3
+test |1 1 1 1|0 0 1 1 0 1 1|s s s s s| P P |- t t t t t - - -|d d d d d| Rd=!cmp.eq(Rs,Rt)           - ALU32 PRED/slots 0 1 2 3
 |1 1 1 1|0 0 1 1 1 0 0|s s s s s| P P |0 t t t t t - - -|d d d d d| Rd=combine(Rt.H,Rs.H)       - ALU32 PERM/slots 0 1 2 3
 |1 1 1 1|0 0 1 1 1 0 1|s s s s s| P P |0 t t t t t - - -|d d d d d| Rd=combine(Rt.H,Rs.L)       - ALU32 PERM/slots 0 1 2 3
 |1 1 1 1|0 0 1 1 1 1 0|s s s s s| P P |0 t t t t t - - -|d d d d d| Rd=combine(Rt.L,Rs.H)       - ALU32 PERM/slots 0 1 2 3
@@ -1450,27 +1450,27 @@ A L I A S     A L I A S     A L I A S    A L I A S     A L I A S   | Rd=zxtb(Rs)
 |1 1 1 1|0 1 1 1 - 0 0|s s s s s| P P |- t t t t t - - -|d d d d d| Rd=vavgh(Rs,Rt)             - ALU32/slots 0 1 2 3      -
 |1 1 1 1|0 1 1 1 - 0 1|s s s s s| P P |- t t t t t - - -|d d d d d| Rd=vavgh(Rs,Rt):sat         - ALU32/slots 0 1 2 3      -
 |1 1 1 1|0 1 1 1 - 1 1|s s s s s| P P |- t t t t t - - -|d d d d d| Rd=vnavgh(Rt,Rs)            - ALU32/slots 0 1 2 3      -
-|1 1 1 1|1 0 0 1 - 0 0|s s s s s| P P |0 t t t t t 0 u u|d d d d d| if (Pu) Rd=and(Rs,Rt)       - ALU32 PRED/slots 0 1 2 3
-|1 1 1 1|1 0 0 1 - 0 0|s s s s s| P P |0 t t t t t 1 u u|d d d d d| if (!Pu) Rd=and(Rs,Rt)      - ALU32 PRED/slots 0 1 2 3
-|1 1 1 1|1 0 0 1 - 0 0|s s s s s| P P |1 t t t t t 0 u u|d d d d d| if (Pu.new) Rd=and(Rs,Rt)   - ALU32 PRED/slots 0 1 2 3
-|1 1 1 1|1 0 0 1 - 0 0|s s s s s| P P |1 t t t t t 1 u u|d d d d d| if (!Pu.new) Rd=and(Rs,Rt)  - ALU32 PRED/slots 0 1 2 3
-|1 1 1 1|1 0 0 1 - 0 1|s s s s s| P P |0 t t t t t 0 u u|d d d d d| if (Pu) Rd=or(Rs,Rt)        - ALU32 PRED/slots 0 1 2 3
-|1 1 1 1|1 0 0 1 - 0 1|s s s s s| P P |0 t t t t t 1 u u|d d d d d| if (!Pu) Rd=or(Rs,Rt)       - ALU32 PRED/slots 0 1 2 3
-|1 1 1 1|1 0 0 1 - 0 1|s s s s s| P P |1 t t t t t 0 u u|d d d d d| if (Pu.new) Rd=or(Rs,Rt)    - ALU32 PRED/slots 0 1 2 3
-|1 1 1 1|1 0 0 1 - 0 1|s s s s s| P P |1 t t t t t 1 u u|d d d d d| if (!Pu.new) Rd=or(Rs,Rt)   - ALU32 PRED/slots 0 1 2 3
-|1 1 1 1|1 0 0 1 - 1 1|s s s s s| P P |0 t t t t t 0 u u|d d d d d| if (Pu) Rd=xor(Rs,Rt)       - ALU32 PRED/slots 0 1 2 3
-|1 1 1 1|1 0 0 1 - 1 1|s s s s s| P P |0 t t t t t 1 u u|d d d d d| if (!Pu) Rd=xor(Rs,Rt)      - ALU32 PRED/slots 0 1 2 3
-|1 1 1 1|1 0 0 1 - 1 1|s s s s s| P P |1 t t t t t 0 u u|d d d d d| if (Pu.new) Rd=xor(Rs,Rt)   - ALU32 PRED/slots 0 1 2 3
-|1 1 1 1|1 0 0 1 - 1 1|s s s s s| P P |1 t t t t t 1 u u|d d d d d| if (!Pu.new) Rd=xor(Rs,Rt)  - ALU32 PRED/slots 0 1 2 3
-|1 1 1 1|1 0 1 1 0 - 0|s s s s s| P P |0 t t t t t 0 u u|d d d d d| if (Pu) Rd=add(Rs,Rt)       - ALU32 PRED/slots 0 1 2 3
-|1 1 1 1|1 0 1 1 0 - 0|s s s s s| P P |0 t t t t t 1 u u|d d d d d| if (!Pu) Rd=add(Rs,Rt)      - ALU32 PRED/slots 0 1 2 3
-|1 1 1 1|1 0 1 1 0 - 0|s s s s s| P P |1 t t t t t 0 u u|d d d d d| if (Pu.new) Rd=add(Rs,Rt)   - ALU32 PRED/slots 0 1 2 3
-|1 1 1 1|1 0 1 1 0 - 0|s s s s s| P P |1 t t t t t 1 u u|d d d d d| if (!Pu.new) Rd=add(Rs,Rt)  - ALU32 PRED/slots 0 1 2 3
-|1 1 1 1|1 0 1 1 0 - 1|s s s s s| P P |0 t t t t t 0 u u|d d d d d| if (Pu) Rd=sub(Rt,Rs)       - ALU32 PRED/slots 0 1 2 3
-|1 1 1 1|1 0 1 1 0 - 1|s s s s s| P P |0 t t t t t 1 u u|d d d d d| if (!Pu) Rd=sub(Rt,Rs)      - ALU32 PRED/slots 0 1 2 3
-|1 1 1 1|1 0 1 1 0 - 1|s s s s s| P P |1 t t t t t 0 u u|d d d d d| if (Pu.new) Rd=sub(Rt,Rs)   - ALU32 PRED/slots 0 1 2 3
-|1 1 1 1|1 0 1 1 0 - 1|s s s s s| P P |1 t t t t t 1 u u|d d d d d| if (!Pu.new) Rd=sub(Rt,Rs)  - ALU32 PRED/slots 0 1 2 3
-|1 1 1 1|1 1 0 1 0 0 0|s s s s s| P P |0 t t t t t 0 u u|d d d d d| if (Pu) Rdd=contains(Rs,Rt) - ALU32 PRED/slots 0 1 2 3
-|1 1 1 1|1 1 0 1 0 0 0|s s s s s| P P |0 t t t t t 1 u u|d d d d d| if (!Pu) Rdd=contains(Rs,Rt)- ALU32 PRED/slots 0 1 2 3
-|1 1 1 1|1 1 0 1 0 0 0|s s s s s| P P |1 t t t t t 0 u u|d d d d d| if (Pu.new) Rdd=contains(Rs,Rt) - ALU32 PRED/slots 0 1 2 3
-|1 1 1 1|1 1 0 1 0 0 0|s s s s s| P P |1 t t t t t 1 u u|d d d d d| if (!Pu.new) Rdd=contains(Rs,Rt)- ALU32 PRED/slots 0 1 2 3
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

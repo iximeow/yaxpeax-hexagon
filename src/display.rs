@@ -95,23 +95,40 @@ impl fmt::Display for Instruction {
             return Ok(());
         }
 
-        static JUMPS: &[Opcode] = &[
+        use crate::BranchHint;
+
+        static CONDITIONAL_JUMPS: &[Opcode] = &[
             Opcode::JumpEq, Opcode::JumpNeq, Opcode::JumpGt, Opcode::JumpLe,
             Opcode::JumpGtu, Opcode::JumpLeu, Opcode::JumpBitSet, Opcode::JumpBitClear,
         ];
-        if JUMPS.contains(&self.opcode) {
-            use crate::BranchHint;
-            let hint_label = match self.flags.branch_hint.unwrap() {
-                BranchHint::Taken => { "t" },
-                BranchHint::NotTaken => { "nt" },
+        if CONDITIONAL_JUMPS.contains(&self.opcode) {
+            let hint_label = match self.flags.branch_hint {
+                Some(BranchHint::Taken) => { ":t" },
+                Some(BranchHint::NotTaken) => { ":nt" },
+                None => { "" },
             };
-            write!(f, "if ({}({}, {})) jump:{} {}",
+            write!(f, "if ({}({}, {})) jump{} {}",
                 self.opcode.cmp_str().unwrap(), // TODO: unwrap_unchecked??
                 self.sources[0],
                 self.sources[1],
                 hint_label,
                 self.dest.unwrap(),
             )?;
+            return Ok(());
+        }
+        static UNCONDITIONAL_BRANCHES: &[Opcode] = &[
+            Opcode::Call, Opcode::Callr, Opcode::Callrh,
+            Opcode::Jump, Opcode::Jumpr, Opcode::Jumprh,
+        ];
+        if UNCONDITIONAL_BRANCHES.contains(&self.opcode) {
+            write!(f, "{}{} {}",
+                self.opcode,
+                match self.flags.branch_hint.as_ref() {
+                    Some(BranchHint::Taken) => ":t",
+                    Some(BranchHint::NotTaken) => ":nt",
+                    None => "",
+                },
+                self.dest.unwrap())?;
             return Ok(());
         }
         if let Some(o) = self.dest.as_ref() {
@@ -157,7 +174,12 @@ impl fmt::Display for Opcode {
             Opcode::BUG => { f.write_str("BUG") },
             Opcode::Nop => { f.write_str("nop") },
             Opcode::Jump => { f.write_str("jump") },
+            Opcode::Jumpr => { f.write_str("jumpr") },
+            Opcode::Jumprh => { f.write_str("jumprh") },
             Opcode::Call => { f.write_str("call") },
+            Opcode::Callr => { f.write_str("callr") },
+            Opcode::Callrh => { f.write_str("callrh") },
+            Opcode::Hintjr => { f.write_str("hintjr") },
             Opcode::Memb => { f.write_str("memb") },
             Opcode::Memub => { f.write_str("memub") },
             Opcode::Memh => { f.write_str("memh") },
@@ -199,6 +221,8 @@ impl fmt::Display for Opcode {
             Opcode::And => { f.write_str("and") },
             Opcode::Sub => { f.write_str("sub") },
             Opcode::Or => { f.write_str("or") },
+            Opcode::Xor => { f.write_str("xor") },
+            Opcode::Contains => { f.write_str("contains") },
 
             Opcode::JumpEq => { f.write_str("cmp.eq+jump") },
             Opcode::JumpNeq => { f.write_str("cmp.neq+jump") },
@@ -258,6 +282,13 @@ impl fmt::Display for Opcode {
 
             Opcode::TransferRegisterJump => { f.write_str("transferregisterjump") }
             Opcode::TransferImmediateJump => { f.write_str("transferimmediatejump") }
+
+            Opcode::Trap0 => { f.write_str("trap0") }
+            Opcode::Trap1 => { f.write_str("trap1") }
+            Opcode::Pause => { f.write_str("pause") }
+            Opcode::Icinva => { f.write_str("icinva") }
+            Opcode::Isync => { f.write_str("isync") }
+            Opcode::Unpause => { f.write_str("unpause") }
         }
     }
 }
@@ -269,7 +300,7 @@ impl fmt::Display for Operand {
                 f.write_str("BUG (operand)")
             }
             Operand::PCRel32 { rel } => {
-                write!(f, "#{}", rel)
+                write!(f, "$+#{}", rel)
             }
             Operand::Gpr { reg } => {
                 write!(f, "R{}", reg)
