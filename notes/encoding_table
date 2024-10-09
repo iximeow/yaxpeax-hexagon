@@ -758,17 +758,17 @@ A L I A S     A L I A S     A L I A S    A L I A S     A L I A S   | Rd=zxtb(Rs)
 |1 0 1 0|1 1 1 1 1 1 0|- - - i i| P P |1 t t t t t 1 i i|i i 0 v v| if (Pv.new) memd(#u6)=Rtt     - ST/slot 0,1
 |1 0 1 0|1 1 1 1 1 1 0|- - - i i| P P |1 t t t t t 1 i i|i i 1 v v| if (!Pv.new) memd(#u6)=Rtt     - ST/slot 0,1
 |ICLASS |P MajOp MinOp|s5       |Parse|                 |d5       |
-|0 0 1 1|1 0 1 1 1 0 0|s s s s s| P P |i u u u u u i - -|t t t t t| memb(Rs+Ru<<#u2)=Rt                  - ST/slot 0,1
+|0 0 1 1|1 0 1 1 0 0 0|s s s s s| P P |i u u u u u i - -|t t t t t| memb(Rs+Ru<<#u2)=Rt                  - ST/slot 0,1
 |0 0 1 1|1 1 0 - - 0 0|s s s s s| P P |l i i i i i i l l|l l l l l| memb(Rs+#u6:0)=#S8                  - ST/slot 0,1
-|0 1 0 0|1 i i 0 1 0 0|i i i i i| P P |i t t t t t i i i|i i i i i| memb(gp+#u16:0)=Rt                  - ST/slot 0,1
-|1 0 1 0|0 i i 1 1 0 0|s s s s s| P P |i t t t t t i i i|i i i i i| memb(Rs+#s11:0)=Rt                  - ST/slot 0,1
-|1 0 1 0|1 0 0 1 1 0 0|x x x x x| P P |u t t t t t 0 - -|- - - 1 -| memb(Rx++I:circ(Mu))=Rt                  - ST/slot 0,1
-|1 0 1 0|1 0 0 1 1 0 0|x x x x x| P P |u t t t t t 0 i i|i i - 0 -| memb(Rx++#s4:0:circ(Mu))=Rt                  - ST/slot 0,1
-|1 0 1 0|1 0 1 1 1 0 0|e e e e e| P P |0 t t t t t 1 - l|l l l l l| memb(Re=#U6)=Rt                  - ST/slot 0,1
-|1 0 1 0|1 0 1 1 1 0 0|x x x x x| P P |0 t t t t t 0 i i|i i - 0 -| memb(Rx++#s4:0)=Rt                  - ST/slot 0,1
-|1 0 1 0|1 1 0 1 1 0 0|u u u u u| P P |i t t t t t 1 i l|l l l l l| memb(Ru<<#u2+#U6)=Rt                  - ST/slot 0,1
-|1 0 1 0|1 1 0 1 1 0 0|x x x x x| P P |u t t t t t 0 - -|- - - - -| memb(Rx++Mu)=Rt                  - ST/slot 0,1
-|1 0 1 0|1 1 1 1 1 0 0|x x x x x| P P |u t t t t t 0 - -|- - - - -| memb(Rx++Mu:brev)=Rt                  - ST/slot 0,1
+|0 1 0 0|1 i i 0 0 0 0|i i i i i| P P |i t t t t t i i i|i i i i i| memb(gp+#u16:0)=Rt                  - ST/slot 0,1
+|1 0 1 0|0 i i 1 0 0 0|s s s s s| P P |i t t t t t i i i|i i i i i| memb(Rs+#s11:0)=Rt                  - ST/slot 0,1
+|1 0 1 0|1 0 0 1 0 0 0|x x x x x| P P |u t t t t t 0 - -|- - - 1 -| memb(Rx++I:circ(Mu))=Rt                  - ST/slot 0,1
+|1 0 1 0|1 0 0 1 0 0 0|x x x x x| P P |u t t t t t 0 i i|i i - 0 -| memb(Rx++#s4:0:circ(Mu))=Rt                  - ST/slot 0,1
+|1 0 1 0|1 0 1 1 0 0 0|e e e e e| P P |0 t t t t t 1 - l|l l l l l| memb(Re=#U6)=Rt                  - ST/slot 0,1
+|1 0 1 0|1 0 1 1 0 0 0|x x x x x| P P |0 t t t t t 0 i i|i i - 0 -| memb(Rx++#s4:0)=Rt                  - ST/slot 0,1
+|1 0 1 0|1 1 0 1 0 0 0|u u u u u| P P |i t t t t t 1 i l|l l l l l| memb(Ru<<#u2+#U6)=Rt                  - ST/slot 0,1
+|1 0 1 0|1 1 0 1 0 0 0|x x x x x| P P |u t t t t t 0 - -|- - - - -| memb(Rx++Mu)=Rt                  - ST/slot 0,1
+|1 0 1 0|1 1 1 1 0 0 0|x x x x x| P P |u t t t t t 0 - -|- - - - -| memb(Rx++Mu:brev)=Rt                  - ST/slot 0,1
 |ICLASS |P MajOp MinOp|s5       |Parse|                 |d5       |
 |0 0 1 1|0 1 0 0 0 0 0|s s s s s| P P |i u u u u u i v v|t t t t t| if (Pv) memb(Rs+Ru<<#u2)=Rt     - ST/slot 0,1
 |0 0 1 1|0 1 0 1 0 0 0|s s s s s| P P |i u u u u u i v v|t t t t t| if (!Pv) memb(Rs+Ru<<#u2)=Rt     - ST/slot 0,1

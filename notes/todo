@@ -777,22 +777,22 @@ A L I A S     A L I A S     A L I A S    A L I A S     A L I A S   | Rd=zxtb(Rs)
 |1 0 0 1|1 1 1 1 1 1 0|i i i i i| P P |1 1 0 t t i 1 - -|d d d d d| if (Pt.new) Rdd=memd(#u6)            - LD/slot 0,1
 |1 0 0 1|1 1 1 1 1 1 0|i i i i i| P P |1 1 1 t t i 1 - -|d d d d d| if (!Pt.new) Rdd=memd(#u6)            - LD/slot 0,1
 |1 0 0 1|1 1 1 1 1 1 0|x x x x x| P P |u 0 - - - - 0 - -|d d d d d| Rdd=memd(Rx++Mu:brev)  - LD/slot 0,1
-|1 0 1 0|0 0 0 0 0 0 0|s s s s s| P P |- - - - - - - - -|- - - - -| dccleana(Rs)     - SYSTEM/slot 0
-|1 0 1 0|0 0 0 0 0 0 1|s s s s s| P P |- - - - - - - - -|- - - - -| dcinva(Rs)     - SYSTEM/slot 0
-|1 0 1 0|0 0 0 0 0 1 0|s s s s s| P P |- - - - - - - - -|- - - - -| dccleaninva(Rs)     - SYSTEM/slot 0
-|1 0 1 0|0 0 0 0 0 1 1|s s s s s| P P |0 t t t t t - - 0|0 1 1 d d| release(Rs):at           - ST/slot 0
-|1 0 1 0|0 0 0 0 0 1 1|s s s s s| P P |0 t t t t t - - 1|0 1 1 d d| release(Rs):st           - ST/slot 0
-|1 0 1 0|0 0 0 0 1 0 0|x x x x x| P P |0 0 0 i i i i i i|i i i i i| allocframe(Rx,#u11:3):raw     - ST/slot 0,1
-|1 0 1 0|0 0 0 0 1 0 1|s s s s s| P P |- t t t t t - - 0|0 1 0 d d| memw_rl(Rs):at=Rt           - ST/slot 0
-|1 0 1 0|0 0 0 0 1 0 1|s s s s s| P P |- t t t t t - - 1|0 1 0 d d| memw_rl(Rs):st=Rt           - ST/slot 0
-|1 0 1 0|0 0 0 0 1 1 0|s s s s s| P P |0 - - - - - - - -|- - - - -| dczeroa(Rs)      - SYSTEM/slot 0
-|1 0 1 0|0 0 0 0 1 1 1|s s s s s| P P |0 t t t t t - - 0|0 1 0 d d| memd_rl(Rs):at=Rtt                  - ST/slot 0
-|1 0 1 0|0 0 0 0 1 1 1|s s s s s| P P |0 t t t t t - - 1|0 1 0 d d| memd_rl(Rs):st=Rtt                  - ST/slot 0
-|1 0 1 0|0 1 1 0 0 0 0|s s s s s| P P |- t t t t t 0 0 0|- - - - -| l2fetch(Rs,Rt)          - SYSTEM/slot 0
-|1 0 1 0|0 1 1 0 1 0 0|s s s s s| P P |- t t t t t - - -|- - - - -| l2fetch(Rs,Rtt)          - SYSTEM/slot 0
+tset |1 0 1 0|0 0 0 0 0 0 0|s s s s s| P P |- - - - - - - - -|- - - - -| dccleana(Rs)     - SYSTEM/slot 0
+test |1 0 1 0|0 0 0 0 0 0 1|s s s s s| P P |- - - - - - - - -|- - - - -| dcinva(Rs)     - SYSTEM/slot 0
+test |1 0 1 0|0 0 0 0 0 1 0|s s s s s| P P |- - - - - - - - -|- - - - -| dccleaninva(Rs)     - SYSTEM/slot 0
+test |1 0 1 0|0 0 0 0 0 1 1|s s s s s| P P |0 t t t t t - - 0|0 1 1 d d| release(Rs):at           - ST/slot 0
+test |1 0 1 0|0 0 0 0 0 1 1|s s s s s| P P |0 t t t t t - - 1|0 1 1 d d| release(Rs):st           - ST/slot 0
+test |1 0 1 0|0 0 0 0 1 0 0|x x x x x| P P |0 0 0 i i i i i i|i i i i i| allocframe(Rx,#u11:3):raw     - ST/slot 0,1
+test |1 0 1 0|0 0 0 0 1 0 1|s s s s s| P P |- t t t t t - - 0|0 1 0 d d| memw_rl(Rs):at=Rt           - ST/slot 0
+test |1 0 1 0|0 0 0 0 1 0 1|s s s s s| P P |- t t t t t - - 1|0 1 0 d d| memw_rl(Rs):st=Rt           - ST/slot 0
+test |1 0 1 0|0 0 0 0 1 1 0|s s s s s| P P |0 - - - - - - - -|- - - - -| dczeroa(Rs)      - SYSTEM/slot 0
+test |1 0 1 0|0 0 0 0 1 1 1|s s s s s| P P |0 t t t t t - - 0|0 1 0 d d| memd_rl(Rs):at=Rtt                  - ST/slot 0
+test |1 0 1 0|0 0 0 0 1 1 1|s s s s s| P P |0 t t t t t - - 1|0 1 0 d d| memd_rl(Rs):st=Rtt                  - ST/slot 0
+test |1 0 1 0|0 1 1 0 0 0 0|s s s s s| P P |- t t t t t 0 0 0|- - - - -| l2fetch(Rs,Rt)          - SYSTEM/slot 0
+test |1 0 1 0|0 1 1 0 1 0 0|s s s s s| P P |- t t t t t - - -|- - - - -| l2fetch(Rs,Rtt)          - SYSTEM/slot 0
+|1 0 1 0|0 i i 1 0 0 0|s s s s s| P P |i t t t t t i i i|i i i i i| memb(Rs+#s11:0)=Rt                  - ST/slot 0,1
 |1 0 1 0|0 i i 1 0 1 0|s s s s s| P P |i t t t t t i i i|i i i i i| memh(Rs+#s11:1)=Rt                  - ST/slot 0,1
 |1 0 1 0|0 i i 1 0 1 1|s s s s s| P P |i t t t t t i i i|i i i i i| memh(Rs+#s11:1)=Rt.H                  - ST/slot 0,1
-|1 0 1 0|0 i i 1 1 0 0|s s s s s| P P |i t t t t t i i i|i i i i i| memb(Rs+#s11:0)=Rt                  - ST/slot 0,1
 |1 0 1 0|0 i i 1 1 0 0|s s s s s| P P |i t t t t t i i i|i i i i i| memw(Rs+#s11:2)=Rt                  - ST/slot 0,1
 |1 0 1 0|0 i i 1 1 0 1|s s s s s| P P |i 0 0 t t t i i i|i i i i i| memb(Rs+#s11:0)=Nt.new                  - NV ST/slot 0
 |1 0 1 0|0 i i 1 1 0 1|s s s s s| P P |i 0 1 t t t i i i|i i i i i| memh(Rs+#s11:1)=Nt.new                  - NV ST/slot 0
@@ -801,13 +801,12 @@ A L I A S     A L I A S     A L I A S    A L I A S     A L I A S   | Rd=zxtb(Rs)
 |1 0 1 0|1 0 0 0 0 0 0|- - - - -| P P |- - - - - - 0 0 0|- - - - -| barrier     - SYSTEM/slot 0
 |1 0 1 0|1 0 0 0 0 0 0|- - - - -| P P |- - - - - 0 1 1 1|d d d d d| Rd=dmsyncht          - SYSTEM/slot 0
 |1 0 1 0|1 0 0 0 0 1 0|- - - - -| P P |- - - - - - - - -|- - - - -| syncht          - SYSTEM/slot 0
+|1 0 1 0|1 0 0 1 0 0 0|x x x x x| P P |u t t t t t 0 i i|i i - 0 -| memb(Rx++#s4:0:circ(Mu))=Rt                  - ST/slot 0,1
 |1 0 1 0|1 0 0 1 0 1 0|x x x x x| P P |u t t t t t 0 - -|- - - 1 -| memh(Rx++I:circ(Mu))=Rt                  - ST/slot 0,1
 |1 0 1 0|1 0 0 1 0 1 0|x x x x x| P P |u t t t t t 0 i i|i i - 0 -| memh(Rx++#s4:1:circ(Mu))=Rt                  - ST/slot 0,1
 |1 0 1 0|1 0 0 1 0 1 1|x x x x x| P P |u t t t t t 0 - -|- - - 1 -| memh(Rx++I:circ(Mu))=Rt.H                  - ST/slot 0,1
 |1 0 1 0|1 0 0 1 0 1 1|x x x x x| P P |u t t t t t 0 i i|i i - 0 -| memh(Rx++#s4:1:circ(Mu))=Rt.H                  - ST/slot 0,1
-|1 0 1 0|1 0 0 1 1 0 0|x x x x x| P P |u t t t t t 0 - -|- - - 1 -| memb(Rx++I:circ(Mu))=Rt                  - ST/slot 0,1
 |1 0 1 0|1 0 0 1 1 0 0|x x x x x| P P |u t t t t t 0 - -|- - - 1 -| memw(Rx++I:circ(Mu))=Rt                  - ST/slot 0,1
-|1 0 1 0|1 0 0 1 1 0 0|x x x x x| P P |u t t t t t 0 i i|i i - 0 -| memb(Rx++#s4:0:circ(Mu))=Rt                  - ST/slot 0,1
 |1 0 1 0|1 0 0 1 1 0 0|x x x x x| P P |u t t t t t 0 i i|i i - 0 -| memw(Rx++#s4:2:circ(Mu))=Rt                  - ST/slot 0,1
 |1 0 1 0|1 0 0 1 1 0 1|x x x x x| P P |u 0 0 t t t 0 - -|- - - 1 -| memb(Rx++I:circ(Mu))=Nt.new                  - NV ST/slot 0
 |1 0 1 0|1 0 0 1 1 0 1|x x x x x| P P |u 0 0 t t t 0 i i|i i - 0 -| memb(Rx++#s4:0:circ(Mu))=Nt.new                  - NV ST/slot 0
@@ -817,6 +816,9 @@ A L I A S     A L I A S     A L I A S    A L I A S     A L I A S   | Rd=zxtb(Rs)
 |1 0 1 0|1 0 0 1 1 0 1|x x x x x| P P |u 1 0 t t t 0 i i|i i - 0 -| memw(Rx++#s4:2:circ(Mu))=Nt.new                  - NV ST/slot 0
 |1 0 1 0|1 0 0 1 1 1 0|x x x x x| P P |u t t t t t 0 - -|- - - 1 -| memd(Rx++I:circ(Mu))=Rtt                  - ST/slot 0,1
 |1 0 1 0|1 0 0 1 1 1 0|x x x x x| P P |u t t t t t 0 i i|i i - 0 -| memd(Rx++#s4:3:circ(Mu))=Rtt                  - ST/slot 0,1
+|1 0 1 0|1 0 0 1 9 0 0|x x x x x| P P |u t t t t t 0 - -|- - - 1 -| memb(Rx++I:circ(Mu))=Rt                  - ST/slot 0,1
+|1 0 1 0|1 0 1 1 0 0 0|e e e e e| P P |0 t t t t t 1 - l|l l l l l| memb(Re=#U6)=Rt                  - ST/slot 0,1
+|1 0 1 0|1 0 1 1 0 0 0|x x x x x| P P |0 t t t t t 0 i i|i i - 0 -| memb(Rx++#s4:0)=Rt                  - ST/slot 0,1
 |1 0 1 0|1 0 1 1 0 0 0|x x x x x| P P |1 t t t t t 0 i i|i i 0 v v| if (Pv) memb(Rx++#s4:0)=Rt     - ST/slot 0,1
 |1 0 1 0|1 0 1 1 0 0 0|x x x x x| P P |1 t t t t t 0 i i|i i 1 v v| if (!Pv) memb(Rx++#s4:0)=Rt     - ST/slot 0,1
 |1 0 1 0|1 0 1 1 0 0 0|x x x x x| P P |1 t t t t t 1 i i|i i 0 v v| if (Pv.new) memb(Rx++#s4:0)=Rt     - ST/slot 0,1
@@ -833,9 +835,7 @@ A L I A S     A L I A S     A L I A S    A L I A S     A L I A S   | Rd=zxtb(Rs)
 |1 0 1 0|1 0 1 1 0 1 1|x x x x x| P P |1 t t t t t 0 i i|i i 1 v v| if (!Pv) memh(Rx++#s4:1)=Rt.H     - ST/slot 0,1
 |1 0 1 0|1 0 1 1 0 1 1|x x x x x| P P |1 t t t t t 1 i i|i i 0 v v| if (Pv.new) memh(Rx++#s4:1)=Rt.H     - ST/slot 0,1
 |1 0 1 0|1 0 1 1 0 1 1|x x x x x| P P |1 t t t t t 1 i i|i i 1 v v| if (!Pv.new) memh(Rx++#s4:1)=Rt.H     - ST/slot 0,1
-|1 0 1 0|1 0 1 1 1 0 0|e e e e e| P P |0 t t t t t 1 - l|l l l l l| memb(Re=#U6)=Rt                  - ST/slot 0,1
 |1 0 1 0|1 0 1 1 1 0 0|e e e e e| P P |0 t t t t t 1 - l|l l l l l| memw(Re=#U6)=Rt                  - ST/slot 0,1
-|1 0 1 0|1 0 1 1 1 0 0|x x x x x| P P |0 t t t t t 0 i i|i i - 0 -| memb(Rx++#s4:0)=Rt                  - ST/slot 0,1
 |1 0 1 0|1 0 1 1 1 0 0|x x x x x| P P |0 t t t t t 0 i i|i i - 0 -| memw(Rx++#s4:2)=Rt                  - ST/slot 0,1
 |1 0 1 0|1 0 1 1 1 0 0|x x x x x| P P |1 t t t t t 0 i i|i i 0 v v| if (Pv) memw(Rx++#s4:2)=Rt     - ST/slot 0,1
 |1 0 1 0|1 0 1 1 1 0 0|x x x x x| P P |1 t t t t t 0 i i|i i 1 v v| if (!Pv) memw(Rx++#s4:2)=Rt     - ST/slot 0,1
@@ -865,13 +865,13 @@ A L I A S     A L I A S     A L I A S    A L I A S     A L I A S   | Rd=zxtb(Rs)
 |1 0 1 0|1 0 1 1 1 1 0|x x x x x| P P |1 t t t t t 0 i i|i i 1 v v| if (!Pv) memd(Rx++#s4:2)=Rtt     - ST/slot 0,1
 |1 0 1 0|1 0 1 1 1 1 0|x x x x x| P P |1 t t t t t 1 i i|i i 0 v v| if (Pv.new) memd(Rx++#s4:2)=Rtt     - ST/slot 0,1
 |1 0 1 0|1 0 1 1 1 1 0|x x x x x| P P |1 t t t t t 1 i i|i i 1 v v| if (!Pv.new) memd(Rx++#s4:2)=Rtt     - ST/slot 0,1
+|1 0 1 0|1 1 0 1 0 0 0|u u u u u| P P |i t t t t t 1 i l|l l l l l| memb(Ru<<#u2+#U6)=Rt                  - ST/slot 0,1
+|1 0 1 0|1 1 0 1 0 0 0|x x x x x| P P |u t t t t t 0 - -|- - - - -| memb(Rx++Mu)=Rt                  - ST/slot 0,1
 |1 0 1 0|1 1 0 1 0 1 0|u u u u u| P P |i t t t t t 1 i l|l l l l l| memh(Ru<<#u2+#U6)=Rt                  - ST/slot 0,1
 |1 0 1 0|1 1 0 1 0 1 0|x x x x x| P P |u t t t t t 0 - -|- - - - -| memh(Rx++Mu)=Rt                  - ST/slot 0,1
 |1 0 1 0|1 1 0 1 0 1 1|u u u u u| P P |i t t t t t 1 i l|l l l l l| memh(Ru<<#u2+#U6)=Rt.H                  - ST/slot 0,1
 |1 0 1 0|1 1 0 1 0 1 1|x x x x x| P P |u t t t t t 0 - -|- - - - -| memh(Rx++Mu)=Rt.H                  - ST/slot 0,1
-|1 0 1 0|1 1 0 1 1 0 0|u u u u u| P P |i t t t t t 1 i l|l l l l l| memb(Ru<<#u2+#U6)=Rt                  - ST/slot 0,1
 |1 0 1 0|1 1 0 1 1 0 0|u u u u u| P P |i t t t t t 1 i l|l l l l l| memw(Ru<<#u2+#U6)=Rt                  - ST/slot 0,1
-|1 0 1 0|1 1 0 1 1 0 0|x x x x x| P P |u t t t t t 0 - -|- - - - -| memb(Rx++Mu)=Rt                  - ST/slot 0,1
 |1 0 1 0|1 1 0 1 1 0 0|x x x x x| P P |u t t t t t 0 - -|- - - - -| memw(Rx++Mu)=Rt                  - ST/slot 0,1
 |1 0 1 0|1 1 0 1 1 0 1|u u u u u| P P |i 0 0 t t t 1 i l|l l l l l| memb(Ru<<#u2+#U6)=Nt.new                  - NV ST/slot 0
 |1 0 1 0|1 1 0 1 1 0 1|u u u u u| P P |i 0 1 t t t 1 i l|l l l l l| memh(Ru<<#u2+#U6)=Nt.new                  - NV ST/slot 0
@@ -885,6 +885,7 @@ A L I A S     A L I A S     A L I A S    A L I A S     A L I A S   | Rd=zxtb(Rs)
 |1 0 1 0|1 1 1 1 0 0 0|- - - i i| P P |0 t t t t t 1 i i|i i 1 v v| if (!Pv) memb(#u6)=Rt     - ST/slot 0,1
 |1 0 1 0|1 1 1 1 0 0 0|- - - i i| P P |1 t t t t t 1 i i|i i 0 v v| if (Pv.new) memb(#u6)=Rt     - ST/slot 0,1
 |1 0 1 0|1 1 1 1 0 0 0|- - - i i| P P |1 t t t t t 1 i i|i i 1 v v| if (!Pv.new) memb(#u6)=Rt     - ST/slot 0,1
+|1 0 1 0|1 1 1 1 0 0 0|x x x x x| P P |u t t t t t 0 - -|- - - - -| memb(Rx++Mu:brev)=Rt                  - ST/slot 0,1
 |1 0 1 0|1 1 1 1 0 1 0|- - - i i| P P |0 t t t t t 1 i i|i i 0 v v| if (Pv) memh(#u6)=Rt     - ST/slot 0,1
 |1 0 1 0|1 1 1 1 0 1 0|- - - i i| P P |0 t t t t t 1 i i|i i 1 v v| if (!Pv) memh(#u6)=Rt     - ST/slot 0,1
 |1 0 1 0|1 1 1 1 0 1 0|- - - i i| P P |1 t t t t t 1 i i|i i 0 v v| if (Pv.new) memh(#u6)=Rt     - ST/slot 0,1
@@ -899,7 +900,6 @@ A L I A S     A L I A S     A L I A S    A L I A S     A L I A S   | Rd=zxtb(Rs)
 |1 0 1 0|1 1 1 1 1 0 0|- - - i i| P P |0 t t t t t 1 i i|i i 1 v v| if (!Pv) memw(#u6)=Rt     - ST/slot 0,1
 |1 0 1 0|1 1 1 1 1 0 0|- - - i i| P P |1 t t t t t 1 i i|i i 0 v v| if (Pv.new) memw(#u6)=Rt     - ST/slot 0,1
 |1 0 1 0|1 1 1 1 1 0 0|- - - i i| P P |1 t t t t t 1 i i|i i 1 v v| if (!Pv.new) memw(#u6)=Rt     - ST/slot 0,1
-|1 0 1 0|1 1 1 1 1 0 0|x x x x x| P P |u t t t t t 0 - -|- - - - -| memb(Rx++Mu:brev)=Rt                  - ST/slot 0,1
 |1 0 1 0|1 1 1 1 1 0 0|x x x x x| P P |u t t t t t 0 - -|- - - - -| memw(Rx++Mu:brev)=Rt                  - ST/slot 0,1
 |1 0 1 0|1 1 1 1 1 0 1|- - - i i| P P |0 0 0 t t t 1 i i|i i 0 v v| if (Pv) memb(#u6)=Nt.new     - NV/slot 0
 |1 0 1 0|1 1 1 1 1 0 1|- - - i i| P P |0 0 0 t t t 1 i i|i i 1 v v| if (!Pv) memb(#u6)=Nt.new     - NV/slot 0
@@ -1420,36 +1420,36 @@ A L I A S     A L I A S     A L I A S    A L I A S     A L I A S   | Rd=zxtb(Rs)
 test |1 1 1 1|0 0 0 1 0 0 0|s s s s s| P P |- t t t t t - - -|d d d d d| Rd=and(Rs,Rt)               - ALU32/slots 0 1 2 3
 test |1 1 1 1|0 0 0 1 0 0 1|s s s s s| P P |- t t t t t - - -|d d d d d| Rd=or(Rs,Rt)                - ALU32/slots 0 1 2 3
 test |1 1 1 1|0 0 0 1 0 1 1|s s s s s| P P |- t t t t t - - -|d d d d d| Rd=xor(Rs,Rt)               - ALU32/slots 0 1 2 3
-|1 1 1 1|0 0 0 1 1 0 0|s s s s s| P P |- t t t t t - - -|d d d d d| Rd=and(Rt,~Rs)              - ALU32/slots 0 1 2 3
-|1 1 1 1|0 0 0 1 1 0 1|s s s s s| P P |- t t t t t - - -|d d d d d| Rd=or(Rt,~Rs)              - ALU32/slots 0 1 2 3
-|1 1 1 1|0 0 1 0 - 0 0|s s s s s| P P |- t t t t t - - -|0 0 0 d d| Pd=cmp.eq(Rs,Rt)            - ALU32 PRED/slots 0 1 2 3
-|1 1 1 1|0 0 1 0 - 0 0|s s s s s| P P |- t t t t t - - -|1 0 0 d d| Pd=!cmp.eq(Rs,Rt)           - ALU32 PRED/slots 0 1 2 3
-|1 1 1 1|0 0 1 0 - 1 0|s s s s s| P P |- t t t t t - - -|0 0 0 d d| Pd=cmp.gt(Rs,Rt)            - ALU32 PRED/slots 0 1 2 3
-|1 1 1 1|0 0 1 0 - 1 0|s s s s s| P P |- t t t t t - - -|1 0 0 d d| Pd=!cmp.gt(Rs,Rt)           - ALU32 PRED/slots 0 1 2 3
-|1 1 1 1|0 0 1 0 - 1 1|s s s s s| P P |- t t t t t - - -|0 0 0 d d| Pd=cmp.gtu(Rs,Rt)           - ALU32 PRED/slots 0 1 2 3
-|1 1 1 1|0 0 1 0 - 1 1|s s s s s| P P |- t t t t t - - -|1 0 0 d d| Pd=!cmp.gtu(Rs,Rt)          - ALU32 PRED/slots 0 1 2 3
+test |1 1 1 1|0 0 0 1 1 0 0|s s s s s| P P |- t t t t t - - -|d d d d d| Rd=and(Rt,~Rs)              - ALU32/slots 0 1 2 3
+test |1 1 1 1|0 0 0 1 1 0 1|s s s s s| P P |- t t t t t - - -|d d d d d| Rd=or(Rt,~Rs)              - ALU32/slots 0 1 2 3
+test |1 1 1 1|0 0 1 0 - 0 0|s s s s s| P P |- t t t t t - - -|0 0 0 d d| Pd=cmp.eq(Rs,Rt)            - ALU32 PRED/slots 0 1 2 3
+test |1 1 1 1|0 0 1 0 - 0 0|s s s s s| P P |- t t t t t - - -|1 0 0 d d| Pd=!cmp.eq(Rs,Rt)           - ALU32 PRED/slots 0 1 2 3
+test |1 1 1 1|0 0 1 0 - 1 0|s s s s s| P P |- t t t t t - - -|0 0 0 d d| Pd=cmp.gt(Rs,Rt)            - ALU32 PRED/slots 0 1 2 3
+test |1 1 1 1|0 0 1 0 - 1 0|s s s s s| P P |- t t t t t - - -|1 0 0 d d| Pd=!cmp.gt(Rs,Rt)           - ALU32 PRED/slots 0 1 2 3
+test |1 1 1 1|0 0 1 0 - 1 1|s s s s s| P P |- t t t t t - - -|0 0 0 d d| Pd=cmp.gtu(Rs,Rt)           - ALU32 PRED/slots 0 1 2 3
+test |1 1 1 1|0 0 1 0 - 1 1|s s s s s| P P |- t t t t t - - -|1 0 0 d d| Pd=!cmp.gtu(Rs,Rt)          - ALU32 PRED/slots 0 1 2 3
 test |1 1 1 1|0 0 1 1 0 0 0|s s s s s| P P |- t t t t t - - -|d d d d d| Rd=add(Rs,Rt)               - ALU32/slots 0 1 2 3
 test |1 1 1 1|0 0 1 1 0 0 1|s s s s s| P P |- t t t t t - - -|d d d d d| Rd=sub(Rt,Rs)               - ALU32/slots 0 1 2 3
 test |1 1 1 1|0 0 1 1 0 1 0|s s s s s| P P |- t t t t t - - -|d d d d d| Rd=cmp.eq(Rs,Rt)            - ALU32 PRED/slots 0 1 2 3
 test |1 1 1 1|0 0 1 1 0 1 1|s s s s s| P P |- t t t t t - - -|d d d d d| Rd=!cmp.eq(Rs,Rt)           - ALU32 PRED/slots 0 1 2 3
-|1 1 1 1|0 0 1 1 1 0 0|s s s s s| P P |0 t t t t t - - -|d d d d d| Rd=combine(Rt.H,Rs.H)       - ALU32 PERM/slots 0 1 2 3
-|1 1 1 1|0 0 1 1 1 0 1|s s s s s| P P |0 t t t t t - - -|d d d d d| Rd=combine(Rt.H,Rs.L)       - ALU32 PERM/slots 0 1 2 3
-|1 1 1 1|0 0 1 1 1 1 0|s s s s s| P P |0 t t t t t - - -|d d d d d| Rd=combine(Rt.L,Rs.H)       - ALU32 PERM/slots 0 1 2 3
-|1 1 1 1|0 0 1 1 1 1 1|s s s s s| P P |0 t t t t t - - -|d d d d d| Rd=combine(Rt.L,Rs.L)       - ALU32 PERM/slots 0 1 2 3
-|1 1 1 1|0 1 0 0 - - -|s s s s s| P P |- t t t t t - u u|d d d d d| Rd=mux(Pu,Rs,Rt)            - ALU32 PERM/slots 0 1 2 3
-|1 1 1 1|0 1 0 1 0 - -|s s s s s| P P |0 t t t t t - - -|d d d d d| Rdd=combine(Rs,Rt)          - ALU32 PERM/slots 0 1 2 3
-|1 1 1 1|0 1 0 1 1 - -|s s s s s| P P |- t t t t t - - -|d d d d d| Rdd=packhl(Rs,Rt)           - ALU32 PERM/slots 0 1 2 3
-|1 1 1 1|0 1 1 0 0 0 0|s s s s s| P P |- t t t t t - - -|d d d d d| Rd=vaddh(Rs,Rt)             - ALU32/slots 0 1 2 3      -
-|1 1 1 1|0 1 1 0 0 0 1|s s s s s| P P |- t t t t t - - -|d d d d d| Rd=vaddh(Rs,Rt):sat         - ALU32/slots 0 1 2 3      -
-|1 1 1 1|0 1 1 0 0 1 0|s s s s s| P P |- t t t t t - - -|d d d d d| Rd=add(Rs,Rt):sat           - ALU32/slots 0 1 2 3
-|1 1 1 1|0 1 1 0 0 1 1|s s s s s| P P |- t t t t t - - -|d d d d d| Rd=vadduh(Rs,Rt):sat        - ALU32/slots 0 1 2 3      -
-|1 1 1 1|0 1 1 0 1 0 0|s s s s s| P P |- t t t t t - - -|d d d d d| Rd=vsubh(Rt,Rs)             - ALU32/slots 0 1 2 3      -
-|1 1 1 1|0 1 1 0 1 0 1|s s s s s| P P |- t t t t t - - -|d d d d d| Rd=vsubh(Rt,Rs):sat         - ALU32/slots 0 1 2 3      -
-|1 1 1 1|0 1 1 0 1 1 0|s s s s s| P P |- t t t t t - - -|d d d d d| Rd=add(Rt,Rs):sat           - ALU32/slots 0 1 2 3
-|1 1 1 1|0 1 1 0 1 1 1|s s s s s| P P |- t t t t t - - -|d d d d d| Rd=vsubuh(Rt,Rs):sat        - ALU32/slots 0 1 2 3      -
-|1 1 1 1|0 1 1 1 - 0 0|s s s s s| P P |- t t t t t - - -|d d d d d| Rd=vavgh(Rs,Rt)             - ALU32/slots 0 1 2 3      -
-|1 1 1 1|0 1 1 1 - 0 1|s s s s s| P P |- t t t t t - - -|d d d d d| Rd=vavgh(Rs,Rt):sat         - ALU32/slots 0 1 2 3      -
-|1 1 1 1|0 1 1 1 - 1 1|s s s s s| P P |- t t t t t - - -|d d d d d| Rd=vnavgh(Rt,Rs)            - ALU32/slots 0 1 2 3      -
+test |1 1 1 1|0 0 1 1 1 0 0|s s s s s| P P |0 t t t t t - - -|d d d d d| Rd=combine(Rt.H,Rs.H)       - ALU32 PERM/slots 0 1 2 3
+test |1 1 1 1|0 0 1 1 1 0 1|s s s s s| P P |0 t t t t t - - -|d d d d d| Rd=combine(Rt.H,Rs.L)       - ALU32 PERM/slots 0 1 2 3
+test |1 1 1 1|0 0 1 1 1 1 0|s s s s s| P P |0 t t t t t - - -|d d d d d| Rd=combine(Rt.L,Rs.H)       - ALU32 PERM/slots 0 1 2 3
+test |1 1 1 1|0 0 1 1 1 1 1|s s s s s| P P |0 t t t t t - - -|d d d d d| Rd=combine(Rt.L,Rs.L)       - ALU32 PERM/slots 0 1 2 3
+test |1 1 1 1|0 1 0 0 - - -|s s s s s| P P |- t t t t t - u u|d d d d d| Rd=mux(Pu,Rs,Rt)            - ALU32 PERM/slots 0 1 2 3
+test |1 1 1 1|0 1 0 1 0 - -|s s s s s| P P |0 t t t t t - - -|d d d d d| Rdd=combine(Rs,Rt)          - ALU32 PERM/slots 0 1 2 3
+test |1 1 1 1|0 1 0 1 1 - -|s s s s s| P P |- t t t t t - - -|d d d d d| Rdd=packhl(Rs,Rt)           - ALU32 PERM/slots 0 1 2 3
+test |1 1 1 1|0 1 1 0 0 0 0|s s s s s| P P |- t t t t t - - -|d d d d d| Rd=vaddh(Rs,Rt)             - ALU32/slots 0 1 2 3      -
+test |1 1 1 1|0 1 1 0 0 0 1|s s s s s| P P |- t t t t t - - -|d d d d d| Rd=vaddh(Rs,Rt):sat         - ALU32/slots 0 1 2 3      -
+test |1 1 1 1|0 1 1 0 0 1 0|s s s s s| P P |- t t t t t - - -|d d d d d| Rd=add(Rs,Rt):sat           - ALU32/slots 0 1 2 3
+test |1 1 1 1|0 1 1 0 0 1 1|s s s s s| P P |- t t t t t - - -|d d d d d| Rd=vadduh(Rs,Rt):sat        - ALU32/slots 0 1 2 3      -
+test |1 1 1 1|0 1 1 0 1 0 0|s s s s s| P P |- t t t t t - - -|d d d d d| Rd=vsubh(Rt,Rs)             - ALU32/slots 0 1 2 3      -
+test |1 1 1 1|0 1 1 0 1 0 1|s s s s s| P P |- t t t t t - - -|d d d d d| Rd=vsubh(Rt,Rs):sat         - ALU32/slots 0 1 2 3      -
+test |1 1 1 1|0 1 1 0 1 1 0|s s s s s| P P |- t t t t t - - -|d d d d d| Rd=sub(Rt,Rs):sat           - ALU32/slots 0 1 2 3
+test |1 1 1 1|0 1 1 0 1 1 1|s s s s s| P P |- t t t t t - - -|d d d d d| Rd=vsubuh(Rt,Rs):sat        - ALU32/slots 0 1 2 3      -
+test |1 1 1 1|0 1 1 1 - 0 0|s s s s s| P P |- t t t t t - - -|d d d d d| Rd=vavgh(Rs,Rt)             - ALU32/slots 0 1 2 3      -
+test |1 1 1 1|0 1 1 1 - 0 1|s s s s s| P P |- t t t t t - - -|d d d d d| Rd=vavgh(Rs,Rt):sat         - ALU32/slots 0 1 2 3      -
+test |1 1 1 1|0 1 1 1 - 1 1|s s s s s| P P |- t t t t t - - -|d d d d d| Rd=vnavgh(Rt,Rs)            - ALU32/slots 0 1 2 3      -
 
 
 
