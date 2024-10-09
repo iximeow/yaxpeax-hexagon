@@ -22,7 +22,7 @@ A L I A S     A L I A S     A L I A S    A L I A S     A L I A S   | Rd=zxtb(Rs)
 |1 1 1 1|0 0 0 1 0 0 1|s s s s s| P P |- t t t t t - - -|d d d d d| Rd=or(Rs,Rt)                - ALU32/slots 0 1 2 3
 |1 1 1 1|0 0 0 1 0 1 1|s s s s s| P P |- t t t t t - - -|d d d d d| Rd=xor(Rs,Rt)               - ALU32/slots 0 1 2 3
 |1 1 1 1|0 0 0 1 1 0 0|s s s s s| P P |- t t t t t - - -|d d d d d| Rd=and(Rt,~Rs)              - ALU32/slots 0 1 2 3
-|1 1 1 1|0 0 0 1 1 0 1|s s s s s| P P |- t t t t t - - -|d d d d d| Rd=and(Rt,~Rs)              - ALU32/slots 0 1 2 3
+|1 1 1 1|0 0 0 1 1 0 1|s s s s s| P P |- t t t t t - - -|d d d d d| Rd=or(Rt,~Rs)               - ALU32/slots 0 1 2 3
          Rs                             |t5
 |ICLASS |P MajOp MinOp|s5       |Parse|                 |d5       |
 |0 1 1 1|0 0 0 1 i i 1|x x x x x| P P |i i i i i i i i i|i i i i i| Rx.L=#u16                   - ALU32/slots 0 1 2 3      - TransferImmediate
