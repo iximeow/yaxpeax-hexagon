@@ -34,7 +34,6 @@ impl fmt::Display for Instruction {
             let predicate = self.flags.predicate.as_ref().unwrap();
             let preg = Operand::pred(predicate.num());
 
-            use crate::BranchHint;
             let hint_label = match self.flags.branch_hint.unwrap() {
                 BranchHint::Taken => { "t" },
                 BranchHint::NotTaken => { "nt" },
@@ -146,6 +145,18 @@ impl fmt::Display for Instruction {
         }
         write!(f, "{}", self.opcode)?;
 
+        if self.opcode == Opcode::And_nRR || self.opcode == Opcode::Or_nRR {
+            // while operand order does not matter here at all, the hexagon (v73) manual reverses
+            // Rs and Rt for these specific instructions.
+            write!(f, "({}, ~{})", self.sources[1], self.sources[0])?;
+            return Ok(());
+        }
+
+        if self.opcode == Opcode::And_RnR || self.opcode == Opcode::Or_RnR {
+            write!(f, "({}, ~{})", self.sources[0], self.sources[1])?;
+            return Ok(());
+        }
+
         if self.sources_count > 0 {
             f.write_str("(")?;
             write!(f, "{}", self.sources[0])?;
@@ -163,6 +174,17 @@ impl fmt::Display for Instruction {
         }
         if self.flags.saturate {
             f.write_str(":sat")?;
+        }
+        match self.flags.branch_hint {
+            Some(BranchHint::Taken) => { f.write_str(":t")? },
+            Some(BranchHint::NotTaken) => { f.write_str(":nt")? },
+            None => {}
+        };
+
+        // DeallocateFrame is shown with `:raw` as a suffix, but after the taken/not-taken hint
+        // same for DeallocReturn
+        if self.opcode == Opcode::DeallocFrame || self.opcode == Opcode::DeallocReturn {
+            f.write_str(":raw")?;
         }
         Ok(())
     }
@@ -219,8 +241,12 @@ impl fmt::Display for Opcode {
             Opcode::CmpGtu => { f.write_str("cmp.gtu") },
             Opcode::Add => { f.write_str("add") },
             Opcode::And => { f.write_str("and") },
+            Opcode::And_nRR => { f.write_str("and_nRR") },
+            Opcode::And_RnR => { f.write_str("and_RnR") },
             Opcode::Sub => { f.write_str("sub") },
             Opcode::Or => { f.write_str("or") },
+            Opcode::Or_nRR => { f.write_str("or_nRR") },
+            Opcode::Or_RnR => { f.write_str("or_RnR") },
             Opcode::Xor => { f.write_str("xor") },
             Opcode::Contains => { f.write_str("contains") },
 
@@ -289,6 +315,37 @@ impl fmt::Display for Opcode {
             Opcode::Icinva => { f.write_str("icinva") }
             Opcode::Isync => { f.write_str("isync") }
             Opcode::Unpause => { f.write_str("unpause") }
+
+            Opcode::Vaddh => { f.write_str("vaddh") },
+            Opcode::Vadduh => { f.write_str("vadduh") },
+            Opcode::Vsubh => { f.write_str("vsubh") },
+            Opcode::Vsubuh => { f.write_str("vsubuh") },
+            Opcode::Vavgh => { f.write_str("vavgh") },
+            Opcode::Vnavgh => { f.write_str("vnavgh") },
+            Opcode::Packhl => { f.write_str("packhl") },
+
+            Opcode::DcCleanA => { f.write_str("dccleana") },
+            Opcode::DcInvA => { f.write_str("dcinva") },
+            Opcode::DcCleanInvA => { f.write_str("dccleaninva") },
+            Opcode::DcZeroA => { f.write_str("dczeroa") },
+            Opcode::L2Fetch => { f.write_str("l2fet_ch") },
+            Opcode::DmSyncHt => { f.write_str("dmsyncht_") },
+            Opcode::SyncHt => { f.write_str("syncht_") },
+
+            Opcode::Release => { f.write_str("release") },
+            Opcode::Barrier => { f.write_str("barrier") },
+            Opcode::AllocFrame => { f.write_str("allocframe") },
+            Opcode::MemwRl => { f.write_str("memwrl") },
+            Opcode::MemdRl => { f.write_str("memdrl") },
+
+            Opcode::DeallocFrame => { f.write_str("deallocframe") },
+            Opcode::DeallocReturn => { f.write_str("dealloc_return") },
+            Opcode::Dcfetch => { f.write_str("dcfetch") },
+
+            Opcode::MemwLocked => { f.write_str("memw_locked") },
+            Opcode::MemwAq => { f.write_str("memw_aq") },
+            Opcode::MemdLocked => { f.write_str("memd_locked") },
+            Opcode::MemdAq => { f.write_str("memd_aq") },
         }
     }
 }
@@ -362,6 +419,30 @@ impl fmt::Display for Operand {
             }
             Operand::ImmU32 { imm } => {
                 write!(f, "#{:}", imm)
+            }
+            Operand::RegShiftOffset { base, shift, offset } => {
+                write!(f, "R{}<<{} + {:#x}", base, shift, offset)
+            }
+            Operand::RegOffsetCirc { base, offset, mu } => {
+                write!(f, "R{}++#{:#x}:circ(M{})", base, offset, mu)
+            }
+            Operand::RegCirc { base, mu } => {
+                write!(f, "R{}++I:circ(M{})", base, mu)
+            }
+            Operand::RegMemIndexed { base, mu } => {
+                write!(f, "R{}++M{}", base, mu)
+            }
+            Operand::RegMemIndexedBrev { base, mu } => {
+                write!(f, "R{}++M{}:brev", base, mu)
+            }
+            Operand::RegStoreAssign { base, addr } => {
+                write!(f, "R{}=#{:#x}", base, addr)
+            }
+            Operand::Absolute { addr } => {
+                write!(f, "#{:#x}", addr)
+            }
+            Operand::GpOffset { offset } => {
+                write!(f, "gp+#{:#x}", offset)
             }
         }
     }
