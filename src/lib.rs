@@ -261,11 +261,14 @@ pub struct Instruction {
     opcode: Opcode,
     dest: Option<Operand>,
     // an alternate destination operand for the handful of instructions that write to two
-    // destinations. in all cases, these are very close to duplex instructions (some operation;
+    // destinations. in most cases, these are very close to duplex instructions (some operation;
     // some other related operation), but it's not clear if instruction packets would error if
     // these instruction cohabitate with three other instructions in a packet. for duplex
     // instructions, it is simply an error to have duplex + 3 more slots, so duplex can be much
     // more simply decoded into a series of instrucitons..
+    //
+    // the outliers here are store-conditional, where one operand is a register (address) and the
+    // other is a predicate register updated to indicate the successfulness of the store.
     alt_dest: Option<Operand>,
     flags: InstFlags,
 
@@ -296,6 +299,13 @@ struct InstFlags {
     saturate: bool,
     chop: bool,
     rounded: Option<RoundingMode>,
+    threads: Option<DomainHint>,
+}
+
+#[derive(Debug, Copy, Clone)]
+enum DomainHint {
+    Same,
+    All,
 }
 
 impl Default for InstFlags {
@@ -307,6 +317,7 @@ impl Default for InstFlags {
             saturate: false,
             chop: false,
             rounded: None,
+            threads: None,
         }
     }
 }
@@ -513,9 +524,11 @@ pub enum Opcode {
     DeallocReturn,
     Dcfetch,
 
-    MemwLocked,
+    MemwLockedLoad,
+    MemwStoreCond,
     MemwAq,
-    MemdLocked,
+    MemdLockedLoad,
+    MemdStoreCond,
     MemdAq,
 }
 
@@ -985,6 +998,7 @@ trait DecodeHandler<T: Reader<<Hexagon as Arch>::Address, <Hexagon as Arch>::Wor
     fn negate_result(&mut self) -> Result<(), <Hexagon as Arch>::DecodeError> { Ok(()) }
     fn saturate(&mut self) -> Result<(), <Hexagon as Arch>::DecodeError> { Ok(()) }
     fn branch_hint(&mut self, hint_taken: bool) -> Result<(), <Hexagon as Arch>::DecodeError> { Ok(()) }
+    fn domain_hint(&mut self, domain: DomainHint) -> Result<(), <Hexagon as Arch>::DecodeError> { Ok(()) }
     fn rounded(&mut self, mode: RoundingMode) -> Result<(), <Hexagon as Arch>::DecodeError> { Ok(()) }
     fn chop(&mut self) -> Result<(), <Hexagon as Arch>::DecodeError> { Ok(()) }
     fn on_word_read(&mut self, _word: <Hexagon as Arch>::Word) {}
@@ -1048,6 +1062,12 @@ impl<T: yaxpeax_arch::Reader<<Hexagon as Arch>::Address, <Hexagon as Arch>::Word
         }
         Ok(())
     }
+    fn domain_hint(&mut self, domain: DomainHint) -> Result<(), <Hexagon as Arch>::DecodeError> {
+        let mut flags = &mut self.instructions[self.instruction_count as usize].flags;
+        assert!(flags.threads.is_none());
+        flags.threads = Some(domain);
+        Ok(())
+    }
     fn rounded(&mut self, mode: RoundingMode) -> Result<(), <Hexagon as Arch>::DecodeError> {
         let mut flags = &mut self.instructions[self.instruction_count as usize].flags;
         assert!(flags.rounded.is_none());
@@ -1104,8 +1124,8 @@ fn decode_store_ops<
         handler.on_source_decoded(Operand::gpr_new(srcreg & 0b111))?;
         let opbits = (srcreg >> 3) & 0b11;
         static OPS: [Option<Opcode>; 4] = [
-            Some(Opcode::StoreMemb), Some(Opcode::StoreMemw),
-            Some(Opcode::StoreMemd), None,
+            Some(Opcode::StoreMemb), Some(Opcode::StoreMemh),
+            Some(Opcode::StoreMemw), None,
         ];
         handler.on_opcode_decoded(decode_opcode!(OPS[opbits as usize]))?;
         handler.on_dest_decoded(dest_op(opbits))?;
@@ -2362,8 +2382,8 @@ fn decode_instruction<
                         opcode_check!(inst & 0b100000_111_00000 == 0);
                         let op_low = (inst >> 11) & 0b11;
                         static OP: [Opcode; 4] = [
-                            Opcode::MemwLocked, Opcode::MemwAq,
-                            Opcode::MemdLocked, Opcode::MemdAq,
+                            Opcode::MemwLockedLoad, Opcode::MemwAq,
+                            Opcode::MemdLockedLoad, Opcode::MemdAq,
                         ];
                         handler.on_source_decoded(Operand::gpr(sssss))?;
                         if op_low > 0b01 {
@@ -2428,57 +2448,86 @@ fn decode_instruction<
             }
         }
         0b1010 => {
-            if inst >> 26 & 1 == 0 {
+            if inst >> 27 & 1 == 0 {
                 // lower chunk: 1010|0 ....
 
                 // may also be xxxxx, depends on instruction.
                 let sssss = reg_b16(inst);
+                let Rs = Operand::gpr(sssss);
 
                 if inst >> 24 & 1 == 0 {
                     // 1010|0..0... these are semi-special memory operations.
-                    handler.on_source_decoded(Operand::gpr(sssss))?;
                     let opc_upper = inst >> 25 & 0b11;
                     if opc_upper == 0b00 {
                         let opc_lower = (inst >> 21) & 0b111;
                         match opc_lower {
                             0b000 => {
                                 handler.on_opcode_decoded(Opcode::DcCleanA)?;
+                                handler.on_source_decoded(Rs)?;
                             },
                             0b001 => {
                                 handler.on_opcode_decoded(Opcode::DcInvA)?;
+                                handler.on_source_decoded(Rs)?;
                             },
                             0b010 => {
                                 handler.on_opcode_decoded(Opcode::DcCleanInvA)?;
+                                handler.on_source_decoded(Rs)?;
                             },
                             0b011 => {
+                                opcode_check!(inst & 0b11100 == 0b01100);
                                 handler.on_opcode_decoded(Opcode::Release)?;
+                                handler.on_source_decoded(Rs)?;
                                 if (inst >> 5) & 1 == 0 {
-                                    //TODO: hint :at
+                                    handler.domain_hint(DomainHint::All)?;
                                 } else {
-                                    //TODO: hint :st
+                                    handler.domain_hint(DomainHint::Same)?;
                                 }
                             },
                             0b100 => {
                                 handler.on_opcode_decoded(Opcode::AllocFrame)?;
+                                let i11 = inst & 0b111_11111111;
+                                operand_check!(inst & 0b111000_00000000 == 0);
+                                handler.on_source_decoded(Rs)?;
+                                handler.on_source_decoded(Operand::imm_u16((i11 as u16) << 3))?;
                             }
                             0b101 => {
-                                handler.on_opcode_decoded(Opcode::MemwRl)?;
-                                if (inst >> 5) & 1 == 0 {
-                                    //TODO: hint :at
+                                handler.on_dest_decoded(Rs)?;
+                                handler.on_source_decoded(Operand::gpr((inst >> 8) as u8 & 0b11111))?;
+                                if inst & 0b1100 == 0b0000 {
+                                    handler.on_opcode_decoded(Opcode::MemwStoreCond)?;
+                                    handler.on_dest_decoded(Operand::pred(inst as u8 & 0b11))?;
+                                } else if inst & 0b11100 == 0b01000 {
+                                    handler.on_opcode_decoded(Opcode::MemwRl)?;
+                                    if (inst >> 5) & 1 == 0 {
+                                        handler.domain_hint(DomainHint::All)?;
+                                    } else {
+                                        handler.domain_hint(DomainHint::Same)?;
+                                    }
                                 } else {
-                                    //TODO: hint :st
+                                    return Err(DecodeError::InvalidOpcode);
                                 }
                             },
                             0b110 => {
+                                opcode_check!((inst >> 13) & 1 == 0);
                                 handler.on_opcode_decoded(Opcode::DcZeroA)?;
+                                handler.on_source_decoded(Rs)?;
                             }
                             _ => {
                                 // 1010|0000|111
-                                handler.on_opcode_decoded(Opcode::MemdRl)?;
-                                if (inst >> 5) & 1 == 0 {
-                                    //TODO: hint :at
+                                handler.on_dest_decoded(Rs)?;
+                                handler.on_source_decoded(Operand::gprpair((inst >> 8) as u8 & 0b11111)?)?;
+                                if inst & 0b1100 == 0b0000 {
+                                    handler.on_opcode_decoded(Opcode::MemdStoreCond)?;
+                                    handler.on_dest_decoded(Operand::pred(inst as u8 & 0b11))?;
+                                } else if inst & 0b11100 == 0b01000 {
+                                    handler.on_opcode_decoded(Opcode::MemdRl)?;
+                                    if (inst >> 5) & 1 == 0 {
+                                        handler.domain_hint(DomainHint::All)?;
+                                    } else {
+                                        handler.domain_hint(DomainHint::Same)?;
+                                    }
                                 } else {
-                                    //TODO: hint :st
+                                    return Err(DecodeError::InvalidOpcode);
                                 }
                             },
                         }
@@ -2491,6 +2540,7 @@ fn decode_instruction<
                         opcode_check!(opc_lower & 0b11 == 0b00);
 
                         handler.on_opcode_decoded(Opcode::L2Fetch)?;
+                        handler.on_source_decoded(Rs)?;
                         let ttttt = reg_b8(inst);
                         if opc_lower == 0b100 {
                             handler.on_source_decoded(Operand::gprpair(ttttt)?)?;
@@ -2620,14 +2670,14 @@ fn decode_instruction<
                                 Operand::RegMemIndexedBrev { base: xxxxx, mu: u as u8 }
                             })?;
                         } else {
-                            // 1010|1011...|.....|PP|1...
+                            // 1010|1111...|.....|PP|1...
                             // predicated store
                             let vv = inst & 0b11;
                             let negated = (inst >> 2) & 1 == 1;
                             let iiii = ((inst >> 3) & 0b1111) as u8;
                             let ii_high = xxxxx & 0b11;
                             let i6 = ((ii_high << 4) | iiii) as i8;
-                            let dotnew = (inst >> 7) & 1 == 1;
+                            let dotnew = (inst >> 13) & 1 == 1;
                             decode_store_ops(handler, minbits, ttttt, |_shamt| {
                                 Operand::Absolute { addr: i6 }
                             })?;

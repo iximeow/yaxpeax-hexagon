@@ -1,6 +1,7 @@
 use core::fmt;
 
 use crate::{Instruction, InstructionPacket, Opcode, Operand};
+use crate::{BranchHint, DomainHint};
 
 impl fmt::Display for InstructionPacket {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -74,11 +75,29 @@ impl fmt::Display for Instruction {
 
         // stores put the mnemonic on LHS
         static STORES: &[Opcode] = &[
-            Opcode::StoreMemb, Opcode::StoreMemh, Opcode::StoreMemw, Opcode::StoreMemd
+            Opcode::StoreMemb, Opcode::StoreMemh, Opcode::StoreMemw, Opcode::StoreMemd, Opcode::MemwRl, Opcode::MemdRl
         ];
         if STORES.contains(&self.opcode) {
-            write!(f, "{}({}) = {}",
+            write!(f, "{}({}){} = {}",
                 self.opcode, self.dest.expect("TODO: unreachable; store has a destination"),
+                match self.flags.threads {
+                    Some(DomainHint::Same) => { ":st" },
+                    Some(DomainHint::All) => { ":at" },
+                    None => { "" }
+                },
+                self.sources[0]
+            )?;
+            return Ok(());
+        }
+
+        static SC_STORES: &[Opcode] = &[
+            Opcode::MemwStoreCond, Opcode::MemdStoreCond,
+        ];
+        if SC_STORES.contains(&self.opcode) {
+            write!(f, "{}({}, {}) = {}",
+                self.opcode,
+                self.dest.expect("TODO: unreachable; store has a destination"),
+                self.alt_dest.expect("TODO: unreachable; store-conditional has a predicate reg"),
                 self.sources[0]
             )?;
             return Ok(());
@@ -93,8 +112,6 @@ impl fmt::Display for Instruction {
             )?;
             return Ok(());
         }
-
-        use crate::BranchHint;
 
         static CONDITIONAL_JUMPS: &[Opcode] = &[
             Opcode::JumpEq, Opcode::JumpNeq, Opcode::JumpGt, Opcode::JumpLe,
@@ -179,11 +196,17 @@ impl fmt::Display for Instruction {
             Some(BranchHint::Taken) => { f.write_str(":t")? },
             Some(BranchHint::NotTaken) => { f.write_str(":nt")? },
             None => {}
-        };
+        }
+
+        match self.flags.threads {
+            Some(DomainHint::Same) => { f.write_str(":st")? },
+            Some(DomainHint::All) => { f.write_str(":at")? },
+            None => {}
+        }
 
         // DeallocateFrame is shown with `:raw` as a suffix, but after the taken/not-taken hint
         // same for DeallocReturn
-        if self.opcode == Opcode::DeallocFrame || self.opcode == Opcode::DeallocReturn {
+        if self.opcode == Opcode::AllocFrame || self.opcode == Opcode::DeallocFrame || self.opcode == Opcode::DeallocReturn {
             f.write_str(":raw")?;
         }
         Ok(())
@@ -328,23 +351,29 @@ impl fmt::Display for Opcode {
             Opcode::DcInvA => { f.write_str("dcinva") },
             Opcode::DcCleanInvA => { f.write_str("dccleaninva") },
             Opcode::DcZeroA => { f.write_str("dczeroa") },
-            Opcode::L2Fetch => { f.write_str("l2fet_ch") },
-            Opcode::DmSyncHt => { f.write_str("dmsyncht_") },
-            Opcode::SyncHt => { f.write_str("syncht_") },
+            Opcode::L2Fetch => { f.write_str("l2fetch") },
+            Opcode::DmSyncHt => { f.write_str("dmsyncht") },
+            Opcode::SyncHt => { f.write_str("syncht") },
 
             Opcode::Release => { f.write_str("release") },
             Opcode::Barrier => { f.write_str("barrier") },
             Opcode::AllocFrame => { f.write_str("allocframe") },
-            Opcode::MemwRl => { f.write_str("memwrl") },
-            Opcode::MemdRl => { f.write_str("memdrl") },
+            Opcode::MemwRl => { f.write_str("memw_rl") },
+            Opcode::MemdRl => { f.write_str("memd_rl") },
 
             Opcode::DeallocFrame => { f.write_str("deallocframe") },
             Opcode::DeallocReturn => { f.write_str("dealloc_return") },
             Opcode::Dcfetch => { f.write_str("dcfetch") },
 
-            Opcode::MemwLocked => { f.write_str("memw_locked") },
+            // LL/SC ops are distinguished by where they are in an instruction, not by their
+            // textual representation
+            Opcode::MemwLockedLoad => { f.write_str("memw_locked") },
+            Opcode::MemwStoreCond => { f.write_str("memw_locked") },
             Opcode::MemwAq => { f.write_str("memw_aq") },
-            Opcode::MemdLocked => { f.write_str("memd_locked") },
+            // LL/SC ops are distinguished by where they are in an instruction, not by their
+            // textual representation
+            Opcode::MemdLockedLoad => { f.write_str("memd_locked") },
+            Opcode::MemdStoreCond => { f.write_str("memd_locked") },
             Opcode::MemdAq => { f.write_str("memd_aq") },
         }
     }
