@@ -1636,7 +1636,39 @@ fn decode_instruction<
                     // 0b11, so bits are like 0011|11xxxx
                     // these are all stores to Rs+#u6:N, shift is determined by op size.
                     // the first few are stores of immediates, most others operate on registers.
+                    let opc_bits = (inst >> 21) & 0b11111;
+                    let opc_upper = opc_bits >> 3;
+                    let opc_lower = opc_bits & 0b11;
+                    let uuuuuu = (inst >> 7) & 0b111111;
+
+                    match opc_upper {
+                        0b00 |
+                        0b01 => {
+                            let i7 = inst & 0b111_1111;
+                            let i_hi = ((inst >> 13) & 0b1) << 7;
+                            let i = i_hi | i7;
+
+                            (match opc_upper {
+                                0b00 => {
+                                    handler.on_opcode_decoded(Opcode::StoreMemb)?;
+                                }
+                                0b01 => {
+                                    Ok(Opcode::StoreMemh),
+                                }
+                                0b10 => {
+                                    Ok(Opcode::StoreMemd),
+                                }
+                                _ => Err(DecodeError::InvalidOpcode)
+                            }?)?;
+                            handler.on_source_decoded(Operand::imm_i8(i as i8))?;
+                        },
+                        0b10 => {
+
+                        },
+                        _ => {
                     panic!("TODO: other: {}", other);
+                        }
+                    }
                 }
             }
         }

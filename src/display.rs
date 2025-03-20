@@ -244,6 +244,13 @@ impl fmt::Display for Opcode {
             Opcode::StoreMemw => { f.write_str("memw") },
             Opcode::StoreMemd => { f.write_str("memd") },
 
+            Opcode::MembAdd => { f.write_str("memb") },
+            Opcode::MembSub => { f.write_str("memb") },
+            Opcode::MembAnd => { f.write_str("memb") },
+            Opcode::MembOr => { f.write_str("memb") },
+            Opcode::MembClr => { f.write_str("memb") },
+            Opcode::MembSet => { f.write_str("memb") },
+
             Opcode::Membh => { f.write_str("membh") },
             Opcode::MemhFifo => { f.write_str("memh_fifo") },
             Opcode::Memubh => { f.write_str("memubh") },
