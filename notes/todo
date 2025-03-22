@@ -200,89 +200,89 @@ A L I A S     A L I A S     A L I A S    A L I A S     A L I A S   | Rd=zxtb(Rs)
 
 
 
-|0 0 1 1|1 1 0 - - 0 0|s s s s s| P P |l i i i i i i l l|l l l l l| memb(Rs+#u6:0)=#S8                  - ST/slot 0,1
-|0 0 1 1|1 1 0 - - 0 1|s s s s s| P P |l i i i i i i l l|l l l l l| memh(Rs+#u6:1)=#S8                  - ST/slot 0,1
-|0 0 1 1|1 1 0 - - 1 0|s s s s s| P P |l i i i i i i l l|l l l l l| memw(Rs+#u6:2)=#S8                  - ST/slot 0,1
-|0 0 1 1|1 1 1 0 - 0 0|s s s s s| P P |0 i i i i i i 0 0|t t t t t| memb(Rs+#u6:0)+=Rt            - MEMOP/slot 0
-|0 0 1 1|1 1 1 0 - 0 0|s s s s s| P P |0 i i i i i i 0 1|t t t t t| memb(Rs+#u6:0)-=Rt            - MEMOP/slot 0
-|0 0 1 1|1 1 1 0 - 0 0|s s s s s| P P |0 i i i i i i 1 0|t t t t t| memb(Rs+#u6:0)&=Rt            - MEMOP/slot 0
-|0 0 1 1|1 1 1 0 - 0 0|s s s s s| P P |0 i i i i i i 1 1|t t t t t| memb(Rs+#u6:0)|=Rt            - MEMOP/slot 0
-|0 0 1 1|1 1 1 0 - 0 1|s s s s s| P P |0 i i i i i i 0 0|t t t t t| memh(Rs+#u6:0)+=Rt            - MEMOP/slot 0
-|0 0 1 1|1 1 1 0 - 0 1|s s s s s| P P |0 i i i i i i 0 1|t t t t t| memh(Rs+#u6:0)-=Rt            - MEMOP/slot 0
-|0 0 1 1|1 1 1 0 - 0 1|s s s s s| P P |0 i i i i i i 1 0|t t t t t| memh(Rs+#u6:0)&=Rt            - MEMOP/slot 0
-|0 0 1 1|1 1 1 0 - 0 1|s s s s s| P P |0 i i i i i i 1 1|t t t t t| memh(Rs+#u6:0)|=Rt            - MEMOP/slot 0
-|0 0 1 1|1 1 1 0 - 1 0|s s s s s| P P |0 i i i i i i 0 0|t t t t t| memw(Rs+#u6:0)+=Rt            - MEMOP/slot 0
-|0 0 1 1|1 1 1 0 - 1 0|s s s s s| P P |0 i i i i i i 0 1|t t t t t| memw(Rs+#u6:0)-=Rt            - MEMOP/slot 0
-|0 0 1 1|1 1 1 0 - 1 0|s s s s s| P P |0 i i i i i i 1 0|t t t t t| memw(Rs+#u6:0)&=Rt            - MEMOP/slot 0
-|0 0 1 1|1 1 1 0 - 1 0|s s s s s| P P |0 i i i i i i 1 1|t t t t t| memw(Rs+#u6:0)|=Rt            - MEMOP/slot 0
-|0 0 1 1|1 1 1 1 - 0 0|s s s s s| P P |0 i i i i i i 0 0|l l l l l| memb(Rs+#u6:0)+=Rt            - MEMOP/slot 0
-|0 0 1 1|1 1 1 1 - 0 0|s s s s s| P P |0 i i i i i i 0 1|l l l l l| memb(Rs+#u6:0)-=Rt            - MEMOP/slot 0
-|0 0 1 1|1 1 1 1 - 0 0|s s s s s| P P |0 i i i i i i 1 0|l l l l l| memb(Rs+#u6:0)=clrbit(#U5)     - MEMOP/slot 0
-|0 0 1 1|1 1 1 1 - 0 0|s s s s s| P P |0 i i i i i i 1 1|l l l l l| memb(Rs+#u6:0)=setbit(#U5)     - MEMOP/slot 0
-|0 0 1 1|1 1 1 1 - 0 1|s s s s s| P P |0 i i i i i i 0 0|l l l l l| memh(Rs+#u6:0)+=Rt            - MEMOP/slot 0
-|0 0 1 1|1 1 1 1 - 0 1|s s s s s| P P |0 i i i i i i 0 1|l l l l l| memh(Rs+#u6:0)-=Rt            - MEMOP/slot 0
-|0 0 1 1|1 1 1 1 - 0 1|s s s s s| P P |0 i i i i i i 1 0|l l l l l| memh(Rs+#u6:0)=clrbit(#U5)     - MEMOP/slot 0
-|0 0 1 1|1 1 1 1 - 0 1|s s s s s| P P |0 i i i i i i 1 1|l l l l l| memh(Rs+#u6:0)=setbit(#U5)     - MEMOP/slot 0
-|0 0 1 1|1 1 1 1 - 1 0|s s s s s| P P |0 i i i i i i 0 0|l l l l l| memw(Rs+#u6:0)+=Rt            - MEMOP/slot 0
-|0 0 1 1|1 1 1 1 - 1 0|s s s s s| P P |0 i i i i i i 0 1|l l l l l| memw(Rs+#u6:0)-=Rt            - MEMOP/slot 0
-|0 0 1 1|1 1 1 1 - 1 0|s s s s s| P P |0 i i i i i i 1 0|l l l l l| memw(Rs+#u6:0)=clrbit(#U5)     - MEMOP/slot 0
-|0 0 1 1|1 1 1 1 - 1 0|s s s s s| P P |0 i i i i i i 1 1|l l l l l| memw(Rs+#u6:0)=setbit(#U5)     - MEMOP/slot 0
-test |0 1 0 0|0 0 0 0 0 0 0|s s s s s| P P |i t t t t t i i i|i i 0 v v| if (Pv) memb(Rs+#u6:0)=Rt     - ST/slot 0,1
-|0 1 0 0|0 0 0 0 0 1 0|s s s s s| P P |i t t t t t i i i|i i 0 v v| if (Pv) memh(Rs+#u6:1)=Rt     - ST/slot 0,1
-|0 1 0 0|0 0 0 0 0 1 1|s s s s s| P P |i t t t t t i i i|i i 0 v v| if (Pv) memh(Rs+#u6:1)=Rt.H     - ST/slot 0,1
-|0 1 0 0|0 0 0 0 1 0 0|s s s s s| P P |i t t t t t i i i|i i 0 v v| if (Pv) memw(Rs+#u6:2)=Rt     - ST/slot 0,1
-|0 1 0 0|0 0 0 0 1 0 1|s s s s s| P P |i 0 0 t t t i i i|i i 0 v v| if (Pv) memb(Rs+#u6:0)=Nt.new     - NV/slot 0
-|0 1 0 0|0 0 0 0 1 0 1|s s s s s| P P |i 0 1 t t t i i i|i i 0 v v| if (Pv) memh(Rs+#u6:1)=Nt.new     - NV/slot 0
-|0 1 0 0|0 0 0 0 1 0 1|s s s s s| P P |i 1 0 t t t i i i|i i 0 v v| if (Pv) memw(Rs+#u6:2)=Nt.new     - NV/slot 0
-|0 1 0 0|0 0 0 0 1 1 0|s s s s s| P P |i t t t t t i i i|i i 0 v v| if (Pv) memd(Rs+#u6:2)=Rtt     - ST/slot 0,1
-|0 1 0 0|0 0 1 0 0 0 0|s s s s s| P P |i t t t t t i i i|i i 0 v v| if (!Pv) memb(Rs+#u6:0)=Rt     - ST/slot 0,1
-|0 1 0 0|0 0 1 0 0 1 0|s s s s s| P P |i t t t t t i i i|i i 0 v v| if (!Pv) memh(Rs+#u6:1)=Rt     - ST/slot 0,1
-|0 1 0 0|0 0 1 0 0 1 1|s s s s s| P P |i t t t t t i i i|i i 0 v v| if (!Pv) memh(Rs+#u6:1)=Rt.H     - ST/slot 0,1
-|0 1 0 0|0 0 1 0 1 0 0|s s s s s| P P |i t t t t t i i i|i i 0 v v| if (!Pv) memw(Rs+#u6:2)=Rt     - ST/slot 0,1
-|0 1 0 0|0 0 1 0 1 0 1|s s s s s| P P |i 0 0 t t t i i i|i i 0 v v| if (!Pv) memb(Rs+#u6:0)=Nt.new     - NV/slot 0
-|0 1 0 0|0 0 1 0 1 0 1|s s s s s| P P |i 0 1 t t t i i i|i i 0 v v| if (!Pv) memh(Rs+#u6:1)=Nt.new     - NV/slot 0
-|0 1 0 0|0 0 1 0 1 0 1|s s s s s| P P |i 1 0 t t t i i i|i i 0 v v| if (!Pv) memw(Rs+#u6:2)=Nt.new     - NV/slot 0
-|0 1 0 0|0 0 1 0 1 1 0|s s s s s| P P |i t t t t t i i i|i i 0 v v| if (!Pv) memd(Rs+#u6:2)=Rtt     - ST/slot 0,1
-|0 1 0 0|0 1 0 0 0 0 0|s s s s s| P P |i t t t t t i i i|i i 0 v v| if (Pv.new) memb(Rs+#u6:0)=Rt     - ST/slot 0,1
-|0 1 0 0|0 1 0 0 0 1 0|s s s s s| P P |i t t t t t i i i|i i 0 v v| if (Pv.new) memh(Rs+#u6:1)=Rt     - ST/slot 0,1
-|0 1 0 0|0 1 0 0 0 1 1|s s s s s| P P |i t t t t t i i i|i i 0 v v| if (Pv.new) memh(Rs+#u6:1)=Rt.H     - ST/slot 0,1
-|0 1 0 0|0 1 0 0 1 0 0|s s s s s| P P |i t t t t t i i i|i i 0 v v| if (Pv.new) memw(Rs+#u6:2)=Rt     - ST/slot 0,1
-|0 1 0 0|0 1 0 0 1 0 1|s s s s s| P P |i 0 0 t t t i i i|i i 0 v v| if (Pv.new) memb(Rs+#u6:0)=Nt.new     - NV/slot 0
-|0 1 0 0|0 1 0 0 1 0 1|s s s s s| P P |i 0 1 t t t i i i|i i 0 v v| if (Pv.new) memh(Rs+#u6:1)=Nt.new     - NV/slot 0
-|0 1 0 0|0 1 0 0 1 0 1|s s s s s| P P |i 1 0 t t t i i i|i i 0 v v| if (Pv.new) memw(Rs+#u6:2)=Nt.new     - NV/slot 0
-|0 1 0 0|0 1 0 0 1 1 0|s s s s s| P P |i t t t t t i i i|i i 0 v v| if (Pv.new) memd(Rs+#u6:2)=Rtt     - ST/slot 0,1
-|0 1 0 0|0 1 1 0 0 0 0|s s s s s| P P |i t t t t t i i i|i i 0 v v| if (!Pv.new) memb(Rs+#u6:0)=Rt     - ST/slot 0,1
-|0 1 0 0|0 1 1 0 0 1 0|s s s s s| P P |i t t t t t i i i|i i 0 v v| if (!Pv.new) memh(Rs+#u6:1)=Rt     - ST/slot 0,1
-|0 1 0 0|0 1 1 0 0 1 1|s s s s s| P P |i t t t t t i i i|i i 0 v v| if (!Pv.new) memh(Rs+#u6:1)=Rt.H     - ST/slot 0,1
-|0 1 0 0|0 1 1 0 1 0 0|s s s s s| P P |i t t t t t i i i|i i 0 v v| if (!Pv.new) memw(Rs+#u6:2)=Rt     - ST/slot 0,1
-|0 1 0 0|0 1 1 0 1 0 1|s s s s s| P P |i 0 0 t t t i i i|i i 0 v v| if (!Pv.new) memb(Rs+#u6:0)=Nt.new     - NV/slot 0
-|0 1 0 0|0 1 1 0 1 0 1|s s s s s| P P |i 0 1 t t t i i i|i i 0 v v| if (!Pv.new) memh(Rs+#u6:1)=Nt.new     - NV/slot 0
-|0 1 0 0|0 1 1 0 1 0 1|s s s s s| P P |i 1 0 t t t i i i|i i 0 v v| if (!Pv.new) memw(Rs+#u6:2)=Nt.new     - NV/slot 0
-|0 1 0 0|0 1 1 0 1 1 0|s s s s s| P P |i t t t t t i i i|i i 0 v v| if (!Pv.new) memd(Rs+#u6:2)=Rtt     - ST/slot 0,1
-|0 1 0 0|0 1 1 1 0 0 0|s s s s s| P P |0 t t i i i i i i|d d d d d| if (Pt.new) Rd=memb(Rs+#u6:3)      - LD/slot 0,1
-|0 1 0 0|0 1 1 1 0 0 1|s s s s s| P P |0 t t i i i i i i|d d d d d| if (Pt.new) Rd=memub(Rs+#u6:3)      - LD/slot 0,1
-|0 1 0 0|0 1 1 1 0 1 0|s s s s s| P P |0 t t i i i i i i|d d d d d| if (Pt.new) Rd=memh(Rs+#u6:3)      - LD/slot 0,1
-|0 1 0 0|0 1 1 1 0 1 1|s s s s s| P P |0 t t i i i i i i|d d d d d| if (Pt.new) Rd=memuh(Rs+#u6:3)      - LD/slot 0,1
-|0 1 0 0|0 1 1 1 1 0 0|s s s s s| P P |0 t t i i i i i i|d d d d d| if (Pt.new) Rd=memw(Rs+#u6:3)      - LD/slot 0,1
-|0 1 0 0|0 1 1 1 1 1 0|s s s s s| P P |0 t t i i i i i i|d d d d d| if (Pt.new) Rdd=memd(Rs+#u6:3)      - LD/slot 0,1
-|0 1 0 0|0 0 0 1 0 0 0|s s s s s| P P |0 t t i i i i i i|d d d d d| if (!Pt) Rd=memb(Rs+#u6:3)      - LD/slot 0,1
-|0 1 0 0|0 0 0 1 0 0 1|s s s s s| P P |0 t t i i i i i i|d d d d d| if (!Pt) Rd=memub(Rs+#u6:3)      - LD/slot 0,1
-|0 1 0 0|0 0 0 1 0 1 0|s s s s s| P P |0 t t i i i i i i|d d d d d| if (!Pt) Rd=memh(Rs+#u6:3)      - LD/slot 0,1
-|0 1 0 0|0 0 0 1 0 1 1|s s s s s| P P |0 t t i i i i i i|d d d d d| if (!Pt) Rd=memuh(Rs+#u6:3)      - LD/slot 0,1
-|0 1 0 0|0 0 0 1 1 0 0|s s s s s| P P |0 t t i i i i i i|d d d d d| if (!Pt) Rd=memw(Rs+#u6:3)      - LD/slot 0,1
-|0 1 0 0|0 0 0 1 1 1 0|s s s s s| P P |0 t t i i i i i i|d d d d d| if (!Pt) Rdd=memd(Rs+#u6:3)      - LD/slot 0,1
-|0 1 0 0|0 0 1 1 0 0 0|s s s s s| P P |0 t t i i i i i i|d d d d d| if (Pt) Rd=memb(Rs+#u6:3)      - LD/slot 0,1
-|0 1 0 0|0 0 1 1 0 0 1|s s s s s| P P |0 t t i i i i i i|d d d d d| if (Pt) Rd=memub(Rs+#u6:3)      - LD/slot 0,1
-|0 1 0 0|0 0 1 1 0 1 0|s s s s s| P P |0 t t i i i i i i|d d d d d| if (Pt) Rd=memh(Rs+#u6:3)      - LD/slot 0,1
-|0 1 0 0|0 0 1 1 0 1 1|s s s s s| P P |0 t t i i i i i i|d d d d d| if (Pt) Rd=memuh(Rs+#u6:3)      - LD/slot 0,1
-|0 1 0 0|0 0 1 1 1 0 0|s s s s s| P P |0 t t i i i i i i|d d d d d| if (Pt) Rd=memw(Rs+#u6:3)      - LD/slot 0,1
-|0 1 0 0|0 0 1 1 1 1 0|s s s s s| P P |0 t t i i i i i i|d d d d d| if (Pt) Rdd=memd(Rs+#u6:3)      - LD/slot 0,1
-|0 1 0 0|0 1 0 1 0 0 0|s s s s s| P P |0 t t i i i i i i|d d d d d| if (!Pt.new) Rd=memb(Rs+#u6:3)      - LD/slot 0,1
-|0 1 0 0|0 1 0 1 0 0 1|s s s s s| P P |0 t t i i i i i i|d d d d d| if (!Pt.new) Rd=memub(Rs+#u6:3)      - LD/slot 0,1
-|0 1 0 0|0 1 0 1 0 1 0|s s s s s| P P |0 t t i i i i i i|d d d d d| if (!Pt.new) Rd=memh(Rs+#u6:3)      - LD/slot 0,1
-|0 1 0 0|0 1 0 1 0 1 1|s s s s s| P P |0 t t i i i i i i|d d d d d| if (!Pt.new) Rd=memuh(Rs+#u6:3)      - LD/slot 0,1
-|0 1 0 0|0 1 0 1 1 0 0|s s s s s| P P |0 t t i i i i i i|d d d d d| if (!Pt.new) Rd=memw(Rs+#u6:3)      - LD/slot 0,1
-|0 1 0 0|0 1 0 1 1 1 0|s s s s s| P P |0 t t i i i i i i|d d d d d| if (!Pt.new) Rdd=memd(Rs+#u6:3)      - LD/slot 0,1
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 test |0 1 0 0|1 i i 0 0 0 0|i i i i i| P P |i t t t t t i i i|i i i i i| memb(gp+#u16:0)=Rt                  - ST/slot 0,1
 test |0 1 0 0|1 i i 0 0 1 0|i i i i i| P P |i t t t t t i i i|i i i i i| memh(gp+#u16:1)=Rt                  - ST/slot 0,1
 test |0 1 0 0|1 i i 0 0 1 1|i i i i i| P P |i t t t t t i i i|i i i i i| memh(gp+#u16:1)=Rt.H                  - ST/slot 0,1

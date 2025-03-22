@@ -1,7 +1,7 @@
 use core::fmt;
 
 use crate::{Instruction, InstructionPacket, Opcode, Operand};
-use crate::{BranchHint, DomainHint};
+use crate::{AssignMode, BranchHint, DomainHint};
 
 impl fmt::Display for InstructionPacket {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -77,19 +77,34 @@ impl fmt::Display for Instruction {
         static STORES: &[Opcode] = &[
             Opcode::StoreMemb, Opcode::StoreMemh, Opcode::StoreMemw, Opcode::StoreMemd, Opcode::MemwRl, Opcode::MemdRl
         ];
+        let mut needs_parens = self.sources_count > 0;
         if STORES.contains(&self.opcode) {
-            write!(f, "{}({}){} = {}",
+            let (assign_op, needs_parens) = match self.flags.assign_mode {
+                None => ("=", false),
+                Some(AssignMode::AddAssign) => ("+=", false),
+                Some(AssignMode::SubAssign) => ("-=", false),
+                Some(AssignMode::AndAssign) => ("&=", false),
+                Some(AssignMode::OrAssign) => ("|=", false),
+                Some(AssignMode::XorAssign) => ("^=", false),
+                Some(AssignMode::ClrBit) => ("= clrbit", true),
+                Some(AssignMode::SetBit) => ("= setbit", true),
+            };
+            write!(f, "{}({}){} {}{}{}{}",
                 self.opcode, self.dest.expect("TODO: unreachable; store has a destination"),
                 match self.flags.threads {
                     Some(DomainHint::Same) => { ":st" },
                     Some(DomainHint::All) => { ":at" },
                     None => { "" }
                 },
-                self.sources[0]
+                assign_op,
+                if needs_parens { "(" } else { " " },
+                self.sources[0],
+                if needs_parens { ")" } else { "" },
             )?;
             return Ok(());
         }
 
+        // TODO: do store conditionals have assign_merge?
         static SC_STORES: &[Opcode] = &[
             Opcode::MemwStoreCond, Opcode::MemdStoreCond,
         ];
@@ -147,8 +162,20 @@ impl fmt::Display for Instruction {
                 self.dest.unwrap())?;
             return Ok(());
         }
+
         if let Some(o) = self.dest.as_ref() {
-            write!(f, "{} = ", o)?;
+            let (assign_op, p) = match self.flags.assign_mode {
+                None => ("=", false),
+                Some(AssignMode::AddAssign) => ("+=", false),
+                Some(AssignMode::SubAssign) => ("-=", false),
+                Some(AssignMode::AndAssign) => ("&=", false),
+                Some(AssignMode::OrAssign) => ("|=", false),
+                Some(AssignMode::XorAssign) => ("^=", false),
+                Some(AssignMode::ClrBit) => ("=clrbit", true),
+                Some(AssignMode::SetBit) => ("=setbit", true),
+            };
+            needs_parens |= p;
+            write!(f, "{} {} ", o, assign_op)?;
         }
 
         // TransferRegister and TransferImmediate display the source operand atypically.
@@ -161,27 +188,29 @@ impl fmt::Display for Instruction {
             f.write_str("!")?;
         }
         write!(f, "{}", self.opcode)?;
+        if needs_parens { f.write_str("(")?; }
 
         if self.opcode == Opcode::And_nRR || self.opcode == Opcode::Or_nRR {
             // while operand order does not matter here at all, the hexagon (v73) manual reverses
             // Rs and Rt for these specific instructions.
-            write!(f, "({}, ~{})", self.sources[1], self.sources[0])?;
+            write!(f, "{}, ~{}", self.sources[1], self.sources[0])?;
+            if needs_parens { f.write_str(")")?; }
             return Ok(());
         }
 
         if self.opcode == Opcode::And_RnR || self.opcode == Opcode::Or_RnR {
-            write!(f, "({}, ~{})", self.sources[0], self.sources[1])?;
+            write!(f, "{}, ~{}", self.sources[0], self.sources[1])?;
+            if needs_parens { f.write_str(")")?; }
             return Ok(());
         }
 
         if self.sources_count > 0 {
-            f.write_str("(")?;
             write!(f, "{}", self.sources[0])?;
             for i in 1..self.sources_count {
                 write!(f, ", {}", self.sources[i as usize])?;
             }
-            f.write_str(")")?;
         }
+        if needs_parens { f.write_str(")")?; }
 
         if let Some(mode) = self.flags.rounded {
             write!(f, "{}", mode.as_label())?;
@@ -243,13 +272,6 @@ impl fmt::Display for Opcode {
             Opcode::StoreMemh => { f.write_str("memh") },
             Opcode::StoreMemw => { f.write_str("memw") },
             Opcode::StoreMemd => { f.write_str("memd") },
-
-            Opcode::MembAdd => { f.write_str("memb") },
-            Opcode::MembSub => { f.write_str("memb") },
-            Opcode::MembAnd => { f.write_str("memb") },
-            Opcode::MembOr => { f.write_str("memb") },
-            Opcode::MembClr => { f.write_str("memb") },
-            Opcode::MembSet => { f.write_str("memb") },
 
             Opcode::Membh => { f.write_str("membh") },
             Opcode::MemhFifo => { f.write_str("memh_fifo") },

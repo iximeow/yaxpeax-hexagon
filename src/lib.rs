@@ -292,6 +292,17 @@ impl RoundingMode {
 }
 
 #[derive(Debug, Copy, Clone)]
+enum AssignMode {
+    AddAssign,
+    SubAssign,
+    AndAssign,
+    OrAssign,
+    XorAssign,
+    ClrBit,
+    SetBit,
+}
+
+#[derive(Debug, Copy, Clone)]
 struct InstFlags {
     predicate: Option<Predicate>,
     branch_hint: Option<BranchHint>,
@@ -300,6 +311,7 @@ struct InstFlags {
     chop: bool,
     rounded: Option<RoundingMode>,
     threads: Option<DomainHint>,
+    assign_mode: Option<AssignMode>,
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -318,6 +330,7 @@ impl Default for InstFlags {
             chop: false,
             rounded: None,
             threads: None,
+            assign_mode: None,
         }
     }
 }
@@ -994,6 +1007,7 @@ trait DecodeHandler<T: Reader<<Hexagon as Arch>::Address, <Hexagon as Arch>::Wor
     fn on_opcode_decoded(&mut self, _opcode: Opcode) -> Result<(), <Hexagon as Arch>::DecodeError> { Ok(()) }
     fn on_source_decoded(&mut self, _operand: Operand) -> Result<(), <Hexagon as Arch>::DecodeError> { Ok(()) }
     fn on_dest_decoded(&mut self, _operand: Operand) -> Result<(), <Hexagon as Arch>::DecodeError> { Ok(()) }
+    fn assign_mode(&mut self, _assign_mode: AssignMode) -> Result<(), <Hexagon as Arch>::DecodeError> { Ok(()) }
     fn inst_predicated(&mut self, num: u8, negated: bool, pred_new: bool) -> Result<(), <Hexagon as Arch>::DecodeError> { Ok(()) }
     fn negate_result(&mut self) -> Result<(), <Hexagon as Arch>::DecodeError> { Ok(()) }
     fn saturate(&mut self) -> Result<(), <Hexagon as Arch>::DecodeError> { Ok(()) }
@@ -1031,6 +1045,11 @@ impl<T: yaxpeax_arch::Reader<<Hexagon as Arch>::Address, <Hexagon as Arch>::Word
         } else {
             inst.dest = Some(operand);
         }
+        Ok(())
+    }
+    fn assign_mode(&mut self, assign_mode: AssignMode) -> Result<(), <Hexagon as Arch>::DecodeError> {
+        let mut inst = &mut self.instructions[self.instruction_count as usize];
+        inst.flags.assign_mode = Some(assign_mode);
         Ok(())
     }
     fn inst_predicated(&mut self, num: u8, negated: bool, pred_new: bool) -> Result<(), <Hexagon as Arch>::DecodeError> {
@@ -1159,6 +1178,52 @@ fn decode_store_ops<
             _ => {
                 return Err(DecodeError::InvalidOpcode);
             }
+        }
+    }
+    Ok(())
+}
+
+// very much like `decode_store_ops`, except for some instructions the strategy is for loads
+// instead.
+fn decode_load_ops<
+    T: Reader<<Hexagon as Arch>::Address, <Hexagon as Arch>::Word>,
+    H: DecodeHandler<T>,
+>(handler: &mut H, opbits: u8, dstreg: u8, src_op: impl Fn(u8) -> Operand) -> Result<(), DecodeError> {
+    // for loads, there's none of the carveout for `R<n>.new` or high register halves.
+    // just mem{b,ub,h,uh,w,d}
+    match opbits {
+        0b000 => {
+            handler.on_opcode_decoded(Opcode::LoadMemb)?;
+            handler.on_dest_decoded(Operand::gpr(dstreg))?;
+            handler.on_source_decoded(src_op(0))?;
+        }
+        0b001 => {
+            handler.on_opcode_decoded(Opcode::LoadMemub)?;
+            handler.on_dest_decoded(Operand::gpr(dstreg))?;
+            handler.on_source_decoded(src_op(0))?;
+        }
+        0b010 => {
+            handler.on_opcode_decoded(Opcode::LoadMemh)?;
+            handler.on_dest_decoded(Operand::gpr(dstreg))?;
+            handler.on_source_decoded(src_op(1))?;
+        }
+        0b011 => {
+            handler.on_opcode_decoded(Opcode::LoadMemuh)?;
+            handler.on_dest_decoded(Operand::gpr(dstreg))?;
+            handler.on_source_decoded(src_op(1))?;
+        }
+        0b100 => {
+            handler.on_opcode_decoded(Opcode::LoadMemw)?;
+            handler.on_dest_decoded(Operand::gpr(dstreg))?;
+            handler.on_source_decoded(src_op(2))?;
+        }
+        0b110 => {
+            handler.on_opcode_decoded(Opcode::LoadMemd)?;
+            handler.on_dest_decoded(Operand::gprpair(dstreg)?)?;
+            handler.on_source_decoded(src_op(3))?;
+        }
+        _ => {
+            return Err(DecodeError::InvalidOpcode);
         }
     }
     Ok(())
@@ -1640,6 +1705,7 @@ fn decode_instruction<
                     let opc_upper = opc_bits >> 3;
                     let opc_lower = opc_bits & 0b11;
                     let uuuuuu = (inst >> 7) & 0b111111;
+                    let sssss = (inst >> 16) & 0b11111;
 
                     match opc_upper {
                         0b00 |
@@ -1648,25 +1714,81 @@ fn decode_instruction<
                             let i_hi = ((inst >> 13) & 0b1) << 7;
                             let i = i_hi | i7;
 
-                            (match opc_upper {
+                            handler.on_opcode_decoded(match opc_lower {
                                 0b00 => {
-                                    handler.on_opcode_decoded(Opcode::StoreMemb)?;
+                                    Opcode::StoreMemb
                                 }
                                 0b01 => {
-                                    Ok(Opcode::StoreMemh),
+                                    Opcode::StoreMemh
                                 }
                                 0b10 => {
-                                    Ok(Opcode::StoreMemd),
+                                    Opcode::StoreMemw
                                 }
-                                _ => Err(DecodeError::InvalidOpcode)
-                            }?)?;
+                                _ => { return Err(DecodeError::InvalidOpcode); }
+                            })?;
                             handler.on_source_decoded(Operand::imm_i8(i as i8))?;
+                            handler.on_dest_decoded(Operand::RegOffset {
+                                base: sssss as u8,
+                                offset: (uuuuuu as u32) << opc_lower,
+                            })?;
                         },
                         0b10 => {
+                            opcode_check!(inst & 0b0010_0000_0000_0000 == 0);
+                            let ttttt = inst & 0b11111;
+                            let assign_mode = (inst >> 5) & 0b11;
 
+                            handler.on_opcode_decoded(match opc_lower {
+                                0b00 => {
+                                    Opcode::StoreMemb
+                                }
+                                0b01 => {
+                                    Opcode::StoreMemh
+                                }
+                                0b10 => {
+                                    Opcode::StoreMemw
+                                }
+                                _ => { return Err(DecodeError::InvalidOpcode); }
+                            })?;
+                            handler.assign_mode(match assign_mode {
+                                0b00 => AssignMode::AddAssign,
+                                0b01 => AssignMode::SubAssign,
+                                0b10 => AssignMode::AndAssign,
+                                _ => AssignMode::OrAssign,
+                            })?;
+                            handler.on_source_decoded(Operand::gpr(ttttt as u8))?;
+                            handler.on_dest_decoded(Operand::RegOffset {
+                                base: sssss as u8,
+                                offset: (uuuuuu as u32) << opc_lower,
+                            })?;
                         },
                         _ => {
-                    panic!("TODO: other: {}", other);
+                            opcode_check!(inst & 0b0010_0000_0000_0000 == 0);
+                            let ttttt = inst & 0b11111;
+                            let assign_mode = (inst >> 5) & 0b11;
+
+                            handler.on_opcode_decoded(match opc_lower {
+                                0b00 => {
+                                    Opcode::StoreMemb
+                                }
+                                0b01 => {
+                                    Opcode::StoreMemh
+                                }
+                                0b10 => {
+                                    Opcode::StoreMemw
+                                }
+                                _ => { return Err(DecodeError::InvalidOpcode); }
+                            })?;
+                            handler.assign_mode(match assign_mode {
+                                0b00 => AssignMode::AddAssign,
+                                0b01 => AssignMode::SubAssign,
+                                0b10 => AssignMode::ClrBit,
+                                _ => AssignMode::SetBit,
+                            })?;
+                            handler.on_source_decoded(Operand::imm_u8(ttttt as u8))?;
+                            handler.on_dest_decoded(Operand::RegOffset {
+                                base: sssss as u8,
+                                offset: (uuuuuu as u32) << opc_lower,
+                            })?;
                         }
                     }
                 }
@@ -1676,34 +1798,67 @@ fn decode_instruction<
             // 0 1 0 0|...
             // loads and stores with large (6b+) offsets
             let predicated = (inst >> 27) & 1 == 0;
-            let load = (inst >> 24) & 1 == 0;
+            let store = (inst >> 24) & 1 == 0;
 
             if predicated {
-                let dotnew = (inst >> 23) & 0b1 == 1;
-                let negated = (inst >> 22) & 0b1 == 0;
-                let pred_reg = (inst >> 11) & 0b11;
-                handler.inst_predicated(pred_reg as u8, negated, dotnew)?;
+                let dotnew = (inst >> 26) & 0b1 == 1;
+                let negated = (inst >> 25) & 0b1 == 1;
 
-                if load {
+                let opbits = (inst >> 21) & 0b111;
+                let sssss = reg_b16(inst);
+
+                if store {
+                    let pred_reg = inst & 0b11;
+                    handler.inst_predicated(pred_reg as u8, negated, dotnew)?;
+
+                    let srcreg = reg_b8(inst);
+                    let i5 = (inst >> 3) & 0b11111;
+                    let i = ((inst >> 13) & 1) << 5;
+                    let iiiiii = i | i5;
+
+                    decode_store_ops(handler, opbits as u8, srcreg as u8, |shamt| {
+                        Operand::RegOffset {
+                            base: sssss as u8,
+                            offset: iiiiii << shamt
+                        }
+                    })?;
                 } else {
+                    let pred_reg = (inst >> 11) & 0b11;
+                    handler.inst_predicated(pred_reg as u8, negated, dotnew)?;
+
+                    let dstreg = reg_b0(inst);
+                    let iiiiii = (inst >> 5) & 0b111111;
+
+                    decode_load_ops(handler, opbits as u8, dstreg as u8, |shamt| {
+                        Operand::RegOffset {
+                            base: sssss as u8,
+                            offset: iiiiii << shamt
+                        }
+                    })?;
                 }
             } else {
                 let i14 = (inst >> 25) & 0b11;
                 let i9 = (inst >> 16) & 0b11111;
                 let i_8 = (inst >> 13) & 0b1;
 
-                if load {
-                    let i_lo = (inst >> 5) & 0b11111111;
-                    let i = (i14 << 14) | (i9 << 9) | (i_8 << 8) | i_lo;
-                    let ddddd = reg_b0(inst);
-                    let opc = (inst >> 21) & 0b111;
-                } else {
-                    let i_lo = inst & 0b11111111;
+                let opbits = ((inst >> 21) & 0b111) as u8;
+
+                if store {
+                    let i_lo = inst & 0b1111_1111;
                     let i = (i14 << 14) | (i9 << 9) | (i_8 << 8) | i_lo;
                     let ttttt = reg_b8(inst);
-                    let opc = ((inst >> 21) & 0b111) as u8;
 
-                    decode_store_ops(handler, opc, ttttt, |shamt| {
+                    decode_store_ops(handler, opbits, ttttt, |shamt| {
+                        Operand::GpOffset {
+                            offset: i << shamt
+                        }
+                    })?;
+                } else {
+                    let i_lo = (inst >> 5) & 0b1111_1111;
+                    let i = (i14 << 14) | (i9 << 9) | (i_8 << 8) | i_lo;
+                    let ddddd = reg_b0(inst);
+
+                    decode_load_ops(handler, opbits, ddddd, |shamt| {
                         Operand::GpOffset { offset: i << shamt }
                     })?;
                 }
