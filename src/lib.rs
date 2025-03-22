@@ -817,6 +817,8 @@ pub enum Operand {
 
     RegOffset { base: u8, offset: u32 },
 
+    RegOffsetInc { base: u8, offset: u32 },
+
     RegShiftedReg { base: u8, index: u8, shift: u8 },
 
     RegShiftOffset { base: u8, shift: u8, offset: i16 },
@@ -2556,15 +2558,19 @@ fn decode_instruction<
                 let ddddd = reg_b0(inst);
                 let xxxxx = reg_b16(inst);
 
+                use Opcode::*;
+                static MEM_FIFO_OPS: [Option<(Opcode, bool, u8)>; 8] = [
+                    None,      Some((Membh, false, 0x01)), Some((MemhFifo, true, 0x01)), Some((Memubh, false, 0x01)),
+                    Some((MembFifo, true, 0x00)), Some((Memubh, true, 0x02)), None, Some((Membh, true, 0x02)),
+                ];
+                static MEM_OPCODES: [Option<(Opcode, bool, u8)>; 8] = [
+                    Some((Memb, false, 0x00)), Some((Memub, false, 0x00)), Some((Memh, false, 0x01)), Some((Memuh, false, 0x01)),
+                    Some((Memw, false, 0x02)), None, Some((Memd, true, 0x03)), None,
+                ];
+
                 match opc_high {
                     0b000 => {
-                        use Opcode::*;
-                        static OPCODES: [Option<(Opcode, bool, u8)>; 8] = [
-                            None,      Some((Membh, false, 0x01)), Some((MemhFifo, true, 0x01)), Some((Memubh, false, 0x01)),
-                            Some((MembFifo, true, 0x00)), Some((Memubh, true, 0x02)), None, Some((Membh, true, 0x02)),
-                        ];
-
-                        let (op, wide, samt) = decode_opcode!(OPCODES[op as usize]);
+                        let (op, wide, samt) = decode_opcode!(MEM_FIFO_OPS[op as usize]);
                         let src_offset = (inst >> 9) & 1 == 0;
                         let iiii = (inst >> 5) & 0b1111;
                         let mu = ((inst >> 13) & 1) as u8;
@@ -2585,12 +2591,6 @@ fn decode_instruction<
                         handler.on_opcode_decoded(op)?;
                     }
                     0b001 => {
-                        use Opcode::*;
-                        static OPCODES: [Option<(Opcode, bool, u8)>; 8] = [
-                            Some((Memb, false, 0x00)), Some((Memub, true, 0x00)), Some((Memh, false, 0x01)), Some((Memuh, true, 0x01)),
-                            Some((Memw, false, 0x02)), None, Some((Memd, true, 0x03)), None,
-                        ];
-
                         if op == 0b111 {
                             let sssss = reg_b8(inst);
                             let ttttt = reg_b16(inst);
@@ -2613,7 +2613,7 @@ fn decode_instruction<
                             return Ok(());
                         }
 
-                        let (op, wide, samt) = decode_opcode!(OPCODES[op as usize]);
+                        let (op, wide, samt) = decode_opcode!(MEM_OPCODES[op as usize]);
                         let src_offset = (inst >> 9) & 1 == 0;
                         let iiii = (inst >> 5) & 0b1111;
                         let mu = ((inst >> 13) & 1) as u8;
@@ -2634,8 +2634,46 @@ fn decode_instruction<
                         handler.on_opcode_decoded(op)?;
                     }
                     0b010 => {
+                        opcode_check!(inst & 0b0010_0000_0000_0000 == 0);
+
+                        let (op, wide, samt) = decode_opcode!(MEM_FIFO_OPS[op as usize]);
+
+                        if inst & 0b0001_0000_0000_0000 == 0 {
+                            let iiii = (inst >> 5) & 0b1111;
+                            handler.on_source_decoded(Operand::RegOffsetInc { base: xxxxx, offset: (iiii << samt) })?;
+                        } else {
+                            let u2 = (inst >> 5) & 0b11;
+                            let u4 = (inst >> 8) & 0b1111;
+                            let uuuuuu = (u2 | (u4 << 2)) as u16;
+                            handler.on_source_decoded(Operand::RegStoreAssign { base: xxxxx, addr: uuuuuu })?;
+                        }
+                        if !wide {
+                            handler.on_dest_decoded(Operand::gpr(ddddd))?;
+                        } else {
+                            handler.on_dest_decoded(Operand::gprpair(ddddd)?)?;
+                        }
+                        handler.on_opcode_decoded(op)?;
                     }
                     0b011 => {
+                        opcode_check!(inst & 0b0010_0000_0000_0000 == 0);
+
+                        let (op, wide, samt) = decode_opcode!(MEM_OPCODES[op as usize]);
+
+                        if inst & 0b0001_0000_0000_0000 == 0 {
+                            let iiii = (inst >> 5) & 0b1111;
+                            handler.on_source_decoded(Operand::RegOffsetInc { base: xxxxx, offset: (iiii << samt) })?;
+                        } else {
+                            let u2 = (inst >> 5) & 0b11;
+                            let u4 = (inst >> 8) & 0b1111;
+                            let uuuuuu = (u2 | (u4 << 2)) as u16;
+                            handler.on_source_decoded(Operand::RegStoreAssign { base: xxxxx, addr: uuuuuu })?;
+                        }
+                        if !wide {
+                            handler.on_dest_decoded(Operand::gpr(ddddd))?;
+                        } else {
+                            handler.on_dest_decoded(Operand::gprpair(ddddd)?)?;
+                        }
+                        handler.on_opcode_decoded(op)?;
                     }
                     0b100 => {
                     }

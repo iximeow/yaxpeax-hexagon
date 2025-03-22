@@ -483,6 +483,9 @@ impl fmt::Display for Operand {
             Operand::RegShiftOffset { base, shift, offset } => {
                 write!(f, "R{}<<{} + {:#x}", base, shift, offset)
             }
+            Operand::RegOffsetInc { base, offset } => {
+                write!(f, "R{}++#{:#x}", base, offset)
+            }
             Operand::RegOffsetCirc { base, offset, mu } => {
                 write!(f, "R{}++#{:#x}:circ(M{})", base, offset, mu)
             }
