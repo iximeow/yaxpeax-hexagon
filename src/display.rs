@@ -293,11 +293,11 @@ impl fmt::Display for Opcode {
             Opcode::CmpGtu => { f.write_str("cmp.gtu") },
             Opcode::Add => { f.write_str("add") },
             Opcode::And => { f.write_str("and") },
-            Opcode::And_nRR => { f.write_str("and_nRR") },
+            Opcode::And_nRR => { f.write_str("and") },
             Opcode::And_RnR => { f.write_str("and_RnR") },
             Opcode::Sub => { f.write_str("sub") },
             Opcode::Or => { f.write_str("or") },
-            Opcode::Or_nRR => { f.write_str("or_nRR") },
+            Opcode::Or_nRR => { f.write_str("or") },
             Opcode::Or_RnR => { f.write_str("or_RnR") },
             Opcode::Xor => { f.write_str("xor") },
             Opcode::Contains => { f.write_str("contains") },
@@ -404,6 +404,8 @@ impl fmt::Display for Opcode {
             Opcode::MemdLockedLoad => { f.write_str("memd_locked") },
             Opcode::MemdStoreCond => { f.write_str("memd_locked") },
             Opcode::MemdAq => { f.write_str("memd_aq") },
+            Opcode::Pmemcpy => { f.write_str("pmemcpy") },
+            Opcode::Linecpy => { f.write_str("linecpy") },
         }
     }
 }
