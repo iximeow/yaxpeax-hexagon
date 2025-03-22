@@ -978,6 +978,7 @@ impl Default for InstDecoder {
 }
 
 trait DecodeHandler<T: Reader<<Hexagon as Arch>::Address, <Hexagon as Arch>::Word>> {
+    /*
     #[inline(always)]
     fn read_u8(&mut self, words: &mut T) -> Result<u8, <Hexagon as Arch>::DecodeError> {
         let b = words.next()?;
@@ -992,6 +993,7 @@ trait DecodeHandler<T: Reader<<Hexagon as Arch>::Address, <Hexagon as Arch>::Wor
         self.on_word_read(buf[1]);
         Ok(u16::from_le_bytes(buf))
     }
+    */
     #[inline(always)]
     fn read_u32(&mut self, words: &mut T) -> Result<u32, <Hexagon as Arch>::DecodeError> {
         let mut buf = [0u8; 4];
@@ -1012,12 +1014,12 @@ trait DecodeHandler<T: Reader<<Hexagon as Arch>::Address, <Hexagon as Arch>::Wor
     fn on_source_decoded(&mut self, _operand: Operand) -> Result<(), <Hexagon as Arch>::DecodeError> { Ok(()) }
     fn on_dest_decoded(&mut self, _operand: Operand) -> Result<(), <Hexagon as Arch>::DecodeError> { Ok(()) }
     fn assign_mode(&mut self, _assign_mode: AssignMode) -> Result<(), <Hexagon as Arch>::DecodeError> { Ok(()) }
-    fn inst_predicated(&mut self, num: u8, negated: bool, pred_new: bool) -> Result<(), <Hexagon as Arch>::DecodeError> { Ok(()) }
+    fn inst_predicated(&mut self, _num: u8, _negated: bool, _pred_new: bool) -> Result<(), <Hexagon as Arch>::DecodeError> { Ok(()) }
     fn negate_result(&mut self) -> Result<(), <Hexagon as Arch>::DecodeError> { Ok(()) }
     fn saturate(&mut self) -> Result<(), <Hexagon as Arch>::DecodeError> { Ok(()) }
-    fn branch_hint(&mut self, hint_taken: bool) -> Result<(), <Hexagon as Arch>::DecodeError> { Ok(()) }
-    fn domain_hint(&mut self, domain: DomainHint) -> Result<(), <Hexagon as Arch>::DecodeError> { Ok(()) }
-    fn rounded(&mut self, mode: RoundingMode) -> Result<(), <Hexagon as Arch>::DecodeError> { Ok(()) }
+    fn branch_hint(&mut self, _hint_taken: bool) -> Result<(), <Hexagon as Arch>::DecodeError> { Ok(()) }
+    fn domain_hint(&mut self, _domain: DomainHint) -> Result<(), <Hexagon as Arch>::DecodeError> { Ok(()) }
+    fn rounded(&mut self, _mode: RoundingMode) -> Result<(), <Hexagon as Arch>::DecodeError> { Ok(()) }
     fn chop(&mut self) -> Result<(), <Hexagon as Arch>::DecodeError> { Ok(()) }
     fn on_word_read(&mut self, _word: <Hexagon as Arch>::Word) {}
 }
@@ -1036,13 +1038,13 @@ impl<T: yaxpeax_arch::Reader<<Hexagon as Arch>::Address, <Hexagon as Arch>::Word
         Ok(())
     }
     fn on_source_decoded(&mut self, operand: Operand) -> Result<(), <Hexagon as Arch>::DecodeError> {
-        let mut inst = &mut self.instructions[self.instruction_count as usize];
+        let inst = &mut self.instructions[self.instruction_count as usize];
         inst.sources[inst.sources_count as usize] = operand;
         inst.sources_count += 1;
         Ok(())
     }
     fn on_dest_decoded(&mut self, operand: Operand) -> Result<(), <Hexagon as Arch>::DecodeError> {
-        let mut inst = &mut self.instructions[self.instruction_count as usize];
+        let inst = &mut self.instructions[self.instruction_count as usize];
         if inst.dest.is_some() {
             assert!(inst.alt_dest.is_none());
             inst.alt_dest = Some(operand);
@@ -1052,31 +1054,31 @@ impl<T: yaxpeax_arch::Reader<<Hexagon as Arch>::Address, <Hexagon as Arch>::Word
         Ok(())
     }
     fn assign_mode(&mut self, assign_mode: AssignMode) -> Result<(), <Hexagon as Arch>::DecodeError> {
-        let mut inst = &mut self.instructions[self.instruction_count as usize];
+        let inst = &mut self.instructions[self.instruction_count as usize];
         inst.flags.assign_mode = Some(assign_mode);
         Ok(())
     }
     fn inst_predicated(&mut self, num: u8, negated: bool, pred_new: bool) -> Result<(), <Hexagon as Arch>::DecodeError> {
-        let mut flags = &mut self.instructions[self.instruction_count as usize].flags;
+        let flags = &mut self.instructions[self.instruction_count as usize].flags;
         assert!(flags.predicate.is_none());
         flags.predicate = Some(Predicate::reg(num).set_negated(negated).set_pred_new(pred_new));
         Ok(())
     }
     fn negate_result(&mut self) -> Result<(), <Hexagon as Arch>::DecodeError> {
-        let mut flags = &mut self.instructions[self.instruction_count as usize].flags;
+        let flags = &mut self.instructions[self.instruction_count as usize].flags;
         assert!(!flags.negated);
         flags.negated = true;
         Ok(())
     }
     fn saturate(&mut self) -> Result<(), <Hexagon as Arch>::DecodeError> {
-        let mut flags = &mut self.instructions[self.instruction_count as usize].flags;
+        let flags = &mut self.instructions[self.instruction_count as usize].flags;
         assert!(!flags.saturate);
         flags.saturate = true;
         Ok(())
 
     }
     fn branch_hint(&mut self, hint_taken: bool) -> Result<(), <Hexagon as Arch>::DecodeError> {
-        let mut flags = &mut self.instructions[self.instruction_count as usize].flags;
+        let flags = &mut self.instructions[self.instruction_count as usize].flags;
         assert!(flags.branch_hint.is_none());
         if hint_taken {
             flags.branch_hint = Some(BranchHint::Taken);
@@ -1086,19 +1088,19 @@ impl<T: yaxpeax_arch::Reader<<Hexagon as Arch>::Address, <Hexagon as Arch>::Word
         Ok(())
     }
     fn domain_hint(&mut self, domain: DomainHint) -> Result<(), <Hexagon as Arch>::DecodeError> {
-        let mut flags = &mut self.instructions[self.instruction_count as usize].flags;
+        let flags = &mut self.instructions[self.instruction_count as usize].flags;
         assert!(flags.threads.is_none());
         flags.threads = Some(domain);
         Ok(())
     }
     fn rounded(&mut self, mode: RoundingMode) -> Result<(), <Hexagon as Arch>::DecodeError> {
-        let mut flags = &mut self.instructions[self.instruction_count as usize].flags;
+        let flags = &mut self.instructions[self.instruction_count as usize].flags;
         assert!(flags.rounded.is_none());
         flags.rounded = Some(mode);
         Ok(())
     }
     fn chop(&mut self) -> Result<(), <Hexagon as Arch>::DecodeError> {
-        let mut flags = &mut self.instructions[self.instruction_count as usize].flags;
+        let flags = &mut self.instructions[self.instruction_count as usize].flags;
         assert!(!flags.chop);
         flags.chop = true;
         Ok(())
@@ -1337,7 +1339,7 @@ fn can_be_extended(iclass: u8, regclass: u8) -> bool {
 fn decode_instruction<
     T: Reader<<Hexagon as Arch>::Address, <Hexagon as Arch>::Word>,
     H: DecodeHandler<T>,
->(decoder: &<Hexagon as Arch>::Decoder, handler: &mut H, inst: u32, extender: Option<u32>) -> Result<(), <Hexagon as Arch>::DecodeError> {
+>(_decoder: &<Hexagon as Arch>::Decoder, handler: &mut H, inst: u32, extender: Option<u32>) -> Result<(), <Hexagon as Arch>::DecodeError> {
     let iclass = (inst >> 28) & 0b1111;
 
     use Opcode::*;
@@ -1377,7 +1379,7 @@ fn decode_instruction<
                 opcode_check!(opbits <= 0b10110);
 
                 handler.on_dest_decoded(Operand::PCRel32 { rel: i9 << 2 })?;
-                handler.on_source_decoded(Operand::gpr_4b(ssss as u8));
+                handler.on_source_decoded(Operand::gpr_4b(ssss as u8))?;
 
                 // TODO: might be nice to push negation through to the opcode. "TestJumpClr" being
                 // used for `p1=tstbit(Rs,#0); if (!p1.new) jump:t` is a very confusing way to say
@@ -1433,7 +1435,7 @@ fn decode_instruction<
                     handler.on_dest_decoded(Operand::gpr_4b(ssss as u8))?;
                 } else {
                     handler.on_opcode_decoded(Opcode::TransferRegisterJump)?;
-                    handler.on_source_decoded(Operand::gpr_4b(ssss as u8));
+                    handler.on_source_decoded(Operand::gpr_4b(ssss as u8))?;
                     handler.on_dest_decoded(Operand::gpr_4b(dddd as u8))?;
                 }
             }
@@ -1701,7 +1703,7 @@ fn decode_instruction<
                         }
                     }
                 }
-                other => {
+                _other => {
                     // 0b11, so bits are like 0011|11xxxx
                     // these are all stores to Rs+#u6:N, shift is determined by op size.
                     // the first few are stores of immediates, most others operate on registers.
@@ -2192,7 +2194,6 @@ fn decode_instruction<
                 handler.on_source_decoded(Operand::Gpr { reg: sssss })?;
             }
             0b0001 => {
-                let imm16 = inst & 0xffff;
                 opcode_check!(min_op & 1 == 1);
 
                 let i_high = ((inst >> 8) & 0xc000) as u16;
@@ -2205,7 +2206,6 @@ fn decode_instruction<
                 handler.on_source_decoded(Operand::ImmU16 { imm: i })?;
             }
             0b0010 => {
-                let imm16 = inst & 0xffff;
                 opcode_check!(min_op & 1 == 1);
 
                 let i_high = ((inst >> 8) & 0xc000) as u16;
@@ -2320,7 +2320,6 @@ fn decode_instruction<
             0b0110 => {
                 let sssss = reg_b16(inst);
                 let ddddd = reg_b0(inst);
-                let dd = ddddd & 0b11;
 
                 let i_hi = ((min_op & 0b1) as i16) << 15 >> 6;
                 let i_lo = ((inst >> 5) as i16) & 0b1_1111_1111;
@@ -2424,7 +2423,7 @@ fn decode_instruction<
                 // 0b0111_1111_...
                 handler.on_opcode_decoded(Opcode::Nop)?;
             }
-            x => {
+            _ => {
                 unreachable!("impossible pattern");
             }
             }
@@ -2740,6 +2739,7 @@ fn decode_instruction<
 
                 // may also be xxxxx, depends on instruction.
                 let sssss = reg_b16(inst);
+                #[allow(non_snake_case)]
                 let Rs = Operand::gpr(sssss);
 
                 if inst >> 24 & 1 == 0 {
@@ -2854,8 +2854,6 @@ fn decode_instruction<
             } else {
                 // upper chunk: 1010|1 ....
                 let majbits = (inst >> 24) & 0b111;
-                let b2 = (inst >> 1) & 1;
-                let b8 = (inst >> 7) & 1;
 
                 let minbits = ((inst >> 21) & 0b111) as u8;
                 match majbits {
@@ -2953,7 +2951,7 @@ fn decode_instruction<
                         let ttttt = reg_b8(inst);
                         if (inst >> 7) & 1 == 0 {
                             let u = (inst >> 13) & 1;
-                            decode_store_ops(handler, minbits, ttttt, |shamt| {
+                            decode_store_ops(handler, minbits, ttttt, |_shamt| {
                                 Operand::RegMemIndexedBrev { base: xxxxx, mu: u as u8 }
                             })?;
                         } else {
