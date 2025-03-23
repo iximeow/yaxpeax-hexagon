@@ -2655,19 +2655,109 @@ fn decode_instruction<
                         handler.on_opcode_decoded(op)?;
                     }
                     0b011 => {
-                        opcode_check!(inst & 0b0010_0000_0000_0000 == 0);
+                        let predicated = inst & 0b0010_0000_0000_0000 != 0;
 
                         let (op, wide, samt) = decode_opcode!(MEM_OPCODES[op as usize]);
 
-                        if inst & 0b0001_0000_0000_0000 == 0 {
-                            let iiii = (inst >> 5) & 0b1111;
-                            handler.on_source_decoded(Operand::RegOffsetInc { base: xxxxx, offset: (iiii << samt) })?;
+                        if !predicated {
+                            if inst & 0b0001_0000_0000_0000 == 0 {
+                                let iiii = (inst >> 5) & 0b1111;
+                                handler.on_source_decoded(Operand::RegOffsetInc { base: xxxxx, offset: (iiii << samt) })?;
+                            } else {
+                                let u2 = (inst >> 5) & 0b11;
+                                let u4 = (inst >> 8) & 0b1111;
+                                let uuuuuu = (u2 | (u4 << 2)) as u16;
+                                handler.on_source_decoded(Operand::RegStoreAssign { base: xxxxx, addr: uuuuuu })?;
+                            }
+                            if !wide {
+                                handler.on_dest_decoded(Operand::gpr(ddddd))?;
+                            } else {
+                                handler.on_dest_decoded(Operand::gprpair(ddddd)?)?;
+                            }
+                            handler.on_opcode_decoded(op)?;
                         } else {
+                            let iiii = (inst >> 5) & 0b1111;
+                            let tt = (inst >> 9) & 0b11;
+                            let negated = (inst >> 11) & 0b1 != 0;
+                            let dotnew = (inst >> 12) & 0b1 != 0;
+
+                            handler.inst_predicated(tt as u8, negated, dotnew)?;
+                            handler.on_source_decoded(Operand::RegOffsetInc { base: xxxxx, offset: (iiii << samt) })?;
+                            if !wide {
+                                handler.on_dest_decoded(Operand::gpr(ddddd))?;
+                            } else {
+                                handler.on_dest_decoded(Operand::gprpair(ddddd)?)?;
+                            }
+                            handler.on_opcode_decoded(op)?;
+                        }
+                    }
+                    0b100 => {
+                        let shifted_reg = inst & 0b0001_0000_0000_0000 != 0;
+
+                        let (op, wide, samt) = decode_opcode!(MEM_FIFO_OPS[op as usize]);
+
+                        if !wide {
+                            handler.on_dest_decoded(Operand::gpr(ddddd))?;
+                        } else {
+                            handler.on_dest_decoded(Operand::gprpair(ddddd)?)?;
+                        }
+                        handler.on_opcode_decoded(op)?;
+
+                        if !shifted_reg {
+                            operand_check!(inst & 0b0000_0000_1000_0000 == 0);
+
+                            let mu = ((inst >> 13) & 1) as u8;
+
+                            handler.on_source_decoded(Operand::RegMemIndexed { base: xxxxx, mu })?;
+                        } else {
+                            let i_hi = (inst >> 13) & 1;
+                            let i_lo = (inst >> 7) & 1;
+                            let ii = ((i_hi << 1) | i_lo) as u8;
+
                             let u2 = (inst >> 5) & 0b11;
                             let u4 = (inst >> 8) & 0b1111;
-                            let uuuuuu = (u2 | (u4 << 2)) as u16;
-                            handler.on_source_decoded(Operand::RegStoreAssign { base: xxxxx, addr: uuuuuu })?;
+                            let uuuuuu = (u2 | (u4 << 2)) as i16;
+
+                            handler.on_source_decoded(Operand::RegShiftOffset { base: xxxxx, shift: ii, offset: uuuuuu })?;
                         }
+                    }
+                    0b101 => {
+                        let shifted_reg = inst & 0b0001_0000_0000_0000 != 0;
+
+                        let (op, wide, samt) = decode_opcode!(MEM_OPCODES[op as usize]);
+
+                        if !wide {
+                            handler.on_dest_decoded(Operand::gpr(ddddd))?;
+                        } else {
+                            handler.on_dest_decoded(Operand::gprpair(ddddd)?)?;
+                        }
+                        handler.on_opcode_decoded(op)?;
+
+                        if !shifted_reg {
+                            operand_check!(inst & 0b0000_0000_1000_0000 == 0);
+
+                            let mu = ((inst >> 13) & 1) as u8;
+
+                            handler.on_source_decoded(Operand::RegMemIndexed { base: xxxxx, mu })?;
+                        } else {
+                            let i_hi = (inst >> 13) & 1;
+                            let i_lo = (inst >> 7) & 1;
+                            let ii = ((i_hi << 1) | i_lo) as u8;
+
+                            let u2 = (inst >> 5) & 0b11;
+                            let u4 = (inst >> 8) & 0b1111;
+                            let uuuuuu = (u2 | (u4 << 2)) as i16;
+
+                            handler.on_source_decoded(Operand::RegShiftOffset { base: xxxxx, shift: ii, offset: uuuuuu })?;
+                        }
+                    }
+                    0b110 => {
+                        operand_check!(inst & 0b0001_0000_1000_0000 == 0);
+
+                        let (op, wide, samt) = decode_opcode!(MEM_FIFO_OPS[op as usize]);
+
+                        let mu = ((inst >> 13) & 1) as u8;
+                        handler.on_source_decoded(Operand::RegMemIndexedBrev { base: xxxxx, mu })?;
                         if !wide {
                             handler.on_dest_decoded(Operand::gpr(ddddd))?;
                         } else {
@@ -2675,14 +2765,41 @@ fn decode_instruction<
                         }
                         handler.on_opcode_decoded(op)?;
                     }
-                    0b100 => {
-                    }
-                    0b101 => {
-                    }
-                    0b110 => {
-                    }
                     _ => {
-                        todo!("other mem op");
+                        // 0b111
+                        let predicated = inst & 0b0000_0000_1000_0000 != 0;
+
+                        let (op, wide, samt) = decode_opcode!(MEM_OPCODES[op as usize]);
+
+                        if !predicated {
+                            operand_check!(inst & 0b0001_0000_0000_0000 == 0);
+                            let mu = ((inst >> 13) & 1) as u8;
+                            handler.on_source_decoded(Operand::RegMemIndexedBrev { base: xxxxx, mu })?;
+                            if !wide {
+                                handler.on_dest_decoded(Operand::gpr(ddddd))?;
+                            } else {
+                                handler.on_dest_decoded(Operand::gprpair(ddddd)?)?;
+                            }
+                            handler.on_opcode_decoded(op)?;
+                        } else {
+                            let i5 = reg_b16(inst);
+                            let i = ((inst >> 8) & 1) as u8;
+                            let iiiiii = (i5 << 1) | i;
+                            let ddddd = reg_b0(inst);
+
+                            let tt = (inst >> 9) & 0b11;
+                            let negated = (inst >> 11) & 0b1 != 0;
+                            let dotnew = (inst >> 12) & 0b1 != 0;
+
+                            handler.inst_predicated(tt as u8, negated, dotnew)?;
+                            handler.on_source_decoded(Operand::RegStoreAssign { base: xxxxx, addr: iiiiii as u16 })?;
+                            if !wide {
+                                handler.on_dest_decoded(Operand::gpr(ddddd))?;
+                            } else {
+                                handler.on_dest_decoded(Operand::gprpair(ddddd)?)?;
+                            }
+                            handler.on_opcode_decoded(op)?;
+                        }
                     }
                 }
             } else {

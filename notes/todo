@@ -665,114 +665,114 @@ A L I A S     A L I A S     A L I A S    A L I A S     A L I A S   | Rd=zxtb(Rs)
 
 
 
-|1 0 0 1|1 0 1 0 0 0 1|x x x x x| P P |0 0 - - - i i i i|d d d d d| Rd=membh(Rx++#s:4)            - LD/slot 0,1
-|1 0 0 1|1 0 1 0 0 1 0|x x x x x| P P |0 0 - - - i i i i|y y y y y| Ryy=memh_fifo(Rx++#s4:0)            - LD/slot 0,1
-|1 0 0 1|1 0 1 0 0 1 1|x x x x x| P P |0 0 - - - i i i i|d d d d d| Rd=memubh(Rx++#s:4)            - LD/slot 0,1
-|1 0 0 1|1 0 1 0 1 0 0|x x x x x| P P |0 0 - - - i i i i|y y y y y| Ryy=memb_fifo(Rx++#s4:0)            - LD/slot 0,1
-|1 0 0 1|1 0 1 0 1 0 1|x x x x x| P P |0 0 - - - i i i i|d d d d d| Rdd=memubh(Rx++#s:4)            - LD/slot 0,1
-|1 0 0 1|1 0 1 0 1 1 1|x x x x x| P P |0 0 - - - i i i i|d d d d d| Rdd=membh(Rx++#s:4)            - LD/slot 0,1
-|1 0 0 1|1 0 1 1 0 0 0|x x x x x| P P |0 0 - - - i i i i|d d d d d| Rd=memb(Rx++#s4:3)  - LD/slot 0,1
-|1 0 0 1|1 0 1 1 0 0 1|x x x x x| P P |0 0 - - - i i i i|d d d d d| Rdd=memub(Rx++#s4:3)  - LD/slot 0,1
-|1 0 0 1|1 0 1 1 0 1 0|x x x x x| P P |0 0 - - - i i i i|d d d d d| Rd=memh(Rx++#s4:3)  - LD/slot 0,1
-|1 0 0 1|1 0 1 1 0 1 1|x x x x x| P P |0 0 - - - i i i i|d d d d d| Rdd=memuh(Rx++#s4:3)  - LD/slot 0,1
-|1 0 0 1|1 0 1 1 1 0 0|x x x x x| P P |0 0 - - - i i i i|d d d d d| Rd=memw(Rx++#s4:3)  - LD/slot 0,1
-|1 0 0 1|1 0 1 1 1 1 0|x x x x x| P P |0 0 - - - i i i i|d d d d d| Rdd=memd(Rx++#s4:3)  - LD/slot 0,1
-|1 0 0 1|1 0 1 0 0 0 1|e e e e e| P P |0 1 l l l l - l l|d d d d d| Rd=membh(Re=#U6)            - LD/slot 0,1
-|1 0 0 1|1 0 1 0 0 1 0|e e e e e| P P |0 1 l l l l - l l|y y y y y| Ryy=memh_fifo(Re=#U6)            - LD/slot 0,1
-|1 0 0 1|1 0 1 0 0 1 1|e e e e e| P P |0 1 l l l l - l l|d d d d d| Rd=memubh(Re=#U6)            - LD/slot 0,1
-|1 0 0 1|1 0 1 0 1 0 0|e e e e e| P P |0 1 l l l l - l l|y y y y y| Ryy=memb_fifo(Re=#U6)            - LD/slot 0,1
-|1 0 0 1|1 0 1 0 1 0 1|e e e e e| P P |0 1 l l l l - l l|d d d d d| Rdd=memubh(Re=#U6)            - LD/slot 0,1
-|1 0 0 1|1 0 1 0 1 1 1|e e e e e| P P |0 1 l l l l - l l|d d d d d| Rdd=membh(Re=#U6)            - LD/slot 0,1
-|1 0 0 1|1 0 1 1 0 0 0|e e e e e| P P |0 1 l l l l - l l|d d d d d| Rd=memb(Re=#U6)    - LD/slot 0,1
-|1 0 0 1|1 0 1 1 0 0 1|e e e e e| P P |0 1 l l l l - l l|d d d d d| Rdd=memub(Re=#U6)    - LD/slot 0,1
-|1 0 0 1|1 0 1 1 0 1 0|e e e e e| P P |0 1 l l l l - l l|d d d d d| Rd=memh(Re=#U6)    - LD/slot 0,1
-|1 0 0 1|1 0 1 1 0 1 1|e e e e e| P P |0 1 l l l l - l l|d d d d d| Rdd=memuh(Re=#U6)    - LD/slot 0,1
-|1 0 0 1|1 0 1 1 1 0 0|e e e e e| P P |0 1 l l l l - l l|d d d d d| Rd=memw(Re=#U6)    - LD/slot 0,1
-|1 0 0 1|1 0 1 1 1 1 0|e e e e e| P P |0 1 l l l l - l l|d d d d d| Rdd=memd(Re=#U6)    - LD/slot 0,1
-|1 0 0 1|1 1 0 0 0 0 1|x x x x x| P P |u 0 - - - - 0 - -|d d d d d| Rd=membh(Rx++Mu)            - LD/slot 0,1
-|1 0 0 1|1 1 0 0 0 1 0|x x x x x| P P |u 0 - - - - 0 - -|y y y y y| Ryy=memh_fifo(Rx++Mu)            - LD/slot 0,1
-|1 0 0 1|1 1 0 0 0 1 1|x x x x x| P P |u 0 - - - - 0 - -|d d d d d| Rd=memubh(Rx++Mu)            - LD/slot 0,1
-|1 0 0 1|1 1 0 0 1 0 0|x x x x x| P P |u 0 - - - - 0 - -|y y y y y| Ryy=memb_fifo(Rx++Mu)            - LD/slot 0,1
-|1 0 0 1|1 1 0 0 1 0 1|x x x x x| P P |u 0 - - - - 0 - -|d d d d d| Rdd=memubh(Rx++Mu)            - LD/slot 0,1
-|1 0 0 1|1 1 0 0 1 1 1|x x x x x| P P |u 0 - - - - 0 - -|d d d d d| Rdd=membh(Rx++Mu)            - LD/slot 0,1
-|1 0 0 1|1 1 0 1 0 0 0|x x x x x| P P |u 0 - - - - 0 - -|d d d d d| Rd=memb(Rx++Mu)  - LD/slot 0,1
-|1 0 0 1|1 1 0 1 0 0 1|x x x x x| P P |u 0 - - - - 0 - -|d d d d d| Rdd=memub(Rx++Mu)  - LD/slot 0,1
-|1 0 0 1|1 1 0 1 0 1 0|x x x x x| P P |u 0 - - - - 0 - -|d d d d d| Rd=memh(Rx++Mu)  - LD/slot 0,1
-|1 0 0 1|1 1 0 1 0 1 1|x x x x x| P P |u 0 - - - - 0 - -|d d d d d| Rdd=memuh(Rx++Mu)  - LD/slot 0,1
-|1 0 0 1|1 1 0 1 1 0 0|x x x x x| P P |u 0 - - - - 0 - -|d d d d d| Rd=memw(Rx++Mu)  - LD/slot 0,1
-|1 0 0 1|1 1 0 1 1 1 0|x x x x x| P P |u 0 - - - - 0 - -|d d d d d| Rdd=memd(Rx++Mu)  - LD/slot 0,1
-|1 0 0 1|1 1 1 0 0 0 1|x x x x x| P P |u 0 - - - - 0 - -|d d d d d| Rd=membh(Rx++Mu:brev)            - LD/slot 0,1
-|1 0 0 1|1 1 1 0 0 1 0|x x x x x| P P |u 0 - - - - 0 - -|y y y y y| Ryy=memh_fifo(Rx++Mu:brev)            - LD/slot 0,1
-|1 0 0 1|1 1 1 0 0 1 1|x x x x x| P P |u 0 - - - - 0 - -|d d d d d| Rd=memubh(Rx++Mu:brev)            - LD/slot 0,1
-|1 0 0 1|1 1 1 0 1 0 0|x x x x x| P P |u 0 - - - - 0 - -|y y y y y| Ryy=memb_fifo(Rx++Mu:brev)            - LD/slot 0,1
-|1 0 0 1|1 1 1 0 1 0 1|x x x x x| P P |u 0 - - - - 0 - -|d d d d d| Rdd=memubh(Rx++Mu:brev)            - LD/slot 0,1
-|1 0 0 1|1 1 1 0 1 1 1|x x x x x| P P |u 0 - - - - 0 - -|d d d d d| Rdd=membh(Rx++Mu:brev)            - LD/slot 0,1
-|1 0 0 1|1 1 1 1 0 0 0|x x x x x| P P |u 0 - - - - 0 - -|d d d d d| Rd=memb(Rx++Mu:brev)  - LD/slot 0,1
-|1 0 0 1|1 1 1 1 0 0 1|x x x x x| P P |u 0 - - - - 0 - -|d d d d d| Rdd=memub(Rx++Mu:brev)  - LD/slot 0,1
-|1 0 0 1|1 1 1 1 0 1 0|x x x x x| P P |u 0 - - - - 0 - -|d d d d d| Rd=memh(Rx++Mu:brev)  - LD/slot 0,1
-|1 0 0 1|1 1 1 1 0 1 1|x x x x x| P P |u 0 - - - - 0 - -|d d d d d| Rdd=memuh(Rx++Mu:brev)  - LD/slot 0,1
-|1 0 0 1|1 1 1 1 1 0 0|x x x x x| P P |u 0 - - - - 0 - -|d d d d d| Rd=memw(Rx++Mu:brev)  - LD/slot 0,1
-|1 0 0 1|1 1 1 1 1 1 0|x x x x x| P P |u 0 - - - - 0 - -|d d d d d| Rdd=memd(Rx++Mu:brev)  - LD/slot 0,1
-|1 0 0 1|1 1 0 0 0 0 1|t t t t t| P P |i 1 l l l l i l l|d d d d d| Rd=membh(Rt<<#u2+#U6)            - LD/slot 0,1
-|1 0 0 1|1 1 0 0 0 1 0|t t t t t| P P |i 1 l l l l i l l|y y y y y| Ryy=memh_fifo(Rt<<#u2+#U6)            - LD/slot 0,1
-|1 0 0 1|1 1 0 0 0 1 1|t t t t t| P P |i 1 l l l l i l l|d d d d d| Rd=memubh(Rt<<#u2+#U6)            - LD/slot 0,1
-|1 0 0 1|1 1 0 0 1 0 0|t t t t t| P P |i 1 l l l l i l l|y y y y y| Ryy=memb_fifo(Rt<<#u2+#U6)            - LD/slot 0,1
-|1 0 0 1|1 1 0 0 1 0 1|t t t t t| P P |i 1 l l l l i l l|d d d d d| Rdd=memubh(Rt<<#u2+#U6)            - LD/slot 0,1
-|1 0 0 1|1 1 0 0 1 1 1|t t t t t| P P |i 1 l l l l i l l|d d d d d| Rdd=membh(Rt<<#u2+#U6)            - LD/slot 0,1
-|1 0 0 1|1 1 0 1 0 0 0|t t t t t| P P |i 1 l l l l i l l|d d d d d| Rd=memb(Rt<<#u2+#U6)  - LD/slot 0,1
-|1 0 0 1|1 1 0 1 0 0 1|t t t t t| P P |i 1 l l l l i l l|d d d d d| Rdd=memub(Rt<<#u2+#U6)  - LD/slot 0,1
-|1 0 0 1|1 1 0 1 0 1 0|t t t t t| P P |i 1 l l l l i l l|d d d d d| Rd=memh(Rt<<#u2+#U6)  - LD/slot 0,1
-|1 0 0 1|1 1 0 1 0 1 1|t t t t t| P P |i 1 l l l l i l l|d d d d d| Rdd=memuh(Rt<<#u2+#U6)  - LD/slot 0,1
-|1 0 0 1|1 1 0 1 1 0 0|t t t t t| P P |i 1 l l l l i l l|d d d d d| Rd=memw(Rt<<#u2+#U6)  - LD/slot 0,1
-|1 0 0 1|1 1 0 1 1 1 0|t t t t t| P P |i 1 l l l l i l l|d d d d d| Rdd=memd(Rt<<#u2+#U6)  - LD/slot 0,1
-|1 0 0 1|1 0 1 1 0 0 0|x x x x x| P P |1 0 0 t t i i i i|d d d d d| if (Pt) Rd=memb(Rx++#s4:3)      - LD/slot 0,1
-|1 0 0 1|1 0 1 1 0 0 0|x x x x x| P P |1 0 1 t t i i i i|d d d d d| if (!Pt) Rd=memb(Rx++#s4:3)      - LD/slot 0,1
-|1 0 0 1|1 0 1 1 0 0 0|x x x x x| P P |1 1 0 t t i i i i|d d d d d| if (Pt.new) Rd=memb(Rx++#s4:3)      - LD/slot 0,1
-|1 0 0 1|1 0 1 1 0 0 0|x x x x x| P P |1 1 1 t t i i i i|d d d d d| if (!Pt.new) Rd=memb(Rx++#s4:3)      - LD/slot 0,1
-|1 0 0 1|1 0 1 1 0 0 1|x x x x x| P P |1 0 0 t t i i i i|d d d d d| if (Pt) Rd=memub(Rx++#s4:3)      - LD/slot 0,1
-|1 0 0 1|1 0 1 1 0 0 1|x x x x x| P P |1 0 1 t t i i i i|d d d d d| if (!Pt) Rd=memub(Rx++#s4:3)      - LD/slot 0,1
-|1 0 0 1|1 0 1 1 0 0 1|x x x x x| P P |1 1 0 t t i i i i|d d d d d| if (Pt.new) Rd=memub(Rx++#s4:3)      - LD/slot 0,1
-|1 0 0 1|1 0 1 1 0 0 1|x x x x x| P P |1 1 1 t t i i i i|d d d d d| if (!Pt.new) Rd=memub(Rx++#s4:3)      - LD/slot 0,1
-|1 0 0 1|1 0 1 1 0 1 0|x x x x x| P P |1 0 0 t t i i i i|d d d d d| if (Pt) Rd=memh(Rx++#s4:3)      - LD/slot 0,1
-|1 0 0 1|1 0 1 1 0 1 0|x x x x x| P P |1 0 1 t t i i i i|d d d d d| if (!Pt) Rd=memh(Rx++#s4:3)      - LD/slot 0,1
-|1 0 0 1|1 0 1 1 0 1 0|x x x x x| P P |1 1 0 t t i i i i|d d d d d| if (Pt.new) Rd=memh(Rx++#s4:3)      - LD/slot 0,1
-|1 0 0 1|1 0 1 1 0 1 0|x x x x x| P P |1 1 1 t t i i i i|d d d d d| if (!Pt.new) Rd=memh(Rx++#s4:3)      - LD/slot 0,1
-|1 0 0 1|1 0 1 1 0 1 1|x x x x x| P P |1 0 0 t t i i i i|d d d d d| if (Pt) Rd=memuh(Rx++#s4:3)      - LD/slot 0,1
-|1 0 0 1|1 0 1 1 0 1 1|x x x x x| P P |1 0 1 t t i i i i|d d d d d| if (!Pt) Rd=memuh(Rx++#s4:3)      - LD/slot 0,1
-|1 0 0 1|1 0 1 1 0 1 1|x x x x x| P P |1 1 0 t t i i i i|d d d d d| if (Pt.new) Rd=memuh(Rx++#s4:3)      - LD/slot 0,1
-|1 0 0 1|1 0 1 1 0 1 1|x x x x x| P P |1 1 1 t t i i i i|d d d d d| if (!Pt.new) Rd=memuh(Rx++#s4:3)      - LD/slot 0,1
-|1 0 0 1|1 0 1 1 1 0 0|x x x x x| P P |1 0 0 t t i i i i|d d d d d| if (Pt) Rd=memw(Rx++#s4:3)      - LD/slot 0,1
-|1 0 0 1|1 0 1 1 1 0 0|x x x x x| P P |1 0 1 t t i i i i|d d d d d| if (!Pt) Rd=memw(Rx++#s4:3)      - LD/slot 0,1
-|1 0 0 1|1 0 1 1 1 0 0|x x x x x| P P |1 1 0 t t i i i i|d d d d d| if (Pt.new) Rd=memw(Rx++#s4:3)      - LD/slot 0,1
-|1 0 0 1|1 0 1 1 1 0 0|x x x x x| P P |1 1 1 t t i i i i|d d d d d| if (!Pt.new) Rd=memw(Rx++#s4:3)      - LD/slot 0,1
-|1 0 0 1|1 0 1 1 1 1 0|x x x x x| P P |1 0 0 t t i i i i|d d d d d| if (Pt) Rdd=memd(Rx++#s4:3)      - LD/slot 0,1
-|1 0 0 1|1 0 1 1 1 1 0|x x x x x| P P |1 0 1 t t i i i i|d d d d d| if (!Pt) Rdd=memd(Rx++#s4:3)      - LD/slot 0,1
-|1 0 0 1|1 0 1 1 1 1 0|x x x x x| P P |1 1 0 t t i i i i|d d d d d| if (Pt.new) Rdd=memd(Rx++#s4:3)      - LD/slot 0,1
-|1 0 0 1|1 0 1 1 1 1 0|x x x x x| P P |1 1 1 t t i i i i|d d d d d| if (!Pt.new) Rdd=memd(Rx++#s4:3)      - LD/slot 0,1
-|1 0 0 1|1 1 1 1 0 0 0|i i i i i| P P |1 0 0 t t i 1 - -|d d d d d| if (Pt) Rd=memb(#u6)            - LD/slot 0,1
-|1 0 0 1|1 1 1 1 0 0 0|i i i i i| P P |1 0 1 t t i 1 - -|d d d d d| if (!Pt) Rd=memb(#u6)            - LD/slot 0,1
-|1 0 0 1|1 1 1 1 0 0 0|i i i i i| P P |1 1 0 t t i 1 - -|d d d d d| if (Pt.new) Rd=memb(#u6)            - LD/slot 0,1
-|1 0 0 1|1 1 1 1 0 0 0|i i i i i| P P |1 1 1 t t i 1 - -|d d d d d| if (!Pt.new) Rd=memb(#u6)            - LD/slot 0,1
-|1 0 0 1|1 1 1 1 0 0 1|i i i i i| P P |1 0 0 t t i 1 - -|d d d d d| if (Pt) Rd=memub(#u6)            - LD/slot 0,1
-|1 0 0 1|1 1 1 1 0 0 1|i i i i i| P P |1 0 1 t t i 1 - -|d d d d d| if (!Pt) Rd=memub(#u6)            - LD/slot 0,1
-|1 0 0 1|1 1 1 1 0 0 1|i i i i i| P P |1 1 0 t t i 1 - -|d d d d d| if (Pt.new) Rd=memub(#u6)            - LD/slot 0,1
-|1 0 0 1|1 1 1 1 0 0 1|i i i i i| P P |1 1 1 t t i 1 - -|d d d d d| if (!Pt.new) Rd=memub(#u6)            - LD/slot 0,1
-|1 0 0 1|1 1 1 1 0 1 0|i i i i i| P P |1 0 0 t t i 1 - -|d d d d d| if (Pt) Rd=memh(#u6)            - LD/slot 0,1
-|1 0 0 1|1 1 1 1 0 1 0|i i i i i| P P |1 0 1 t t i 1 - -|d d d d d| if (!Pt) Rd=memh(#u6)            - LD/slot 0,1
-|1 0 0 1|1 1 1 1 0 1 0|i i i i i| P P |1 1 0 t t i 1 - -|d d d d d| if (Pt.new) Rd=memh(#u6)            - LD/slot 0,1
-|1 0 0 1|1 1 1 1 0 1 0|i i i i i| P P |1 1 1 t t i 1 - -|d d d d d| if (!Pt.new) Rd=memh(#u6)            - LD/slot 0,1
-|1 0 0 1|1 1 1 1 0 1 1|i i i i i| P P |1 0 0 t t i 1 - -|d d d d d| if (Pt) Rd=memuh(#u6)            - LD/slot 0,1
-|1 0 0 1|1 1 1 1 0 1 1|i i i i i| P P |1 0 1 t t i 1 - -|d d d d d| if (!Pt) Rd=memuh(#u6)            - LD/slot 0,1
-|1 0 0 1|1 1 1 1 0 1 1|i i i i i| P P |1 1 0 t t i 1 - -|d d d d d| if (Pt.new) Rd=memuh(#u6)            - LD/slot 0,1
-|1 0 0 1|1 1 1 1 0 1 1|i i i i i| P P |1 1 1 t t i 1 - -|d d d d d| if (!Pt.new) Rd=memuh(#u6)            - LD/slot 0,1
-|1 0 0 1|1 1 1 1 1 0 0|i i i i i| P P |1 0 0 t t i 1 - -|d d d d d| if (Pt) Rd=memw(#u6)            - LD/slot 0,1
-|1 0 0 1|1 1 1 1 1 0 0|i i i i i| P P |1 0 1 t t i 1 - -|d d d d d| if (!Pt) Rd=memw(#u6)            - LD/slot 0,1
-|1 0 0 1|1 1 1 1 1 0 0|i i i i i| P P |1 1 0 t t i 1 - -|d d d d d| if (Pt.new) Rd=memw(#u6)            - LD/slot 0,1
-|1 0 0 1|1 1 1 1 1 0 0|i i i i i| P P |1 1 1 t t i 1 - -|d d d d d| if (!Pt.new) Rd=memw(#u6)            - LD/slot 0,1
-|1 0 0 1|1 1 1 1 1 1 0|i i i i i| P P |1 0 0 t t i 1 - -|d d d d d| if (Pt) Rdd=memd(#u6)            - LD/slot 0,1
-|1 0 0 1|1 1 1 1 1 1 0|i i i i i| P P |1 0 1 t t i 1 - -|d d d d d| if (!Pt) Rdd=memd(#u6)            - LD/slot 0,1
-|1 0 0 1|1 1 1 1 1 1 0|i i i i i| P P |1 1 0 t t i 1 - -|d d d d d| if (Pt.new) Rdd=memd(#u6)            - LD/slot 0,1
-|1 0 0 1|1 1 1 1 1 1 0|i i i i i| P P |1 1 1 t t i 1 - -|d d d d d| if (!Pt.new) Rdd=memd(#u6)            - LD/slot 0,1
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
