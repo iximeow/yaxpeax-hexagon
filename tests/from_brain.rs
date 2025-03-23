@@ -316,6 +316,25 @@ fn inst_0110() {
     test_display(&0b0110_1010000_00110_11_0_000101_00_10110u32.to_le_bytes(), "{ R22 = C6 }");
     test_display(&0b0110_1010010_01001_11_0_000101_00_10110u32.to_le_bytes(), "{ R22 = add(pc, #0x5) }");
 
+    test_display(&0b0110_1011000_00011_11_0_000100_00_00001u32.to_le_bytes(), "{ P1 = and(P2, P3) }");
+    test_display(&0b0110_1011000_00011_11_1_000101_00_10001u32.to_le_bytes(), "{ P1 = fastcorner9(P3, P2) }");
+    test_display(&0b0110_1011000_10011_11_0_000100_00_00001u32.to_le_bytes(), "{ P1 = and(P2, and(P3, P0)) }");
+    test_display(&0b0110_1011000_10011_11_1_000101_00_10001u32.to_le_bytes(), "{ P1 = !fastcorner9(P3, P2) }");
+    test_display(&0b0110_1011001_00011_11_0_000100_00_10001u32.to_le_bytes(), "{ P1 = or(P2, P3) }");
+    test_display(&0b0110_1011001_10011_11_0_000100_00_10001u32.to_le_bytes(), "{ P1 = and(P3, or(P2, P0)) }");
+    test_display(&0b0110_1011010_00011_11_0_000100_00_10001u32.to_le_bytes(), "{ P1 = xor(P2, P3) }");
+    test_display(&0b0110_1011010_10011_11_0_000100_00_10001u32.to_le_bytes(), "{ P1 = or(P3, and(P2, P0)) }");
+    test_display(&0b0110_1011011_00011_11_0_000100_00_10001u32.to_le_bytes(), "{ P1 = and(P2, !P3) }");
+    test_display(&0b0110_1011011_10011_11_0_000100_00_10001u32.to_le_bytes(), "{ P1 = or(P3, or(P2, P0)) }");
+    test_display(&0b0110_1011100_00011_11_0_000100_00_10001u32.to_le_bytes(), "{ P1 = any8(P3) }");
+    test_display(&0b0110_1011100_10011_11_0_000100_00_10001u32.to_le_bytes(), "{ P1 = and(P3, and(P2, !P0)) }");
+    test_display(&0b0110_1011101_00011_11_0_000100_00_10001u32.to_le_bytes(), "{ P1 = all8(P3) }");
+    test_display(&0b0110_1011101_10011_11_0_000100_00_10001u32.to_le_bytes(), "{ P1 = and(P3, or(P2, !P0)) }");
+    test_display(&0b0110_1011110_00011_11_0_000100_00_10001u32.to_le_bytes(), "{ P1 = not(P3) }");
+    test_display(&0b0110_1011110_10011_11_0_000100_00_10001u32.to_le_bytes(), "{ P1 = or(P3, and(P2, !P0)) }");
+    test_display(&0b0110_1011111_00011_11_0_000100_00_10001u32.to_le_bytes(), "{ P1 = or(P2, !P3) }");
+    test_display(&0b0110_1011111_10011_11_0_000100_00_10001u32.to_le_bytes(), "{ P1 = or(P3, or(P2, !P0)) }");
+
     test_display(&0b0110_1100001_01001_11_0_000000_00_00000u32.to_le_bytes(), "{ barrier }");
 
     test_display(&0b0110_1111111_01010_11_0_001100_10_00011u32.to_le_bytes(), "{ R3 = movlen(R6, R11:10) }");

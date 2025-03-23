@@ -3,6 +3,10 @@ use core::fmt;
 use crate::{Instruction, InstructionPacket, Opcode, Operand};
 use crate::{AssignMode, BranchHint, DomainHint};
 
+fn special_display_rules(op: &Opcode) -> bool {
+    *op as u16 & 0x8000 == 0x8000
+}
+
 impl fmt::Display for InstructionPacket {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.write_str("{ ")?;
@@ -25,6 +29,53 @@ impl fmt::Display for InstructionPacket {
 
 impl fmt::Display for Instruction {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if special_display_rules(&self.opcode) {
+            match self.opcode {
+                Opcode::AndAnd => {
+                    return write!(f, "{} = and({}, and({}, {}))", self.dest.as_ref().unwrap(),
+                        self.sources[0], self.sources[1], self.sources[2]);
+                }
+                Opcode::AndOr => {
+                    return write!(f, "{} = and({}, or({}, {}))", self.dest.as_ref().unwrap(),
+                        self.sources[0], self.sources[1], self.sources[2]);
+                }
+                Opcode::OrAnd => {
+                    return write!(f, "{} = or({}, and({}, {}))", self.dest.as_ref().unwrap(),
+                        self.sources[0], self.sources[1], self.sources[2]);
+                }
+                Opcode::AndNot => {
+                    return write!(f, "{} = and({}, !{})", self.dest.as_ref().unwrap(),
+                        self.sources[0], self.sources[1]);
+                }
+                Opcode::OrOr => {
+                    return write!(f, "{} = or({}, or({}, {}))", self.dest.as_ref().unwrap(),
+                        self.sources[0], self.sources[1], self.sources[2]);
+                }
+                Opcode::AndAndNot => {
+                    return write!(f, "{} = and({}, and({}, !{}))", self.dest.as_ref().unwrap(),
+                        self.sources[0], self.sources[1], self.sources[2]);
+                }
+                Opcode::AndOrNot => {
+                    return write!(f, "{} = and({}, or({}, !{}))", self.dest.as_ref().unwrap(),
+                        self.sources[0], self.sources[1], self.sources[2]);
+                }
+                Opcode::OrAndNot => {
+                    return write!(f, "{} = or({}, and({}, !{}))", self.dest.as_ref().unwrap(),
+                        self.sources[0], self.sources[1], self.sources[2]);
+                }
+                Opcode::OrNot => {
+                    return write!(f, "{} = or({}, !{})", self.dest.as_ref().unwrap(),
+                        self.sources[0], self.sources[1]);
+                }
+                Opcode::OrOrNot => {
+                    return write!(f, "{} = or({}, or({}, !{}))", self.dest.as_ref().unwrap(),
+                        self.sources[0], self.sources[1], self.sources[2]);
+                }
+                _ => {
+                    unreachable!("TODO: should be exhaustive for opcodes with special display rules");
+                }
+            }
+        }
         static REG_COMPARE_JUMPS: &[Opcode] = &[
             Opcode::JumpRegNz, Opcode::JumpRegGez,
             Opcode::JumpRegZ, Opcode::JumpRegLez,
@@ -445,6 +496,19 @@ impl fmt::Display for Opcode {
             Opcode::Diag1 => { f.write_str("diag1") },
 
             Opcode::Movlen => { f.write_str("movlen") },
+            Opcode::Fastcorner9 => { f.write_str("fastcorner9") },
+            Opcode::AndAnd => { f.write_str("andand") },
+            Opcode::AndOr => { f.write_str("andor") },
+            Opcode::OrAnd => { f.write_str("orand") },
+            Opcode::AndNot => { f.write_str("andnot") },
+            Opcode::OrOr => { f.write_str("oror") },
+            Opcode::AndAndNot => { f.write_str("andandnot") },
+            Opcode::AndOrNot => { f.write_str("andornot") },
+            Opcode::OrAndNot => { f.write_str("orandnot") },
+            Opcode::OrNot => { f.write_str("ornot") },
+            Opcode::OrOrNot => { f.write_str("orornot") },
+            Opcode::Any8 => { f.write_str("any8") },
+            Opcode::All8 => { f.write_str("all8") },
         }
     }
 }

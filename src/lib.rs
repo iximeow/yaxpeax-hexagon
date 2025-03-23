@@ -369,6 +369,7 @@ impl Default for InstFlags {
 /// ```
 #[allow(non_camel_case_types)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[repr(u16)]
 pub enum Opcode {
     /// TODO: remove. should never be shown. implies an instruction was parially decoded but
     /// accepted?
@@ -575,6 +576,21 @@ pub enum Opcode {
     Diag1,
 
     Movlen,
+
+    Fastcorner9,
+    Any8,
+    All8,
+
+    AndAnd = 0x8000,
+    AndOr,
+    OrAnd,
+    AndNot,
+    OrOr,
+    AndAndNot,
+    AndOrNot,
+    OrAndNot,
+    OrNot,
+    OrOrNot,
 }
 
 impl Opcode {
@@ -2363,6 +2379,134 @@ fn decode_instruction<
                     handler.on_source_decoded(Operand::cr(9))?;
                     handler.on_source_decoded(Operand::imm_u8(iiiiii as u8))?;
                     handler.on_dest_decoded(Operand::gpr(ddddd))?;
+                }
+                o if o & 0b1111000 == 0b1011000 => {
+                    let opc = (inst >> 20) & 0b1111;
+                    let dd = (inst & 0b11) as u8;
+                    let uu = ((inst >> 6) & 0b11) as u8;
+                    let tt = ((inst >> 8) & 0b11) as u8;
+                    let ss = ((inst >> 16) & 0b11) as u8;
+                    let b13 = (inst >> 13) & 0b1;
+
+                    handler.on_dest_decoded(Operand::pred(dd))?;
+
+                    match opc {
+                        0b0000 => {
+                            if b13 == 0 {
+                                handler.on_opcode_decoded(Opcode::And)?;
+                                handler.on_source_decoded(Operand::pred(tt))?;
+                                handler.on_source_decoded(Operand::pred(ss))?;
+                            } else {
+                                opcode_check!(inst & 0b10010000 == 0b10010000);
+                                handler.on_opcode_decoded(Opcode::Fastcorner9)?;
+                                handler.on_source_decoded(Operand::pred(ss))?;
+                                handler.on_source_decoded(Operand::pred(tt))?;
+                            }
+                        },
+                        0b0001 => {
+                            if b13 == 0 {
+                                handler.on_opcode_decoded(Opcode::AndAnd)?;
+                                handler.on_source_decoded(Operand::pred(tt))?;
+                                handler.on_source_decoded(Operand::pred(ss))?;
+                                handler.on_source_decoded(Operand::pred(uu))?;
+                            } else {
+                                opcode_check!(inst & 0b10010000 == 0b10010000);
+                                handler.on_opcode_decoded(Opcode::Fastcorner9)?;
+                                handler.negate_result()?;
+                                handler.on_source_decoded(Operand::pred(ss))?;
+                                handler.on_source_decoded(Operand::pred(tt))?;
+                            }
+                        },
+                        0b0010 => {
+                            opcode_check!(b13 == 0);
+                            handler.on_opcode_decoded(Opcode::Or)?;
+                            handler.on_source_decoded(Operand::pred(tt))?;
+                            handler.on_source_decoded(Operand::pred(ss))?;
+                        },
+                        0b0011 => {
+                            opcode_check!(b13 == 0);
+                            handler.on_opcode_decoded(Opcode::AndOr)?;
+                            handler.on_source_decoded(Operand::pred(ss))?;
+                            handler.on_source_decoded(Operand::pred(tt))?;
+                            handler.on_source_decoded(Operand::pred(uu))?;
+                        },
+                        0b0100 => {
+                            opcode_check!(b13 == 0);
+                            handler.on_opcode_decoded(Opcode::Xor)?;
+                            handler.on_source_decoded(Operand::pred(tt))?;
+                            handler.on_source_decoded(Operand::pred(ss))?;
+                        },
+                        0b0101 => {
+                            opcode_check!(b13 == 0);
+                            handler.on_opcode_decoded(Opcode::OrAnd)?;
+                            handler.on_source_decoded(Operand::pred(ss))?;
+                            handler.on_source_decoded(Operand::pred(tt))?;
+                            handler.on_source_decoded(Operand::pred(uu))?;
+                        },
+                        0b0110 => {
+                            opcode_check!(b13 == 0);
+                            handler.on_opcode_decoded(Opcode::AndNot)?;
+                            handler.on_source_decoded(Operand::pred(tt))?;
+                            handler.on_source_decoded(Operand::pred(ss))?;
+                        },
+                        0b0111 => {
+                            opcode_check!(b13 == 0);
+                            handler.on_opcode_decoded(Opcode::OrOr)?;
+                            handler.on_source_decoded(Operand::pred(ss))?;
+                            handler.on_source_decoded(Operand::pred(tt))?;
+                            handler.on_source_decoded(Operand::pred(uu))?;
+                        },
+                        0b1000 => {
+                            opcode_check!(b13 == 0);
+                            handler.on_opcode_decoded(Opcode::Any8)?;
+                            handler.on_source_decoded(Operand::pred(ss))?;
+                        },
+                        0b1001 => {
+                            opcode_check!(b13 == 0);
+                            handler.on_opcode_decoded(Opcode::AndAndNot)?;
+                            handler.on_source_decoded(Operand::pred(ss))?;
+                            handler.on_source_decoded(Operand::pred(tt))?;
+                            handler.on_source_decoded(Operand::pred(uu))?;
+                        },
+                        0b1010 => {
+                            opcode_check!(b13 == 0);
+                            handler.on_opcode_decoded(Opcode::All8)?;
+                            handler.on_source_decoded(Operand::pred(ss))?;
+                        },
+                        0b1011 => {
+                            opcode_check!(b13 == 0);
+                            handler.on_opcode_decoded(Opcode::AndOrNot)?;
+                            handler.on_source_decoded(Operand::pred(ss))?;
+                            handler.on_source_decoded(Operand::pred(tt))?;
+                            handler.on_source_decoded(Operand::pred(uu))?;
+                        },
+                        0b1100 => {
+                            opcode_check!(b13 == 0);
+                            handler.on_opcode_decoded(Opcode::Not)?;
+                            handler.on_source_decoded(Operand::pred(ss))?;
+                        },
+                        0b1101 => {
+                            opcode_check!(b13 == 0);
+                            handler.on_opcode_decoded(Opcode::OrAndNot)?;
+                            handler.on_source_decoded(Operand::pred(ss))?;
+                            handler.on_source_decoded(Operand::pred(tt))?;
+                            handler.on_source_decoded(Operand::pred(uu))?;
+                        },
+                        0b1110 => {
+                            opcode_check!(b13 == 0);
+                            handler.on_opcode_decoded(Opcode::OrNot)?;
+                            handler.on_source_decoded(Operand::pred(tt))?;
+                            handler.on_source_decoded(Operand::pred(ss))?;
+                        },
+                        // 0b1111
+                        _ => {
+                            opcode_check!(b13 == 0);
+                            handler.on_opcode_decoded(Opcode::OrOrNot)?;
+                            handler.on_source_decoded(Operand::pred(ss))?;
+                            handler.on_source_decoded(Operand::pred(tt))?;
+                            handler.on_source_decoded(Operand::pred(uu))?;
+                        },
+                    }
                 }
                 0b1100000 => {
                     opcode_check!(inst & 0x2000 == 0);
