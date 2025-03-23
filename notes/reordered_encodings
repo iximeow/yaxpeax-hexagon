@@ -337,10 +337,10 @@ A L I A S     A L I A S     A L I A S    A L I A S     A L I A S   | Rd=zxtb(Rs)
 |0 1 1 0|0 0 0 0 1 1 1|s s s s s| P P |- i i i i i - - -|i i - - -| p3=sp3loop0(#r7:2,Rs)       - CR/slot 3
 |0 1 1 0|0 0 0 1 0 0 i|s s s s s| P P |i 0 i i i i i i i|i i i i -| if (Rs!=#0) jump:nt #r13:2  - J/slot 3
 |0 1 1 0|0 0 0 1 0 0 i|s s s s s| P P |i 1 i i i i i i i|i i i i -| if (Rs!=#0) jump:t #r13:2   - J/slot 3
-|0 1 1 0|0 0 0 1 0 1 i|s s s s s| P P |i 0 i i i i i i i|i i i i -| if (Rs==#0) jump:nt #r13:2  - J/slot 3
 |0 1 1 0|0 0 0 1 0 1 i|s s s s s| P P |i 0 i i i i i i i|i i i i -| if (Rs>=#0) jump:nt #r13:2  - J/slot 3
-|0 1 1 0|0 0 0 1 0 1 i|s s s s s| P P |i 1 i i i i i i i|i i i i -| if (Rs==#0) jump:t #r13:2   - J/slot 3
 |0 1 1 0|0 0 0 1 0 1 i|s s s s s| P P |i 1 i i i i i i i|i i i i -| if (Rs>=#0) jump:t #r13:2   - J/slot 3
+|0 1 1 0|0 0 0 1 1 0 i|s s s s s| P P |i 0 i i i i i i i|i i i i -| if (Rs==#0) jump:nt #r13:2  - J/slot 3
+|0 1 1 0|0 0 0 1 1 0 i|s s s s s| P P |i 1 i i i i i i i|i i i i -| if (Rs==#0) jump:t #r13:2   - J/slot 3
 |0 1 1 0|0 0 0 1 1 1 i|s s s s s| P P |i 0 i i i i i i i|i i i i -| if (Rs<=#0) jump:nt #r13:2  - J/slot 3
 |0 1 1 0|0 0 0 1 1 1 i|s s s s s| P P |i 1 i i i i i i i|i i i i -| if (Rs<=#0) jump:t #r13:2   - J/slot 3
 |0 1 1 0|0 0 1 0 0 0 1|s s s s s| P P |- - - - - - - - -|d d d d d| Cd=Rs                       - CR/slot 3           - CONTROL REGISTERS ARE NOT NUMBERED NORMALLY
@@ -350,7 +350,7 @@ A L I A S     A L I A S     A L I A S    A L I A S     A L I A S   | Rd=zxtb(Rs)
 |0 1 1 0|0 0 1 0 0 1 0|s s s s s| P P |- t t t t t 0 1 1|- - - - -| diag1(Rss,Rtt)     - SYSTEM/slot 3
 |0 1 1 0|0 0 1 1 0 0 1|s s s s s| P P |- - - - - - - - -|d d d d d| Cdd=Rss                     - CR/slot 3           - CONTROL REGISTERS ARE NOT NUMBERED NORMALLY
 |0 1 1 0|1 0 0 0 0 0 0|s s s s s| P P |- - - - - - - - -|d d d d d| Rss=Cdd                     - CR/slot 3           - CONTROL REGISTERS ARE NOT NUMBERED NORMALLY
-|0 1 1 0|1 0 0 1 0 0 0|l l l l l| P P |- i i i i i l l l|i i - l l| loop1(#r7:2,#U10)           - CR/slot 3
+|0 1 1 0|1 0 0 1 0 0 0|l l l l l| P P |- i i i i i l l l|i i - l l| loop0(#r7:2,#U10)           - CR/slot 3
 |0 1 1 0|1 0 0 1 0 0 1|l l l l l| P P |- i i i i i l l l|i i - l l| loop1(#r7:2,#U10)           - CR/slot 3
 |0 1 1 0|1 0 0 1 1 0 1|l l l l l| P P |- i i i i i l l l|i i - l l| p3=sp1loop0(#r7:2,#U10)     - CR/slot 3
 |0 1 1 0|1 0 0 1 1 1 0|l l l l l| P P |- i i i i i l l l|i i - l l| p3=sp2loop0(#r7:2,#U10)     - CR/slot 3

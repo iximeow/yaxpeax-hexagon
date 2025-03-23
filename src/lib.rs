@@ -450,6 +450,23 @@ pub enum Opcode {
     /// predicate register used for branch condition is part of normal predication bits
     CmpGtuJump,
 
+    /// jump conditioned on a register being equal to zero
+    ///
+    /// source 1 is the register used for jump conditioning, source 2 is the relative branch
+    JumpRegZ,
+    /// jump conditioned on a register being nonzero
+    ///
+    /// source 1 is the register used for jump conditioning, source 2 is the relative branch
+    JumpRegNz,
+    /// jump conditioned on a register being greater than or equal to zero
+    ///
+    /// source 1 is the register used for jump conditioning, source 2 is the relative branch
+    JumpRegGez,
+    /// jump conditioned on a register being less than or equal to zero
+    ///
+    /// source 1 is the register used for jump conditioning, source 2 is the relative branch
+    JumpRegLez,
+
     Add,
     And,
     And_nRR,
@@ -546,6 +563,18 @@ pub enum Opcode {
 
     Pmemcpy,
     Linecpy,
+
+    Loop0,
+    Loop1,
+    Sp1Loop0,
+    Sp2Loop0,
+    Sp3Loop0,
+    Trace,
+    Diag,
+    Diag0,
+    Diag1,
+
+    Movlen,
 }
 
 impl Opcode {
@@ -2032,12 +2061,155 @@ fn decode_instruction<
             let opbits = (inst >> 21) & 0b1111111;
 
             match opbits {
+                0b0000000 => {
+                    let sssss = reg_b16(inst);
+                    let iiiii = reg_b8(inst);
+                    let ii = ((inst >> 3) & 0b11) as u8;
+                    let i7 = (iiiii << 2) | ii;
+                    let rel = ((i7 << 1) as i8 as i32) << 1;
+
+                    handler.on_opcode_decoded(Opcode::Loop0)?;
+                    handler.on_source_decoded(Operand::PCRel32 { rel })?;
+                    handler.on_source_decoded(Operand::gpr(sssss))?;
+                }
+                0b0000001 => {
+                    let sssss = reg_b16(inst);
+                    let iiiii = reg_b8(inst);
+                    let ii = ((inst >> 3) & 0b11) as u8;
+                    let i7 = (iiiii << 2) | ii;
+                    let rel = ((i7 << 1) as i8 as i32) << 1;
+
+                    handler.on_opcode_decoded(Opcode::Loop1)?;
+                    handler.on_source_decoded(Operand::PCRel32 { rel })?;
+                    handler.on_source_decoded(Operand::gpr(sssss))?;
+                }
+                0b0000010 | 0b0000011 => {
+                    return Err(DecodeError::InvalidOpcode);
+                }
+                0b0000101 => {
+                    let sssss = reg_b16(inst);
+                    let iiiii = reg_b8(inst);
+                    let ii = ((inst >> 3) & 0b11) as u8;
+                    let i7 = (iiiii << 2) | ii;
+                    let rel = ((i7 << 1) as i8 as i32) << 1;
+
+                    handler.on_opcode_decoded(Opcode::Sp1Loop0)?;
+                    handler.on_source_decoded(Operand::PCRel32 { rel })?;
+                    handler.on_source_decoded(Operand::gpr(sssss))?;
+                    handler.on_dest_decoded(Operand::pred(3))?;
+                }
+                0b0000110 => {
+                    let sssss = reg_b16(inst);
+                    let iiiii = reg_b8(inst);
+                    let ii = ((inst >> 3) & 0b11) as u8;
+                    let i7 = (iiiii << 2) | ii;
+                    let rel = ((i7 << 1) as i8 as i32) << 1;
+
+                    handler.on_opcode_decoded(Opcode::Sp2Loop0)?;
+                    handler.on_source_decoded(Operand::PCRel32 { rel })?;
+                    handler.on_source_decoded(Operand::gpr(sssss))?;
+                    handler.on_dest_decoded(Operand::pred(3))?;
+                }
+                0b0000111 => {
+                    let sssss = reg_b16(inst);
+                    let iiiii = reg_b8(inst);
+                    let ii = ((inst >> 3) & 0b11) as u8;
+                    let i7 = (iiiii << 2) | ii;
+                    let rel = ((i7 << 1) as i8 as i32) << 1;
+
+                    handler.on_opcode_decoded(Opcode::Sp3Loop0)?;
+                    handler.on_source_decoded(Operand::PCRel32 { rel })?;
+                    handler.on_source_decoded(Operand::gpr(sssss))?;
+                    handler.on_dest_decoded(Operand::pred(3))?;
+                }
+                0b0001000 | 0b0001001 => {
+                    let sssss = reg_b16(inst);
+                    let i11 = (inst >> 1) & 0b111_1111_1111;
+                    let i_mid = (inst >> 13) & 1;
+                    let i_hi = (inst >> 21) & 1;
+                    let i13 = i11 | (i_mid << 11) | (i_hi << 12);
+                    let rel = (i13 << 3) as i16 as i32 >> 1;
+
+                    let taken = (inst >> 12) & 1 == 1;
+                    handler.branch_hint(taken)?;
+                    handler.on_opcode_decoded(Opcode::JumpRegNz)?;
+                    handler.on_source_decoded(Operand::gpr(sssss))?;
+                    handler.on_dest_decoded(Operand::PCRel32 { rel })?;
+                }
+                0b0001010 | 0b0001011 => {
+                    let sssss = reg_b16(inst);
+                    let i11 = (inst >> 1) & 0b111_1111_1111;
+                    let i_mid = (inst >> 13) & 1;
+                    let i_hi = (inst >> 21) & 1;
+                    let i13 = i11 | (i_mid << 11) | (i_hi << 12);
+                    let rel = (i13 << 3) as i16 as i32 >> 1;
+
+                    let taken = (inst >> 12) & 1 == 1;
+                    handler.branch_hint(taken)?;
+                    handler.on_opcode_decoded(Opcode::JumpRegGez)?;
+                    handler.on_source_decoded(Operand::gpr(sssss))?;
+                    handler.on_dest_decoded(Operand::PCRel32 { rel })?;
+                }
+                0b0001100 | 0b0001101 => {
+                    let sssss = reg_b16(inst);
+                    let i11 = (inst >> 1) & 0b111_1111_1111;
+                    let i_mid = (inst >> 13) & 1;
+                    let i_hi = (inst >> 21) & 1;
+                    let i13 = i11 | (i_mid << 11) | (i_hi << 12);
+                    let rel = (i13 << 3) as i16 as i32 >> 1;
+
+                    let taken = (inst >> 12) & 1 == 1;
+                    handler.branch_hint(taken)?;
+                    handler.on_opcode_decoded(Opcode::JumpRegZ)?;
+                    handler.on_source_decoded(Operand::gpr(sssss))?;
+                    handler.on_dest_decoded(Operand::PCRel32 { rel })?;
+                }
+                0b0001110 | 0b0001111 => {
+                    let sssss = reg_b16(inst);
+                    let i11 = (inst >> 1) & 0b111_1111_1111;
+                    let i_mid = (inst >> 13) & 1;
+                    let i_hi = (inst >> 21) & 1;
+                    let i13 = i11 | (i_mid << 11) | (i_hi << 12);
+                    let rel = (i13 << 3) as i16 as i32 >> 1;
+
+                    let taken = (inst >> 12) & 1 == 1;
+                    handler.branch_hint(taken)?;
+                    handler.on_opcode_decoded(Opcode::JumpRegLez)?;
+                    handler.on_source_decoded(Operand::gpr(sssss))?;
+                    handler.on_dest_decoded(Operand::PCRel32 { rel })?;
+                }
                 0b0010001 => {
                     let sssss = reg_b16(inst);
                     let ddddd = reg_b0(inst);
                     handler.on_opcode_decoded(Opcode::TransferRegister)?;
                     handler.on_source_decoded(Operand::gpr(sssss))?;
                     handler.on_dest_decoded(Operand::cr(ddddd))?;
+                }
+                0b0010010 => {
+                    let opc = (inst >> 5) & 0b111;
+                    let sssss = reg_b16(inst);
+                    let ttttt = reg_b8(inst);
+                    match opc {
+                        0b000 => {
+                            handler.on_opcode_decoded(Opcode::Trace)?;
+                            handler.on_source_decoded(Operand::gpr(sssss))?;
+                        },
+                        0b001 => {
+                            handler.on_opcode_decoded(Opcode::Diag)?;
+                            handler.on_source_decoded(Operand::gpr(sssss))?;
+                        },
+                        0b010 => {
+                            handler.on_opcode_decoded(Opcode::Diag0)?;
+                            handler.on_source_decoded(Operand::gprpair(sssss)?)?;
+                            handler.on_source_decoded(Operand::gprpair(ttttt)?)?;
+                        },
+                        0b011 => {
+                            handler.on_opcode_decoded(Opcode::Diag1)?;
+                            handler.on_source_decoded(Operand::gprpair(sssss)?)?;
+                            handler.on_source_decoded(Operand::gprpair(ttttt)?)?;
+                        },
+                        _ => { return Err(DecodeError::InvalidOpcode); }
+                    };
                 }
                 0b0111000 => {
                     // not in V73! store to supervisor register?
@@ -2046,6 +2218,11 @@ fn decode_instruction<
                     handler.on_opcode_decoded(Opcode::TransferRegister)?;
                     handler.on_dest_decoded(Operand::sr(ddddddd as u8))?;
                     handler.on_source_decoded(Operand::gpr(sssss))?;
+                }
+                // TODO: 1001000 loop0 goes here
+                0b1100001 => {
+                    opcode_check!((inst >> 5) & 0b111 == 0);
+                    handler.on_opcode_decoded(Opcode::Barrier)?;
                 }
                 0b1101000 => {
                     // not in V73! store to supervisor register?
@@ -2086,6 +2263,84 @@ fn decode_instruction<
                     handler.on_opcode_decoded(Opcode::TransferRegister)?;
                     handler.on_source_decoded(Operand::crpair(sssss)?)?;
                     handler.on_dest_decoded(Operand::gprpair(ddddd)?)?;
+                }
+                0b1001000 => {
+                    let lllll = reg_b16(inst) as u32;
+                    let l_mid = (inst >> 5) & 0b111;
+                    let l_low = inst & 0b11;
+                    let l10 = l_low | (l_mid << 2) | (lllll << 5);
+
+                    let iiiii = reg_b8(inst);
+                    let ii = ((inst >> 3) & 0b11) as u8;
+                    let i7 = (iiiii << 2) | ii;
+                    let rel = ((i7 << 1) as i8 as i32) << 1;
+
+                    handler.on_opcode_decoded(Opcode::Loop0)?;
+                    handler.on_source_decoded(Operand::PCRel32 { rel })?;
+                    handler.on_source_decoded(Operand::ImmU16 { imm: l10 as u16 })?;
+                }
+                0b1001001 => {
+                    let lllll = reg_b16(inst) as u32;
+                    let l_mid = (inst >> 5) & 0b111;
+                    let l_low = inst & 0b11;
+                    let l10 = l_low | (l_mid << 2) | (lllll << 5);
+
+                    let iiiii = reg_b8(inst);
+                    let ii = ((inst >> 3) & 0b11) as u8;
+                    let i7 = (iiiii << 2) | ii;
+                    let rel = ((i7 << 1) as i8 as i32) << 1;
+
+                    handler.on_opcode_decoded(Opcode::Loop1)?;
+                    handler.on_source_decoded(Operand::PCRel32 { rel })?;
+                    handler.on_source_decoded(Operand::ImmU16 { imm: l10 as u16 })?;
+                }
+                0b1001101 => {
+                    let lllll = reg_b16(inst) as u32;
+                    let l_mid = (inst >> 5) & 0b111;
+                    let l_low = inst & 0b11;
+                    let l10 = l_low | (l_mid << 2) | (lllll << 5);
+
+                    let iiiii = reg_b8(inst);
+                    let ii = ((inst >> 3) & 0b11) as u8;
+                    let i7 = (iiiii << 2) | ii;
+                    let rel = ((i7 << 1) as i8 as i32) << 1;
+
+                    handler.on_opcode_decoded(Opcode::Sp1Loop0)?;
+                    handler.on_source_decoded(Operand::PCRel32 { rel })?;
+                    handler.on_source_decoded(Operand::ImmU16 { imm: l10 as u16 })?;
+                    handler.on_dest_decoded(Operand::pred(3))?;
+                }
+                0b1001110 => {
+                    let lllll = reg_b16(inst) as u32;
+                    let l_mid = (inst >> 5) & 0b111;
+                    let l_low = inst & 0b11;
+                    let l10 = l_low | (l_mid << 2) | (lllll << 5);
+
+                    let iiiii = reg_b8(inst);
+                    let ii = ((inst >> 3) & 0b11) as u8;
+                    let i7 = (iiiii << 2) | ii;
+                    let rel = ((i7 << 1) as i8 as i32) << 1;
+
+                    handler.on_opcode_decoded(Opcode::Sp2Loop0)?;
+                    handler.on_source_decoded(Operand::PCRel32 { rel })?;
+                    handler.on_source_decoded(Operand::ImmU16 { imm: l10 as u16 })?;
+                    handler.on_dest_decoded(Operand::pred(3))?;
+                }
+                0b1001111 => {
+                    let lllll = reg_b16(inst) as u32;
+                    let l_mid = (inst >> 5) & 0b111;
+                    let l_low = inst & 0b11;
+                    let l10 = l_low | (l_mid << 2) | (lllll << 5);
+
+                    let iiiii = reg_b8(inst);
+                    let ii = ((inst >> 3) & 0b11) as u8;
+                    let i7 = (iiiii << 2) | ii;
+                    let rel = ((i7 << 1) as i8 as i32) << 1;
+
+                    handler.on_opcode_decoded(Opcode::Sp3Loop0)?;
+                    handler.on_source_decoded(Operand::PCRel32 { rel })?;
+                    handler.on_source_decoded(Operand::ImmU16 { imm: l10 as u16 })?;
+                    handler.on_dest_decoded(Operand::pred(3))?;
                 }
                 0b1010000 => {
                     let sssss = reg_b16(inst);
@@ -2152,6 +2407,16 @@ fn decode_instruction<
                     handler.on_opcode_decoded(Opcode::Tlboc)?;
                     handler.on_source_decoded(Operand::gprpair(sssss)?)?;
                     handler.on_dest_decoded(Operand::gpr(ddddd))?;
+                }
+                0b1111111 => {
+                    opcode_check!((inst >> 5) & 0b100000111 == 0b010);
+                    let ddddd = reg_b0(inst);
+                    let sssss = reg_b8(inst);
+                    let ttttt = reg_b16(inst);
+                    handler.on_opcode_decoded(Opcode::Movlen)?;
+                    handler.on_dest_decoded(Operand::gpr(ddddd))?;
+                    handler.on_source_decoded(Operand::gpr(sssss))?;
+                    handler.on_source_decoded(Operand::gprpair(ttttt)?)?;
                 }
                 _ => {
                     eprintln!("!!! TODO: {:07b} !!!", opbits);

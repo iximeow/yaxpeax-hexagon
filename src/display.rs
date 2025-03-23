@@ -25,6 +25,28 @@ impl fmt::Display for InstructionPacket {
 
 impl fmt::Display for Instruction {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        static REG_COMPARE_JUMPS: &[Opcode] = &[
+            Opcode::JumpRegNz, Opcode::JumpRegGez,
+            Opcode::JumpRegZ, Opcode::JumpRegLez,
+        ];
+        if REG_COMPARE_JUMPS.contains(&self.opcode) {
+            return write!(f, "if ({}{}#0) jump{} {}",
+                self.sources[0],
+                match self.opcode {
+                    Opcode::JumpRegZ => "==",
+                    Opcode::JumpRegNz => "!=",
+                    Opcode::JumpRegGez => ">=",
+                    // JumpRegLez, the one other option
+                    _ => "<=",
+                },
+                match self.flags.branch_hint {
+                    Some(BranchHint::Taken) => { ":t" },
+                    Some(BranchHint::NotTaken) => { ":nt" },
+                    None => { "" },
+                },
+                self.dest.as_ref().unwrap()
+            );
+        }
         // handle cmp+jump first; this includes elements that would be misformatted below (like
         // predication)
         static COMPARE_JUMPS: &[Opcode] = &[
@@ -316,6 +338,11 @@ impl fmt::Display for Opcode {
             Opcode::CmpGtuJump => { f.write_str("p=cmp.gtu+if(p.new)jump") },
             Opcode::TestClrJump => { f.write_str("p=tstbit+if(p.new)jump") },
 
+            Opcode::JumpRegZ => { f.write_str("if(rn==0)jump") },
+            Opcode::JumpRegNz => { f.write_str("if(rn!=0)jump") },
+            Opcode::JumpRegGez => { f.write_str("if(rn>=0)jump") },
+            Opcode::JumpRegLez => { f.write_str("if(rn<=0)jump") },
+
             Opcode::Tlbw => { f.write_str("tlbw") },
             Opcode::Tlbr => { f.write_str("tlbr") },
             Opcode::Tlbp => { f.write_str("tlbp") },
@@ -406,6 +433,18 @@ impl fmt::Display for Opcode {
             Opcode::MemdAq => { f.write_str("memd_aq") },
             Opcode::Pmemcpy => { f.write_str("pmemcpy") },
             Opcode::Linecpy => { f.write_str("linecpy") },
+
+            Opcode::Loop0 => { f.write_str("loop0") },
+            Opcode::Loop1 => { f.write_str("loop1") },
+            Opcode::Sp1Loop0 => { f.write_str("sp1loop0") },
+            Opcode::Sp2Loop0 => { f.write_str("sp2loop0") },
+            Opcode::Sp3Loop0 => { f.write_str("sp3loop0") },
+            Opcode::Trace => { f.write_str("trace") },
+            Opcode::Diag => { f.write_str("diag") },
+            Opcode::Diag0 => { f.write_str("diag0") },
+            Opcode::Diag1 => { f.write_str("diag1") },
+
+            Opcode::Movlen => { f.write_str("movlen") },
         }
     }
 }

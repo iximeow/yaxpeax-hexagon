@@ -280,11 +280,45 @@ fn inst_0101() {
 
 #[test]
 fn inst_0110() {
+    test_display(&0b0110_0000000_00110_11_0_00010_000_01000u32.to_le_bytes(), "{ loop0($+#36, R6) }");
+    test_display(&0b0110_0000001_00110_11_0_00010_000_01000u32.to_le_bytes(), "{ loop1($+#36, R6) }");
+    test_invalid(&0b0110_0000010_00110_11_0_00010_000_01000u32.to_le_bytes(), DecodeError::InvalidOpcode);
+    test_invalid(&0b0110_0000011_00110_11_0_00010_000_01000u32.to_le_bytes(), DecodeError::InvalidOpcode);
+    test_display(&0b0110_0000101_00110_11_0_00010_000_01000u32.to_le_bytes(), "{ P3 = sp1loop0($+#36, R6) }");
+    test_display(&0b0110_0000110_00110_11_0_00010_000_01000u32.to_le_bytes(), "{ P3 = sp2loop0($+#36, R6) }");
+    test_display(&0b0110_0000111_00110_11_0_00010_000_01000u32.to_le_bytes(), "{ P3 = sp3loop0($+#36, R6) }");
+
+    // TODO: test signed (negative) offsets
+    test_display(&0b0110_0001001_00110_11_1_000101_00_10110u32.to_le_bytes(), "{ if (R6!=#0) jump:nt $+#-6868 }");
+    test_display(&0b0110_0001001_00110_11_1_100101_00_10110u32.to_le_bytes(), "{ if (R6!=#0) jump:t $+#-6868 }");
+    test_display(&0b0110_0001011_00110_11_1_000101_00_10110u32.to_le_bytes(), "{ if (R6>=#0) jump:nt $+#-6868 }");
+    test_display(&0b0110_0001011_00110_11_1_100101_00_10110u32.to_le_bytes(), "{ if (R6>=#0) jump:t $+#-6868 }");
+    test_display(&0b0110_0001101_00110_11_1_000101_00_10110u32.to_le_bytes(), "{ if (R6==#0) jump:nt $+#-6868 }");
+    test_display(&0b0110_0001101_00110_11_1_100101_00_10110u32.to_le_bytes(), "{ if (R6==#0) jump:t $+#-6868 }");
+    test_display(&0b0110_0001111_00110_11_1_000101_00_10110u32.to_le_bytes(), "{ if (R6<=#0) jump:nt $+#-6868 }");
+    test_display(&0b0110_0001111_00110_11_1_100101_00_10110u32.to_le_bytes(), "{ if (R6<=#0) jump:t $+#-6868 }");
+
     test_display(&0b0110_0010001_00110_11_0_000101_00_10110u32.to_le_bytes(), "{ C22 = R6 }");
+    test_display(&0b0110_0010010_00110_11_0_00000_000_01000u32.to_le_bytes(), "{ trace(R6) }");
+    test_display(&0b0110_0010010_00110_11_0_00000_001_01000u32.to_le_bytes(), "{ diag(R6) }");
+    test_display(&0b0110_0010010_00110_11_0_00100_010_01000u32.to_le_bytes(), "{ diag0(R7:6, R5:4) }");
+    test_display(&0b0110_0010010_00110_11_0_00100_011_01000u32.to_le_bytes(), "{ diag1(R7:6, R5:4) }");
+
     test_display(&0b0110_0011001_00110_11_0_000101_00_10110u32.to_le_bytes(), "{ C23:22 = R7:6 }");
     test_display(&0b0110_1000000_00110_11_0_000101_00_10110u32.to_le_bytes(), "{ R23:22 = C7:6 }");
+
+    test_display(&0b0110_1001000_00110_11_0_000101_00_01010u32.to_le_bytes(), "{ loop0($+#36, #0xd2) }");
+    test_display(&0b0110_1001001_00110_11_0_000101_00_01010u32.to_le_bytes(), "{ loop1($+#36, #0xd2) }");
+    test_display(&0b0110_1001101_00110_11_0_000101_00_01010u32.to_le_bytes(), "{ P3 = sp1loop0($+#36, #0xd2) }");
+    test_display(&0b0110_1001110_00110_11_0_000101_00_01010u32.to_le_bytes(), "{ P3 = sp2loop0($+#36, #0xd2) }");
+    test_display(&0b0110_1001111_00110_11_0_000101_00_01010u32.to_le_bytes(), "{ P3 = sp3loop0($+#36, #0xd2) }");
+
     test_display(&0b0110_1010000_00110_11_0_000101_00_10110u32.to_le_bytes(), "{ R22 = C6 }");
     test_display(&0b0110_1010010_01001_11_0_000101_00_10110u32.to_le_bytes(), "{ R22 = add(pc, #0x5) }");
+
+    test_display(&0b0110_1100001_01001_11_0_000000_00_00000u32.to_le_bytes(), "{ barrier }");
+
+    test_display(&0b0110_1111111_01010_11_0_001100_10_00011u32.to_le_bytes(), "{ R3 = movlen(R6, R11:10) }");
 }
 
 #[test]
