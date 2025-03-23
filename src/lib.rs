@@ -2941,6 +2941,61 @@ fn decode_instruction<
                     let llllll = (l_high << 3) | l_low;
                     handler.on_source_decoded(Operand::imm_u8(llllll))?;
                 }
+                0b0010 => {
+                    let opc_hi = (inst >> 22) & 0b11;
+                    let opc_lo = (inst >> 5) & 0b111;
+                    let opc = (opc_hi << 3) | opc_lo;
+
+                    let assign_mode_bits = opc >> 2;
+                    let shift_op_bits = opc & 0b11;
+
+                    let assign_mode = match assign_mode_bits {
+                        0b000 => AssignMode::SubAssign,
+                        0b001 => AssignMode::AddAssign,
+                        0b010 => AssignMode::AndAssign,
+                        0b011 => AssignMode::OrAssign,
+                        0b100 => AssignMode::XorAssign,
+                        _ => {
+                            return Err(DecodeError::InvalidOpcode);
+                        }
+                    };
+                    let opc = match shift_op_bits {
+                        0b00 => Opcode::Asr,
+                        0b01 => Opcode::Lsr,
+                        0b10 => Opcode::Asl,
+                        _ => Opcode::Rol,
+                    };
+                    let sssss = reg_b16(inst);
+                    let xxxxx = reg_b0(inst);
+                    let u6 = ((inst >> 8) & 0b11_1111) as u8;
+                    handler.assign_mode(assign_mode)?;
+                    handler.on_opcode_decoded(opc)?;
+                    handler.on_dest_decoded(Operand::gprpair(xxxxx)?)?;
+                    handler.on_source_decoded(Operand::gprpair(sssss)?)?;
+                    handler.on_source_decoded(Operand::imm_u8(u6))?;
+                }
+                0b0011 => {
+                    let xxxxx = reg_b0(inst);
+                    let sssss = reg_b16(inst);
+
+                    let opc_lo = (inst >> 5) & 0b111;
+                    let opc_hi = (inst >> 21) & 0b111;
+                    let opc = (opc_hi << 3) | opc_lo;
+
+                    // TODO: it's not clear which immediate is the #u6 versus #U6
+                    // they may be backwards in the decoding..
+                    handler.on_dest_decoded(Operand::gprpair(xxxxx)?)?;
+                    handler.on_source_decoded(Operand::gprpair(sssss)?)?;
+                    handler.on_opcode_decoded(Opcode::Insert)?;
+
+                    let iiiiii = (inst >> 8) & 0b111111;
+                    let l_lo = (inst >> 5) & 0b111;
+                    let l_hi = (inst >> 21) & 0b111;
+                    let llllll = l_lo | (l_hi << 3);
+
+                    handler.on_source_decoded(Operand::imm_u8(iiiiii as u8))?;
+                    handler.on_source_decoded(Operand::imm_u8(llllll as u8))?;
+                }
                 0b1111 => {
                     opcode_check!(inst & 0x00102000 == 0);
                     handler.on_source_decoded(Operand::gpr(sssss))?;
