@@ -933,7 +933,7 @@ A L I A S     A L I A S     A L I A S    A L I A S     A L I A S   | Rd=zxtb(Rs)
 |ICLASS |RegType|MajOp|s5       |Parse|           |MinOp|d5       |
 |1 0 0 0|0 0 0 0|1 0 0|s s s s s| P P |- - - - - -|1 1 0|- - - - -| Rdd=abs(Rss)          - XTYPE ALU/slot 2,3
 |1 0 0 0|1 1 0 0|1 0 0|s s s s s| P P |- - - - - -|1 0 0|d d d d d| Rd=abs(Rs)          - XTYPE ALU/slot 2,3
-|1 0 0 0|1 1 0 0|1 0 0|s s s s s| P P |- - - - - -|1 0 1|d d d d d| Rd=abs(Rs)          - XTYPE ALU/slot 2,3
+|1 0 0 0|1 1 0 0|1 0 0|s s s s s| P P |- - - - - -|1 0 1|d d d d d| Rd=abs(Rs):sat          - XTYPE ALU/slot 2,3
 
 |1 1 0 1|1 0 1 1|0 i i|s s s s s| P P |i d d d d d|i i i|u u u u u| Rd=add(Rs,add(Ru,#s6))          - XTYPE ALU/slot 2,3
 |1 1 0 1|1 0 1 1|1 i i|s s s s s| P P |i d d d d d|i i i|u u u u u| Rd=add(Rs,sub(#s6,Ru))          - XTYPE ALU/slot 2,3
@@ -1005,7 +1005,7 @@ A L I A S     A L I A S     A L I A S    A L I A S     A L I A S   | Rd=zxtb(Rs)
 |1 0 0 0|1 0 0 0|1 1 0|s s s s s| P P |- - - - - -|0 0 1|d d d d d| Rd=round(Rss):sat                 - XTYPE ALU/slot 2,3
 |1 0 0 0|1 1 0 0|1 1 1|s s s s s| P P |0 i i i i i|0 0 -|d d d d d| Rd=cround(Rs,#u5)                 - XTYPE ALU/slot 2,3
 |1 0 0 0|1 1 0 0|1 1 1|s s s s s| P P |0 i i i i i|1 0 -|d d d d d| Rd=round(Rs,#u5)                 - XTYPE ALU/slot 2,3
-|1 0 0 0|1 1 0 0|1 1 1|s s s s s| P P |0 i i i i i|1 0 -|d d d d d| Rd=round(Rs,#u5):sat                 - XTYPE ALU/slot 2,3
+|1 0 0 0|1 1 0 0|1 1 1|s s s s s| P P |0 i i i i i|1 1 -|d d d d d| Rd=round(Rs,#u5):sat                 - XTYPE ALU/slot 2,3
 |1 0 0 0|1 1 0 0|1 1 1|s s s s s| P P |i i i i i i|0 1 -|d d d d d| Rdd=cround(Rss,#u6)                 - XTYPE ALU/slot 2,3
 
 |1 1 0 0|0 1 1 0|1 1 -|s s s s s| P P |- t t t t t|0 0 -|d d d d d| Rd=cround(Rs,Rt)                 - XTYPE ALU/slot 2,3
