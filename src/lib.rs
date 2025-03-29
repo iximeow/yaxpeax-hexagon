@@ -303,6 +303,12 @@ enum AssignMode {
 }
 
 #[derive(Debug, Copy, Clone)]
+enum RawMode {
+    Lo,
+    Hi,
+}
+
+#[derive(Debug, Copy, Clone)]
 struct InstFlags {
     predicate: Option<Predicate>,
     branch_hint: Option<BranchHint>,
@@ -312,6 +318,7 @@ struct InstFlags {
     rounded: Option<RoundingMode>,
     threads: Option<DomainHint>,
     assign_mode: Option<AssignMode>,
+    raw_mode: Option<RawMode>,
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -331,6 +338,7 @@ impl Default for InstFlags {
             rounded: None,
             threads: None,
             assign_mode: None,
+            raw_mode: None,
         }
     }
 }
@@ -651,6 +659,20 @@ pub enum Opcode {
     SfFixupr,
     Swiz,
 
+    Parity,
+    Vmux,
+    VcmpwEq,
+    VcmpwGt,
+    VcmpwGtu,
+    VcmphEq,
+    VcmphGt,
+    VcmphGtu,
+    VcmpbEq,
+    VcmpbGt,
+    VcmpbGtu,
+    Tlbmatch,
+    Boundscheck,
+
     AndAnd = 0x8000,
     AndOr,
     OrAnd,
@@ -663,6 +685,7 @@ pub enum Opcode {
     OrOrNot,
     AddClb,
     SfInvsqrta,
+    Any8VcmpbEq,
 }
 
 impl Opcode {
@@ -1140,6 +1163,7 @@ trait DecodeHandler<T: Reader<<Hexagon as Arch>::Address, <Hexagon as Arch>::Wor
     fn domain_hint(&mut self, _domain: DomainHint) -> Result<(), <Hexagon as Arch>::DecodeError> { Ok(()) }
     fn rounded(&mut self, _mode: RoundingMode) -> Result<(), <Hexagon as Arch>::DecodeError> { Ok(()) }
     fn chop(&mut self) -> Result<(), <Hexagon as Arch>::DecodeError> { Ok(()) }
+    fn raw_mode(&mut self, _mode: RawMode) -> Result<(), <Hexagon as Arch>::DecodeError> { Ok(()) }
     fn on_word_read(&mut self, _word: <Hexagon as Arch>::Word) {}
 }
 
@@ -1222,6 +1246,12 @@ impl<T: yaxpeax_arch::Reader<<Hexagon as Arch>::Address, <Hexagon as Arch>::Word
         let flags = &mut self.instructions[self.instruction_count as usize].flags;
         assert!(!flags.chop);
         flags.chop = true;
+        Ok(())
+    }
+    fn raw_mode(&mut self, mode: RawMode) -> Result<(), <Hexagon as Arch>::DecodeError> {
+        let flags = &mut self.instructions[self.instruction_count as usize].flags;
+        assert!(flags.raw_mode.is_none());
+        flags.raw_mode = Some(mode);
         Ok(())
     }
     #[inline(always)]
@@ -4363,7 +4393,97 @@ fn decode_instruction<
             }
         }
         0b1101 => {
-            todo!("iclass 1101");
+            let opc_hi = (inst >> 24) & 0b1111;
+            let ddddd = reg_b0(inst);
+            let ttttt = reg_b8(inst);
+            let sssss = reg_b16(inst);
+
+            match opc_hi {
+                0b0000 => {
+                    handler.on_dest_decoded(Operand::gpr(ddddd))?;
+                    handler.on_source_decoded(Operand::gprpair(sssss)?)?;
+                    handler.on_source_decoded(Operand::gprpair(ttttt)?)?;
+                    handler.on_opcode_decoded(Opcode::Parity)?;
+                }
+                0b0001 => {
+                    let uu = ((inst >> 5) & 0b11) as u8;
+                    handler.on_dest_decoded(Operand::gprpair(ddddd)?)?;
+                    handler.on_source_decoded(Operand::pred(uu))?;
+                    handler.on_source_decoded(Operand::gprpair(sssss)?)?;
+                    handler.on_source_decoded(Operand::gprpair(ttttt)?)?;
+                    handler.on_opcode_decoded(Opcode::Vmux)?;
+                }
+                0b0010 => {
+                    opcode_check!(inst & 0x80_00_00 == 0);
+
+                    let ophi = (inst >> 13) & 1;
+                    let oplo = (inst >> 5) & 0b111;
+                    let opc = oplo | (ophi << 3);
+                    let dd = ddddd & 0b11;
+
+                    handler.on_dest_decoded(Operand::pred(dd))?;
+                    handler.on_source_decoded(Operand::gprpair(sssss)?)?;
+                    if opc != 0b1011 {
+                        handler.on_source_decoded(Operand::gprpair(ttttt)?)?;
+                    } else {
+                        handler.on_source_decoded(Operand::gpr(ttttt))?;
+                    }
+
+                    match opc {
+                        0b0000 => {
+                            handler.on_opcode_decoded(Opcode::VcmpwEq)?;
+                        }
+                        0b0001 => {
+                            handler.on_opcode_decoded(Opcode::VcmpwGt)?;
+                        }
+                        0b0010 => {
+                            handler.on_opcode_decoded(Opcode::VcmpwGtu)?;
+                        }
+                        0b0011 => {
+                            handler.on_opcode_decoded(Opcode::VcmphEq)?;
+                        }
+                        0b0100 => {
+                            handler.on_opcode_decoded(Opcode::VcmphGt)?;
+                        }
+                        0b0101 => {
+                            handler.on_opcode_decoded(Opcode::VcmphGtu)?;
+                        }
+                        0b0110 => {
+                            handler.on_opcode_decoded(Opcode::VcmpbEq)?;
+                        }
+                        0b0111 => {
+                            handler.on_opcode_decoded(Opcode::VcmpbGtu)?;
+                        }
+                        0b1000 => {
+                            handler.on_opcode_decoded(Opcode::Any8VcmpbEq)?;
+                        }
+                        0b1001 => {
+                            handler.on_opcode_decoded(Opcode::Any8VcmpbEq)?;
+                            handler.negate_result();
+                        }
+                        0b1010 => {
+                            handler.on_opcode_decoded(Opcode::VcmpbGt)?;
+                        }
+                        0b1011 => {
+                            handler.on_opcode_decoded(Opcode::Tlbmatch)?;
+                        }
+                        0b1100 => {
+                            handler.on_opcode_decoded(Opcode::Boundscheck)?;
+                            handler.raw_mode(RawMode::Lo)?;
+                        }
+                        0b1101 => {
+                            handler.on_opcode_decoded(Opcode::Boundscheck)?;
+                            handler.raw_mode(RawMode::Hi)?;
+                        }
+                        _ => {
+                            return Err(DecodeError::InvalidOpcode);
+                        }
+                    }
+                }
+                _ => {
+                    todo!("other");
+                },
+            }
         }
         0b1111 => {
             let ddddd = reg_b0(inst);

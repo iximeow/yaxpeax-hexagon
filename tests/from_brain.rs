@@ -1098,6 +1098,28 @@ fn inst_1100() {
 }
 
 #[test]
+fn inst_1101() {
+    test_display(&0b1101_0000_000_10100_11_000110_110_10110u32.to_le_bytes(), "{ R22 = parity(R21:20, R7:6) }");
+    // bit 7 is `-` in the listing...
+    test_display(&0b1101_0001_000_10100_11_000110_110_10110u32.to_le_bytes(), "{ R23:22 = vmux(P2, R21:20, R7:6) }");
+    // bits 2, 3, 4 are `-` in the listing
+    test_display(&0b1101_0010_000_10100_11_000110_000_10110u32.to_le_bytes(), "{ P2 = vcmpw.eq(R21:20, R7:6) }");
+    test_display(&0b1101_0010_000_10100_11_000110_001_10110u32.to_le_bytes(), "{ P2 = vcmpw.gt(R21:20, R7:6) }");
+    test_display(&0b1101_0010_000_10100_11_000110_010_10110u32.to_le_bytes(), "{ P2 = vcmpw.gtu(R21:20, R7:6) }");
+    test_display(&0b1101_0010_000_10100_11_000110_011_10110u32.to_le_bytes(), "{ P2 = vcmph.eq(R21:20, R7:6) }");
+    test_display(&0b1101_0010_000_10100_11_000110_100_10110u32.to_le_bytes(), "{ P2 = vcmph.gt(R21:20, R7:6) }");
+    test_display(&0b1101_0010_000_10100_11_000110_101_10110u32.to_le_bytes(), "{ P2 = vcmph.gtu(R21:20, R7:6) }");
+    test_display(&0b1101_0010_000_10100_11_000110_110_10110u32.to_le_bytes(), "{ P2 = vcmpb.eq(R21:20, R7:6) }");
+    test_display(&0b1101_0010_000_10100_11_000110_111_10110u32.to_le_bytes(), "{ P2 = vcmpb.gtu(R21:20, R7:6) }");
+    test_display(&0b1101_0010_000_10100_11_100110_000_10110u32.to_le_bytes(), "{ P2 = any8(vcmpb.eq(R21:20, R7:6)) }");
+    test_display(&0b1101_0010_000_10100_11_100110_001_10110u32.to_le_bytes(), "{ P2 = !any8(vcmpb.eq(R21:20, R7:6)) }");
+    test_display(&0b1101_0010_000_10100_11_100110_010_10110u32.to_le_bytes(), "{ P2 = vcmpb.gt(R21:20, R7:6) }");
+    test_display(&0b1101_0010_000_10100_11_100110_011_10110u32.to_le_bytes(), "{ P2 = tlbmatch(R21:20, R6) }");
+    test_display(&0b1101_0010_000_10100_11_100110_100_10110u32.to_le_bytes(), "{ P2 = boundscheck(R21:20, R7:6):raw:lo }");
+    test_display(&0b1101_0010_000_10100_11_100110_101_10110u32.to_le_bytes(), "{ P2 = boundscheck(R21:20, R7:6):raw:hi }");
+}
+
+#[test]
 fn inst_1111() {
     test_display(&0b1111_0001000_00100_11_0_00011_000_00110u32.to_le_bytes(), "{ R6 = and(R4, R3) }");
     test_display(&0b1111_0001001_00100_11_0_00011_000_00110u32.to_le_bytes(), "{ R6 = or(R4, R3) }");

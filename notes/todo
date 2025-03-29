@@ -558,38 +558,38 @@ A L I A S     A L I A S     A L I A S    A L I A S     A L I A S   | Rd=zxtb(Rs)
 
 
 
-|1 0 0 0|1 1 0 0|0 0 0|s s s s s| P P |0 i i i i i|0 0 0|d d d d d| Rdd=asr(Rs,#u5)                 - XTYPE PERM/slot 2,3
-|1 0 0 0|1 1 0 0|0 0 0|s s s s s| P P |0 i i i i i|0 0 1|d d d d d| Rdd=lsr(Rs,#u5)                 - XTYPE PERM/slot 2,3
-|1 0 0 0|1 1 0 0|0 0 0|s s s s s| P P |0 i i i i i|0 1 0|d d d d d| Rdd=asl(Rs,#u5)                 - XTYPE PERM/slot 2,3
-|1 0 0 0|1 1 0 0|0 0 0|s s s s s| P P |0 i i i i i|0 1 1|d d d d d| Rdd=rol(Rs,#u5)                 - XTYPE PERM/slot 2,3
-|1 0 0 0|1 1 0 0|0 0 0|s s s s s| P P |- - - - - -|1 0 0|d d d d d| Rd=clb(Rs)                 - XTYPE ALU/slot 2,3
-|1 0 0 0|1 1 0 0|0 0 0|s s s s s| P P |- - - - - -|1 0 1|d d d d d| Rd=cl0(Rs)                 - XTYPE ALU/slot 2,3
-|1 0 0 0|1 1 0 0|0 0 0|s s s s s| P P |- - - - - -|1 1 0|d d d d d| Rd=cl1(Rs)                 - XTYPE ALU/slot 2,3
-|1 0 0 0|1 1 0 0|0 0 0|s s s s s| P P |- - - - - -|1 1 1|d d d d d| Rd=normamt(Rs)                 - XTYPE ALU/slot 2,3
-|1 0 0 0|1 1 0 0|0 0 1|s s s s s| P P |i i i i i i|0 0 0|d d d d d| Rd=add(clb(Rs),#s6)                 - XTYPE ALU/slot 2,3
-|1 0 0 0|1 1 0 0|0 1 0|s s s s s| P P |0 i i i i i|0 0 0|d d d d d| Rd=asr(Rs,#u5):rnd                 - XTYPE PERM/slot 2,3
-|1 0 0 0|1 1 0 0|0 1 0|s s s s s| P P |0 i i i i i|0 1 0|d d d d d| Rd=asl(Rs,#u5):sat                 - XTYPE PERM/slot 2,3
-|1 0 0 0|1 1 0 0|0 1 0|s s s s s| P P |- - - - - -|1 0 0|d d d d d| Rd=ct0(Rs)                 - XTYPE ALU/slot 2,3
-|1 0 0 0|1 1 0 0|0 1 0|s s s s s| P P |- - - - - -|1 0 1|d d d d d| Rd=ct1(Rs)                 - XTYPE ALU/slot 2,3
-|1 0 0 0|1 1 0 0|0 1 0|s s s s s| P P |- - - - - -|1 1 0|d d d d d| Rd=brev(Rs)                 - XTYPE ALU/slot 2,3
-|1 0 0 0|1 1 0 0|0 1 0|s s s s s| P P |- - - - - -|1 1 1|d d d d d| Rd=vsplatb(Rs)                 - XTYPE PERM/slot 2,3
-|1 0 0 0|1 1 0 0|1 0 -|s s s s s| P P |- - - - - -|0 0 -|d d d d d| Rd=vsathb(Rs)                 - XTYPE PERM/slot 2,3
-|1 0 0 0|1 1 0 0|1 0 -|s s s s s| P P |- - - - - -|0 1 -|d d d d d| Rd=vsathub(Rs)                 - XTYPE PERM/slot 2,3
-|1 0 0 0|1 1 0 0|1 0 0|s s s s s| P P |- - - - - -|1 0 0|d d d d d| Rd=abs(Rs)          - XTYPE ALU/slot 2,3
-|1 0 0 0|1 1 0 0|1 0 0|s s s s s| P P |- - - - - -|1 0 1|d d d d d| Rd=abs(Rs):sat          - XTYPE ALU/slot 2,3
-|1 0 0 0|1 1 0 0|1 0 0|s s s s s| P P |- - - - - -|1 1 0|d d d d d| Rd=neg(Rs):sat                 - XTYPE ALU/slot 2,3
-|1 0 0 0|1 1 0 0|1 0 0|s s s s s| P P |- - - - - -|1 1 1|d d d d d| Rd=swiz(Rs)                 - XTYPE PERM/slot 2,3
-|1 0 0 0|1 1 0 0|1 1 0|s s s s s| P P |0 i i i i i|0 0 0|d d d d d| Rd=setbit(Rs,#u5)                 - XTYPE ALU/slot 2,3
-|1 0 0 0|1 1 0 0|1 1 0|s s s s s| P P |0 i i i i i|0 0 1|d d d d d| Rd=clrbit(Rs,#u5)                 - XTYPE ALU/slot 2,3
-|1 0 0 0|1 1 0 0|1 1 0|s s s s s| P P |0 i i i i i|0 1 0|d d d d d| Rd=togglebit(Rs,#u5)                 - XTYPE ALU/slot 2,3
-|1 0 0 0|1 1 0 0|1 1 0|s s s s s| P P |- - - - - -|1 0 0|d d d d d| Rd=sath(Rs)                 - XTYPE PERM/slot 2,3
-|1 0 0 0|1 1 0 0|1 1 0|s s s s s| P P |- - - - - -|1 0 1|d d d d d| Rd=satuh(Rs)                 - XTYPE PERM/slot 2,3
-|1 0 0 0|1 1 0 0|1 1 0|s s s s s| P P |- - - - - -|1 1 0|d d d d d| Rd=satub(Rs)                 - XTYPE PERM/slot 2,3
-|1 0 0 0|1 1 0 0|1 1 0|s s s s s| P P |- - - - - -|1 1 1|d d d d d| Rd=satb(Rs)                 - XTYPE PERM/slot 2,3
-|1 0 0 0|1 1 0 0|1 1 1|s s s s s| P P |0 i i i i i|0 0 -|d d d d d| Rd=cround(Rs,#u5)                 - XTYPE ALU/slot 2,3
-|1 0 0 0|1 1 0 0|1 1 1|s s s s s| P P |i i i i i i|0 1 -|d d d d d| Rdd=cround(Rss,#u6)                 - XTYPE ALU/slot 2,3
-|1 0 0 0|1 1 0 0|1 1 1|s s s s s| P P |0 i i i i i|1 0 -|d d d d d| Rd=round(Rs,#u5)                 - XTYPE ALU/slot 2,3
-|1 0 0 0|1 1 0 0|1 1 1|s s s s s| P P |0 i i i i i|1 1 -|d d d d d| Rd=round(Rs,#u5):sat                 - XTYPE ALU/slot 2,3
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1046,22 +1046,22 @@ A L I A S     A L I A S     A L I A S    A L I A S     A L I A S   | Rd=zxtb(Rs)
 
 
 
-|1 1 0 1|0 0 0 0|- - -|s s s s s| P P |- t t t t t|- - -|d d d d d| Rd=parity(Rss,Rtt)                 - XTYPE ALU/slot 2,3
-|1 1 0 1|0 0 0 1|- - -|s s s s s| P P |- t t t t t|- u u|d d d d d| Rdd=vmux(Pu,Rss,Rtt)                 - XTYPE PERM/slot 2,3
-|1 1 0 1|0 0 1 0|0 - -|s s s s s| P P |0 t t t t t|0 0 0|- - - d d| Pd=vcmpw.eq(Rss,Rtt)                 - XTYPE PERM/slot 2,3
-|1 1 0 1|0 0 1 0|0 - -|s s s s s| P P |0 t t t t t|0 0 1|- - - d d| Pd=vcmpw.gt(Rss,Rtt)                 - XTYPE PERM/slot 2,3
-|1 1 0 1|0 0 1 0|0 - -|s s s s s| P P |0 t t t t t|0 1 0|- - - d d| Pd=vcmpw.gtu(Rss,Rtt)                 - XTYPE PERM/slot 2,3
-|1 1 0 1|0 0 1 0|0 - -|s s s s s| P P |0 t t t t t|0 1 1|- - - d d| Pd=vcmph.eq(Rss,Rtt)                 - XTYPE PERM/slot 2,3
-|1 1 0 1|0 0 1 0|0 - -|s s s s s| P P |0 t t t t t|1 0 0|- - - d d| Pd=vcmph.gt(Rss,Rtt)                 - XTYPE PERM/slot 2,3
-|1 1 0 1|0 0 1 0|0 - -|s s s s s| P P |0 t t t t t|1 0 1|- - - d d| Pd=vcmph.gtu(Rss,Rtt)                 - XTYPE PERM/slot 2,3
-|1 1 0 1|0 0 1 0|0 - -|s s s s s| P P |0 t t t t t|1 1 0|- - - d d| Pd=vcmpb.eq(Rss,Rtt)                 - XTYPE PERM/slot 2,3
-|1 1 0 1|0 0 1 0|0 - -|s s s s s| P P |0 t t t t t|1 1 1|- - - d d| Pd=vcmpb.gtu(Rss,Rtt)                 - XTYPE PERM/slot 2,3
-|1 1 0 1|0 0 1 0|0 - -|s s s s s| P P |1 t t t t t|0 0 0|- - - d d| Pd=any8(vcmpb.eq(Rss,Rtt))                 - XTYPE PERM/slot 2,3
-|1 1 0 1|0 0 1 0|0 - -|s s s s s| P P |1 t t t t t|0 0 1|- - - d d| Pd=!any8(vcmpb.eq(Rss,Rtt))                 - XTYPE PERM/slot 2,3
-|1 1 0 1|0 0 1 0|0 - -|s s s s s| P P |1 t t t t t|0 1 0|- - - d d| Pd=vcmpb.gt(Rss,Rtt)                 - XTYPE PERM/slot 2,3
-|1 1 0 1|0 0 1 0|0 - -|s s s s s| P P |1 t t t t t|0 1 1|- - - d d| Pd=tlbmatch(Rss,Rt)                 - XTYPE PERM/slot 2,3
-|1 1 0 1|0 0 1 0|0 - -|s s s s s| P P |1 t t t t t|1 0 0|- - - d d| Pd=boundscheck(Rss,Rtt):raw:lo                 - XTYPE PERM/slot 2,3
-|1 1 0 1|0 0 1 0|0 - -|s s s s s| P P |1 t t t t t|1 0 1|- - - d d| Pd=boundscheck(Rss,Rtt):raw:hi                 - XTYPE PERM/slot 2,3
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 |1 1 0 1|0 0 1 1|0 0 0|s s s s s| P P |- t t t t t|0 0 0|d d d d d| Rdd=vaddub(Rss,Rtt)                 - XTYPE ALU/slot 2,3
 |1 1 0 1|0 0 1 1|0 0 0|s s s s s| P P |- t t t t t|0 0 1|d d d d d| Rdd=vaddub(Rss,Rtt):sat                 - XTYPE ALU/slot 2,3
 |1 1 0 1|0 0 1 1|0 0 0|s s s s s| P P |- t t t t t|0 1 0|d d d d d| Rdd=vaddh(Rss,Rtt)                 - XTYPE ALU/slot 2,3

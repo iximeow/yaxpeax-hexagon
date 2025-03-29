@@ -1,7 +1,7 @@
 use core::fmt;
 
 use crate::{Instruction, InstructionPacket, Opcode, Operand};
-use crate::{AssignMode, BranchHint, DomainHint};
+use crate::{AssignMode, BranchHint, DomainHint, RawMode};
 
 fn special_display_rules(op: &Opcode) -> bool {
     *op as u16 & 0x8000 == 0x8000
@@ -79,6 +79,12 @@ impl fmt::Display for Instruction {
                     return write!(f, "{}, {} = {}({})",
                         self.dest.as_ref().unwrap(), self.alt_dest.as_ref().unwrap(),
                         self.opcode, self.sources[0]);
+                }
+                Opcode::Any8VcmpbEq => {
+                    return write!(f, "{} = {}any8(vcmpb.eq({}, {}))",
+                        self.dest.as_ref().unwrap(),
+                        if self.flags.negated { "!" } else { "" },
+                        self.sources[0], self.sources[1]);
                 }
                 _ => {
                     unreachable!("TODO: should be exhaustive for opcodes with special display rules");
@@ -312,6 +318,12 @@ impl fmt::Display for Instruction {
         match self.flags.threads {
             Some(DomainHint::Same) => { f.write_str(":st")? },
             Some(DomainHint::All) => { f.write_str(":at")? },
+            None => {}
+        }
+
+        match self.flags.raw_mode {
+            Some(RawMode::Lo) => { f.write_str(":raw:lo")? },
+            Some(RawMode::Hi) => { f.write_str(":raw:hi")? },
             None => {}
         }
 
@@ -586,6 +598,20 @@ impl fmt::Display for Opcode {
             Opcode::SfFixupr => { f.write_str("sffixupr") },
             Opcode::SfInvsqrta => { f.write_str("sfinvsqrta") },
             Opcode::Swiz => { f.write_str("swiz") },
+            Opcode::Parity => { f.write_str("parity") },
+            Opcode::Tlbmatch => { f.write_str("tlbmatch") },
+            Opcode::Boundscheck => { f.write_str("boundscheck") },
+            Opcode::Any8VcmpbEq => { f.write_str("any8vcmpbeq") },
+            Opcode::Vmux => { f.write_str("vmux") },
+            Opcode::VcmpwEq => { f.write_str("vcmpw.eq") },
+            Opcode::VcmpwGt => { f.write_str("vcmpw.gt") },
+            Opcode::VcmpwGtu => { f.write_str("vcmpw.gtu") },
+            Opcode::VcmphEq => { f.write_str("vcmph.eq") },
+            Opcode::VcmphGt => { f.write_str("vcmph.gt") },
+            Opcode::VcmphGtu => { f.write_str("vcmph.gtu") },
+            Opcode::VcmpbEq => { f.write_str("vcmpb.eq") },
+            Opcode::VcmpbGt => { f.write_str("vcmpb.gt") },
+            Opcode::VcmpbGtu => { f.write_str("vcmpb.gtu") },
         }
     }
 }
