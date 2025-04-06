@@ -27,12 +27,12 @@ impl Arch for Hexagon {
     type Operand = Operand;
 }
 
-#[derive(Debug, Copy, Clone, Default)]
+#[derive(Debug, Copy, Clone, Default, PartialEq)]
 struct Predicate {
     state: u8,
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 enum BranchHint {
     Taken,
     NotTaken,
@@ -112,20 +112,20 @@ impl Predicate {
 }
 
 #[derive(Debug, Copy, Clone, Default)]
-struct LoopEnd {
+pub struct LoopEnd {
     loops_ended: u8
 }
 
 impl LoopEnd {
-    fn end_0(&self) -> bool {
+    pub fn end_0(&self) -> bool {
         self.loops_ended & 0b01 != 0
     }
 
-    fn end_1(&self) -> bool {
+    pub fn end_1(&self) -> bool {
         self.loops_ended & 0b10 != 0
     }
 
-    fn end_any(&self) -> bool {
+    pub fn end_any(&self) -> bool {
         self.loops_ended != 0
     }
 
@@ -276,22 +276,32 @@ pub struct Instruction {
     sources_count: u8,
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 enum RoundingMode {
     Round,
+    Cround,
     Raw,
+    Hi,
+    Lo,
+    Pos,
+    Neg,
 }
 
 impl RoundingMode {
     fn as_label(&self) -> &'static str {
         match self {
             RoundingMode::Round => ":rnd",
+            RoundingMode::Cround => ":crnd",
             RoundingMode::Raw => ":raw",
+            RoundingMode::Lo => ":lo",
+            RoundingMode::Hi => ":hi",
+            RoundingMode::Pos => ":pos",
+            RoundingMode::Neg => ":neg",
         }
     }
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 enum AssignMode {
     AddAssign,
     SubAssign,
@@ -302,13 +312,13 @@ enum AssignMode {
     SetBit,
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 enum RawMode {
     Lo,
     Hi,
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 struct InstFlags {
     predicate: Option<Predicate>,
     branch_hint: Option<BranchHint>,
@@ -319,9 +329,13 @@ struct InstFlags {
     threads: Option<DomainHint>,
     assign_mode: Option<AssignMode>,
     raw_mode: Option<RawMode>,
+    shift_left: Option<u8>,
+    shift_right: Option<u8>,
+    carry: bool,
+    deprecated: bool,
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 enum DomainHint {
     Same,
     All,
@@ -339,6 +353,10 @@ impl Default for InstFlags {
             threads: None,
             assign_mode: None,
             raw_mode: None,
+            shift_left: None,
+            shift_right: None,
+            carry: false,
+            deprecated: false,
         }
     }
 }
@@ -440,6 +458,12 @@ pub enum Opcode {
     CmpEq,
     CmpGt,
     CmpGtu,
+    CmpbEq,
+    CmphEq,
+    CmpbGtu,
+    CmphGtu,
+    CmpbGt,
+    CmphGt,
 
     JumpEq,
     JumpNeq,
@@ -513,6 +537,13 @@ pub enum Opcode {
     Vlsrh,
     Vaslw,
     Vaslh,
+    Vlslw,
+    Vlslh,
+
+    Vabsdiffb,
+    Vabsdiffub,
+    Vabsdiffh,
+    Vabsdiffw,
 
     Not,
     Neg,
@@ -534,11 +565,77 @@ pub enum Opcode {
     Isync,
     Unpause,
 
+    DfAdd,
+    DfSub,
+    DfMax,
+    DfMin,
+
+    SfSub,
+    SfAdd,
+    SfMpy,
+    SfMax,
+    SfMin,
+    SfCmpEq,
+    SfCmpGt,
+    SfCmpGe,
+    SfCmpUo,
+
+    DfCmpEq,
+    DfCmpGt,
+    DfCmpGe,
+    DfCmpUo,
+    DfMpyll,
+    DfMpylh,
+    DfMpyhh,
+    DfMpyfix,
+
+    Cmpy,
+    Cmpyiw,
+    Cmpyrw,
+    Cmpyiwh,
+    Cmpyrwh,
+    Cmpyi,
+    Cmpyr,
+    Pcmpyw,
+    Vacsh,
+    Vcmpyi,
+    Vcmpyr,
+    Vmpybu,
+    Vmpyh,
+    Vmpyhsu,
+    Vmpybsu,
+    Vpcmpyw,
+    Vrmpybsu,
+    Vdmpybsu,
+    Vrmpybu,
+    Vrmpyh,
+
+    Pmpyw,
+    Lfs,
+
+    Vxaddsubh,
+    Vxaddsubw,
+    Vxsubaddh,
+    Vxsubaddw,
+
+    Vraddub,
+    Vraddh,
+    Vradduh,
+    Vrsadub,
+    Vaddub,
     Vaddh,
+    Vaddhub,
     Vadduh,
+    Vaddw,
+    Vsubub,
+    Vsubw,
     Vsubh,
     Vsubuh,
+    Vavgub,
+    Vavgw,
+    Vavguw,
     Vavgh,
+    Vavguh,
     Vnavgh,
 
     Packhl,
@@ -587,6 +684,11 @@ pub enum Opcode {
     Any8,
     All8,
 
+    Max,
+    Maxu,
+    Min,
+    Minu,
+
     Valignb,
     Vspliceb,
     Vsxtbh,
@@ -595,7 +697,19 @@ pub enum Opcode {
     Vzxthw,
     Vsplath,
     Vsplatb,
+    Vcrotate,
     Vrcrotate,
+    Vmaxb,
+    Vmaxub,
+    Vminb,
+    Vminub,
+    Vminuw,
+    Vminh,
+    Vminuh,
+    Vmaxw,
+    Vmaxuw,
+    Vmaxh,
+    Vmaxuh,
     Vrmaxh,
     Vrmaxw,
     Vrminh,
@@ -604,6 +718,8 @@ pub enum Opcode {
     Vrmaxuw,
     Vrminuh,
     Vrminuw,
+    Vnegh,
+    Vcnegh,
     Vrcnegh,
 
     ConvertDf2D,
@@ -628,7 +744,12 @@ pub enum Opcode {
     Togglebit,
     Tstbit,
     Bitsclr,
-    Sfclass,
+    Bitsset,
+    Modwrap,
+    SfClass,
+    DfClass,
+    SfMake,
+    DfMake,
     Tableidxb,
     Tableidxh,
     Tableidxw,
@@ -637,7 +758,9 @@ pub enum Opcode {
     Vasrhub,
     Vrndwh,
     Vtrunohb,
+    Vtrunowh,
     Vtrunehb,
+    Vtrunewh,
     Normamt,
     Popcount,
     Sat,
@@ -657,7 +780,15 @@ pub enum Opcode {
     Ct1,
     Vitpack,
     SfFixupr,
+    SfFixupn,
+    SfFixupd,
+    SfRecipa,
     Swiz,
+    Shuffeb,
+    Shuffob,
+    Shuffeh,
+    Shuffoh,
+    Decbin,
 
     Parity,
     Vmux,
@@ -673,6 +804,22 @@ pub enum Opcode {
     Tlbmatch,
     Boundscheck,
 
+    Mpy,
+    Mpyu,
+    Mpyi,
+    Mpysu,
+    Vcmpyh,
+    Vrcmpys,
+    Vdmpy,
+    Vmpyeh,
+    Vmpyweh,
+    Vmpywoh,
+    Vmpyweuh,
+    Vmpywouh,
+    Vrmpywoh,
+    Vrmpyu,
+    Vrmpysu,
+
     AndAnd = 0x8000,
     AndOr,
     OrAnd,
@@ -683,9 +830,24 @@ pub enum Opcode {
     OrAndNot,
     OrNot,
     OrOrNot,
+    AndLsr,
+    OrLsr,
+    AddLsr,
+    SubLsr,
+    AddLsl,
+    AddAsl,
+    SubAsl,
+    AndAsl,
+    OrAsl,
     AddClb,
+    AddAdd,
+    AddSub,
     SfInvsqrta,
     Any8VcmpbEq,
+
+    AddMpyi,
+    MpyiNeg,
+    MpyiPos,
 }
 
 impl Opcode {
@@ -709,6 +871,7 @@ impl Opcode {
     }
 }
 
+/*
 /// TODO: don't know if this will be useful, but this is how V73 is described.. it also appears to
 /// be the overall structure of the processor at least back to V5x.
 /// TODO: how far back does this organization reflect reality? all the way to V2?
@@ -726,6 +889,7 @@ enum ExecutionUnit {
     /// XTYPE, ALU32, J, CR
     S3
 }
+*/
 
 /// V73 Section 2.1:
 /// > thirty-two 32-bit general-purpose registers (named R0 through R31)
@@ -759,15 +923,6 @@ impl fmt::Display for GPR {
         f.write_str(NAMES[self.0 as usize])
     }
 }
-
-/// V73 Section 2.1:
-/// > the general registers can be specified as a pair that represent a single 64-bit register.
-/// >
-/// > NOTE: the first register in a register pair must always be odd-numbered, and the second must be
-/// > the next lower register.
-///
-/// from Table 2-2, note there is an entry of `R31:R30 (LR:FP)`
-struct RegPair(u8);
 
 /// V73 Section 2.2:
 /// > the Hexagon processor includes a set of 32-bit control registers that provide access to
@@ -885,9 +1040,34 @@ impl ControlReg {
     const UTIMERHI: ControlReg = ControlReg(31);
 }
 
+impl Instruction {
+    fn sources(&self) -> &[Operand] {
+        &self.sources[..self.sources_count as usize]
+    }
+}
+
 impl PartialEq for Instruction {
     fn eq(&self, other: &Self) -> bool {
-        panic!("partialeq")
+        let Instruction {
+            opcode: leftop,
+            dest: leftdest,
+            alt_dest: leftaltdest,
+            flags: leftflags,
+            ..
+        } = self;
+        let Instruction {
+            opcode: rightop,
+            dest: rightdest,
+            alt_dest: rightaltdest,
+            flags: rightflags,
+            ..
+        } = other;
+
+        leftop == rightop &&
+            leftdest == rightdest &&
+            leftaltdest == rightaltdest &&
+            leftflags == rightflags &&
+            self.sources() == other.sources()
     }
 }
 
@@ -945,7 +1125,19 @@ pub enum Operand {
     GprLow { reg: u8 },
     /// `Rn.H`, high 16 bits of `R<reg>`
     GprHigh { reg: u8 },
+
+    /// the complex conjugate of `R<reg>`. this is only used in a few instructions performing
+    /// complex multiplies, and is displayed as `Rn*`.
+    GprConjugate { reg: u8 },
     /// `Rn:m`, register pair forming a 64-bit location
+    ///
+    /// V73 Section 2.1:
+    /// > the general registers can be specified as a pair that represent a single 64-bit register.
+    /// >
+    /// > NOTE: the first register in a register pair must always be odd-numbered, and the second must be
+    /// > the next lower register.
+    ///
+    /// from Table 2-2, note there is an entry of `R31:R30 (LR:FP)`
     Gpr64b { reg_low: u8 },
     /// `Cn:m`, control register pair forming a 64-bit location
     Cr64b { reg_low: u8 },
@@ -1002,6 +1194,10 @@ impl Operand {
 
     fn gpr_high(num: u8) -> Self {
         Self::GprHigh { reg: num }
+    }
+
+    fn gpr_conjugate(num: u8) -> Self {
+        Self::GprConjugate { reg: num }
     }
 
     /// decode a 4-bit `num` into a full register, according to
@@ -1164,6 +1360,10 @@ trait DecodeHandler<T: Reader<<Hexagon as Arch>::Address, <Hexagon as Arch>::Wor
     fn rounded(&mut self, _mode: RoundingMode) -> Result<(), <Hexagon as Arch>::DecodeError> { Ok(()) }
     fn chop(&mut self) -> Result<(), <Hexagon as Arch>::DecodeError> { Ok(()) }
     fn raw_mode(&mut self, _mode: RawMode) -> Result<(), <Hexagon as Arch>::DecodeError> { Ok(()) }
+    fn shift_left(&mut self, _shiftamt: u8) -> Result<(), <Hexagon as Arch>::DecodeError> { Ok(()) }
+    fn shift_right(&mut self, _shiftamt: u8) -> Result<(), <Hexagon as Arch>::DecodeError> { Ok(()) }
+    fn carry(&mut self) -> Result<(), <Hexagon as Arch>::DecodeError> { Ok(()) }
+    fn deprecated(&mut self) -> Result<(), <Hexagon as Arch>::DecodeError> { Ok(()) }
     fn on_word_read(&mut self, _word: <Hexagon as Arch>::Word) {}
 }
 
@@ -1252,6 +1452,32 @@ impl<T: yaxpeax_arch::Reader<<Hexagon as Arch>::Address, <Hexagon as Arch>::Word
         let flags = &mut self.instructions[self.instruction_count as usize].flags;
         assert!(flags.raw_mode.is_none());
         flags.raw_mode = Some(mode);
+        Ok(())
+    }
+    fn shift_left(&mut self, shiftamt: u8) -> Result<(), <Hexagon as Arch>::DecodeError> {
+        let flags = &mut self.instructions[self.instruction_count as usize].flags;
+        assert!(flags.shift_left.is_none());
+        assert!(flags.shift_right.is_none());
+        flags.shift_left = Some(shiftamt);
+        Ok(())
+    }
+    fn shift_right(&mut self, shiftamt: u8) -> Result<(), <Hexagon as Arch>::DecodeError> {
+        let flags = &mut self.instructions[self.instruction_count as usize].flags;
+        assert!(flags.shift_left.is_none());
+        assert!(flags.shift_right.is_none());
+        flags.shift_right = Some(shiftamt);
+        Ok(())
+    }
+    fn carry(&mut self) -> Result<(), <Hexagon as Arch>::DecodeError> {
+        let flags = &mut self.instructions[self.instruction_count as usize].flags;
+        assert!(!flags.carry);
+        flags.carry = true;
+        Ok(())
+    }
+    fn deprecated(&mut self) -> Result<(), <Hexagon as Arch>::DecodeError> {
+        let flags = &mut self.instructions[self.instruction_count as usize].flags;
+        assert!(!flags.deprecated);
+        flags.deprecated = true;
         Ok(())
     }
     #[inline(always)]
@@ -1477,6 +1703,8 @@ fn decode_packet<
 
         current_word += 1;
     }
+
+    handler.on_decode_end();
 
     Ok(())
 }
@@ -3080,10 +3308,6 @@ fn decode_instruction<
                     let xxxxx = reg_b0(inst);
                     let sssss = reg_b16(inst);
 
-                    let opc_lo = (inst >> 5) & 0b111;
-                    let opc_hi = (inst >> 21) & 0b111;
-                    let opc = (opc_hi << 3) | opc_lo;
-
                     // TODO: it's not clear which immediate is the #u6 versus #U6
                     // they may be backwards in the decoding..
                     handler.on_dest_decoded(Operand::gprpair(xxxxx)?)?;
@@ -3142,7 +3366,7 @@ fn decode_instruction<
                 0b0101 => {
                     let opc_hi = (inst >> 21) & 0b111;
                     let i6 = (inst >> 8) & 0b111111;
-                    let dd = inst & 0b11;
+                    let dd = (inst & 0b11) as u8;
                     let sssss = reg_b16(inst);
 
                     handler.on_dest_decoded(Operand::pred(dd as u8))?;
@@ -3173,7 +3397,7 @@ fn decode_instruction<
                             handler.negate_result()?;
                         }
                         0b111 => {
-                            handler.on_opcode_decoded(Opcode::Sfclass)?;
+                            handler.on_opcode_decoded(Opcode::SfClass)?;
                             operand_check!(i6 & 0b10_0000 == 0);
                             handler.on_source_decoded(Operand::imm_u8(i6 as u8))?;
                         }
@@ -3295,8 +3519,7 @@ fn decode_instruction<
                             handler.on_source_decoded(Operand::gpr(sssss))?;
                             handler.on_source_decoded(Operand::imm_u8(i6 as u8))?;
                         }
-                        0b100001 |
-                        0b110110 => {
+                        0b100001 => {
                             handler.on_dest_decoded(Operand::gprpair(ddddd)?)?;
                             handler.on_source_decoded(Operand::gpr(sssss))?;
                         }
@@ -3305,7 +3528,7 @@ fn decode_instruction<
                             operand_check!(i6 & 0b10_0000 == 0);
                             handler.on_dest_decoded(Operand::gprpair(ddddd)?)?;
                             handler.on_source_decoded(Operand::gpr(sssss))?;
-                            handler.chop();
+                            handler.chop()?;
                         }
                         _ => {
                             handler.on_dest_decoded(Operand::gpr(ddddd))?;
@@ -3339,7 +3562,6 @@ fn decode_instruction<
                 0b1010 => {
                     // 1000|1010...
                     let ddddd = reg_b0(inst);
-                    let ttttt = reg_b8(inst);
                     let sssss = reg_b16(inst);
                     let l_lo = (inst >> 5) & 0b111;
                     let l_hi = (inst >> 21) & 0b111;
@@ -3356,8 +3578,8 @@ fn decode_instruction<
                     // 1000|1011...
                     let ddddd = reg_b0(inst);
                     let sssss = reg_b16(inst);
-                    let op_lo = (inst >> 5) & 0b111;
-                    let op_hi = (inst >> 21) & 0b111;
+                    let op_lo = ((inst >> 5) & 0b111) as u8;
+                    let op_hi = ((inst >> 21) & 0b111) as u8;
                     let i6 = (inst >> 8) & 0b111111;
 
                     handler.on_dest_decoded(Operand::gpr(ddddd))?;
@@ -3788,7 +4010,7 @@ fn decode_instruction<
                     0b100 => {
                         let shifted_reg = inst & 0b0001_0000_0000_0000 != 0;
 
-                        let (op, wide, samt) = decode_opcode!(MEM_FIFO_OPS[op as usize]);
+                        let (op, wide, _samt) = decode_opcode!(MEM_FIFO_OPS[op as usize]);
 
                         if !wide {
                             handler.on_dest_decoded(Operand::gpr(ddddd))?;
@@ -3818,7 +4040,7 @@ fn decode_instruction<
                     0b101 => {
                         let shifted_reg = inst & 0b0001_0000_0000_0000 != 0;
 
-                        let (op, wide, samt) = decode_opcode!(MEM_OPCODES[op as usize]);
+                        let (op, wide, _samt) = decode_opcode!(MEM_OPCODES[op as usize]);
 
                         if !wide {
                             handler.on_dest_decoded(Operand::gpr(ddddd))?;
@@ -3848,7 +4070,7 @@ fn decode_instruction<
                     0b110 => {
                         operand_check!(inst & 0b0001_0000_1000_0000 == 0);
 
-                        let (op, wide, samt) = decode_opcode!(MEM_FIFO_OPS[op as usize]);
+                        let (op, wide, _samt) = decode_opcode!(MEM_FIFO_OPS[op as usize]);
 
                         let mu = ((inst >> 13) & 1) as u8;
                         handler.on_source_decoded(Operand::RegMemIndexedBrev { base: xxxxx, mu })?;
@@ -3863,7 +4085,7 @@ fn decode_instruction<
                         // 0b111
                         let predicated = inst & 0b0000_0000_1000_0000 != 0;
 
-                        let (op, wide, samt) = decode_opcode!(MEM_OPCODES[op as usize]);
+                        let (op, wide, _samt) = decode_opcode!(MEM_OPCODES[op as usize]);
 
                         if !predicated {
                             operand_check!(inst & 0b0001_0000_0000_0000 == 0);
@@ -4178,7 +4400,6 @@ fn decode_instruction<
                         let ttttt = reg_b8(inst);
                         if (inst >> 7) & 1 == 0 {
                             let u = (inst >> 13) & 1;
-                            let iiii = (inst >> 3) & 0b1111;
                             decode_store_ops(handler, minbits, ttttt, |_shamt| {
                                 Operand::RegMemIndexed { base: xxxxx, mu: u as u8 }
                             })?;
@@ -4236,15 +4457,16 @@ fn decode_instruction<
             handler.on_source_decoded(Operand::imm_i16(i as i16))?;
         }
         0b1100 => {
+            let ddddd = reg_b0(inst);
+            let ttttt = reg_b8(inst);
+            let sssss = reg_b16(inst);
+
             let majbits = (inst >> 24) & 0b1111;
             match majbits {
                 0b0000 => {
                     // 1100|0000|...
                     let op = (inst >> 23) & 1;
 
-                    let ddddd = reg_b0(inst);
-                    let ttttt = reg_b8(inst);
-                    let sssss = reg_b16(inst);
                     let iii = (inst >> 5) & 0b111;
 
                     handler.on_dest_decoded(Operand::gprpair(ddddd)?)?;
@@ -4261,43 +4483,332 @@ fn decode_instruction<
                     handler.on_source_decoded(Operand::imm_u8(iii as u8))?;
                 }
                 0b0001 => {
-                    let minbits = (inst >> 22) & 0b11;
+                    let op_lo = (inst >> 5) & 0b111;
+                    let op_hi = (inst >> 22) & 011;
+
+                    match op_hi {
+                        0b00 => {
+                            static OPCODES: [Opcode; 4] = [
+                                Opcode::Extractu, Opcode::Shuffeb,
+                                Opcode::Shuffob, Opcode::Shuffeh
+                            ];
+
+                            handler.on_opcode_decoded(OPCODES[op_lo as usize])?;
+                            handler.on_dest_decoded(Operand::gprpair(ddddd)?)?;
+                            if op_lo < 0b10 {
+                                handler.on_source_decoded(Operand::gprpair(sssss)?)?;
+                                handler.on_source_decoded(Operand::gprpair(ttttt)?)?;
+                            } else {
+                                handler.on_source_decoded(Operand::gprpair(ttttt)?)?;
+                                handler.on_source_decoded(Operand::gprpair(sssss)?)?;
+                            }
+                        },
+                        0b01 => {
+                            static OPCODES: [Option<Opcode>; 8] = [
+                                Some(Vxaddsubw), Some(Vaddhub), Some(Vxsubaddw), None,
+                                Some(Vxaddsubh), None         , Some(Vxsubaddh), None,
+                            ];
+
+                            let op_lo = (inst >> 5) as usize & 0b111;
+
+                            handler.on_opcode_decoded(decode_opcode!(OPCODES[op_lo]))?;
+                            handler.saturate()?;
+                            if op_lo == 0b001 {
+                                handler.on_dest_decoded(Operand::gpr(ddddd))?;
+                            } else {
+                                handler.on_dest_decoded(Operand::gprpair(ddddd)?)?;
+                            }
+                            if op_lo < 0b10 {
+                                handler.on_source_decoded(Operand::gprpair(sssss)?)?;
+                                handler.on_source_decoded(Operand::gprpair(ttttt)?)?;
+                            } else {
+                                handler.on_source_decoded(Operand::gprpair(ttttt)?)?;
+                                handler.on_source_decoded(Operand::gprpair(sssss)?)?;
+                            }
+                        }
+                        0b10 => {
+                            static OPCODES: [Option<Opcode>; 8] = [
+                                Some(Shuffoh),   None, Some(Vtrunewh), Some(Vtrunehb),
+                                Some(Vtrunowh), Some(Vtrunohb), Some(Lfs), None,
+                            ];
+
+                            let op_lo = (inst >> 5) as usize & 0b111;
+
+                            handler.on_opcode_decoded(decode_opcode!(OPCODES[op_lo]))?;
+                            handler.on_dest_decoded(Operand::gprpair(ddddd)?)?;
+
+                            if op_lo == 0b000 {
+                                handler.on_source_decoded(Operand::gprpair(ttttt)?)?;
+                                handler.on_source_decoded(Operand::gprpair(sssss)?)?;
+                            } else {
+                                handler.on_source_decoded(Operand::gprpair(sssss)?)?;
+                                handler.on_source_decoded(Operand::gprpair(ttttt)?)?;
+                            }
+                        }
+                        _ => {
+                            static OPCODES: [Opcode; 4] = [
+                                Opcode::Vxaddsubh, Opcode::Vxsubaddh, Opcode::Extractu, Opcode::Decbin,
+                            ];
+
+                            handler.on_opcode_decoded(OPCODES[op_lo as usize])?;
+                            handler.on_dest_decoded(Operand::gprpair(ddddd)?)?;
+                            handler.on_source_decoded(Operand::gprpair(sssss)?)?;
+                            handler.on_source_decoded(Operand::gprpair(ttttt)?)?;
+
+                            if op_lo < 0b10 {
+                                handler.rounded(RoundingMode::Round)?;
+                                handler.shift_right(1)?;
+                                handler.saturate()?;
+                            }
+                        }
+                    }
                 }
                 0b0010 => {
                     let minbits = (inst >> 21) & 0b111;
+
+                    let uu = ((inst >> 5) & 0b11) as u8;
+
+                    handler.on_dest_decoded(Operand::gprpair(ddddd)?)?;
+                    if minbits & 0b100 == 0 {
+                        handler.on_source_decoded(Operand::gprpair(ttttt)?)?;
+                        handler.on_source_decoded(Operand::gprpair(sssss)?)?;
+                    } else {
+                        handler.on_source_decoded(Operand::gprpair(sssss)?)?;
+                        handler.on_source_decoded(Operand::gprpair(ttttt)?)?;
+                    }
+                    handler.on_source_decoded(Operand::pred(uu))?;
+
+                    if minbits & 0b100 == 0 {
+                        handler.on_opcode_decoded(Opcode::Valignb)?;
+                    } else if minbits == 0b100 {
+                        handler.on_opcode_decoded(Opcode::Vspliceb)?;
+                    } else if minbits == 0b110 {
+                        handler.on_opcode_decoded(Opcode::Add)?;
+                        handler.carry()?;
+                    } else if minbits == 0b111 {
+                        handler.on_opcode_decoded(Opcode::Sub)?;
+                        handler.carry()?;
+                    } else {
+                        return Err(DecodeError::InvalidOpcode);
+                    }
                 }
                 0b0011 => {
                     let minbits = (inst >> 22) & 0b11;
+                    let op_lo = (inst >> 6) & 0b11;
+
+                    let opc = op_lo | (minbits << 2);
+
+                    handler.on_dest_decoded(Operand::gprpair(ddddd)?)?;
+                    handler.on_source_decoded(Operand::gprpair(sssss)?)?;
+                    handler.on_source_decoded(Operand::gpr(ttttt))?;
+
+                    if minbits == 0b11 {
+                        if op_lo == 0b00 {
+                            handler.on_opcode_decoded(Opcode::Vcrotate)?;
+                        } else if op_lo == 0b01 {
+                            handler.on_opcode_decoded(Opcode::Vcnegh)?;
+                        } else if op_lo == 0b11 {
+                            handler.on_opcode_decoded(Opcode::Vrcrotate)?;
+                            let u_lo = (inst >> 5) & 1;
+                            let u_hi = (inst >> 13) & 1;
+                            let u = u_lo | (u_hi << 1);
+                            handler.on_source_decoded(Operand::imm_u8(u as u8))?;
+                        } else {
+                            return Err(DecodeError::InvalidOpcode);
+                        }
+                    } else {
+                        static OPCODES: [Option<Opcode>; 16] = [
+                            Some(Vasrw), Some(Vlsrw), Some(Vaslw), Some(Vlslw),
+                            Some(Vasrh), Some(Vlsrh), Some(Vaslh), Some(Vlslh),
+                            Some(Asr), Some(Lsr), Some(Asl), Some(Lsl),
+                            None, None, None, None,
+                        ];
+
+                        handler.on_opcode_decoded(decode_opcode!(OPCODES[opc as usize]))?;
+                    }
+
                 }
                 0b0100 => {
                     let minbits = (inst >> 21) & 0b111;
                     opcode_check!(minbits == 0b000);
+                    operand_check!(inst & 0b0010_0000_0000_0000 == 0);
+
+                    handler.on_opcode_decoded(Opcode::AddAsl)?;
+                    handler.on_dest_decoded(Operand::gpr(ddddd))?;
+                    handler.on_source_decoded(Operand::gpr(ttttt))?;
+                    handler.on_source_decoded(Operand::gpr(sssss))?;
+                    handler.on_source_decoded(Operand::imm_u8(((inst >> 5) & 0b111) as u8))?;
                 }
                 0b0101 => {
                     let minbits = (inst >> 5) & 0b111;
+
+                    handler.on_dest_decoded(Operand::gpr(ddddd))?;
+                    handler.on_source_decoded(Operand::gpr(sssss))?;
+
+                    if minbits < 0b100 {
+                        opcode_check!(minbits == 0b010);
+                        handler.on_opcode_decoded(Opcode::Vasrw)?;
+                        handler.on_dest_decoded(Operand::gpr(ttttt))?;
+                    } else {
+                        handler.shift_left(1)?;
+                        handler.rounded(RoundingMode::Round)?;
+                        handler.saturate()?;
+                        if minbits & 0b010 == 0 {
+                            handler.on_opcode_decoded(Opcode::Cmpyiwh)?;
+                        } else {
+                            handler.on_opcode_decoded(Opcode::Cmpyrwh)?;
+                        }
+                        if minbits & 0b001 == 0 {
+                            handler.on_source_decoded(Operand::gpr(ttttt))?;
+                        } else {
+                            panic!("star?");
+//                            handler.on_source_decoded(Operand::gprstar(ttttt))?;
+                        }
+                    }
                 }
                 0b0110 => {
-                    // opc bits are both inst[6:7} and inst[22:23]
+                    // opc bits are both inst[6:7] and inst[22:23]
+                    let op_lo = (inst >> 6) & 0b11;
+                    let op_hi = (inst >> 22) & 0b11;
+                    let opc = op_lo | (op_hi << 2);
+
+                    match opc {
+                        0b0000 => {
+                            handler.on_opcode_decoded(Opcode::Asr)?;
+                            handler.saturate()?;
+                        },
+                        0b0010 => {
+                            handler.on_opcode_decoded(Opcode::Asl)?;
+                            handler.saturate()?;
+                        },
+                        0b0100 => {
+                            handler.on_opcode_decoded(Opcode::Asr)?;
+                        },
+                        0b0101 => {
+                            handler.on_opcode_decoded(Opcode::Lsr)?;
+                        },
+                        0b0110 => {
+                            handler.on_opcode_decoded(Opcode::Asl)?;
+                        },
+                        0b0111 => {
+                            handler.on_opcode_decoded(Opcode::Lsl)?;
+                        },
+                        0b1011 => {
+                            let i_hi = reg_b8(inst);
+                            let i_lo = ((inst >> 5) & 1) as u8;
+                            let i6 = i_lo | (i_hi << 1);
+                            let i6 = i6 as i8;
+
+                            handler.on_opcode_decoded(Opcode::Lsl)?;
+                            handler.on_dest_decoded(Operand::gpr(reg_b0(inst)))?;
+                            handler.on_source_decoded(Operand::imm_i8(i6 << 2  >> 2))?;
+                            handler.on_source_decoded(Operand::gpr(reg_b8(inst)))?;
+                            return Ok(());
+                        },
+                        0b1100 => {
+                            handler.on_opcode_decoded(Opcode::Cround)?;
+                        },
+                        0b1101 => {
+                            handler.on_opcode_decoded(Opcode::Cround)?;
+                            handler.on_dest_decoded(Operand::gprpair(reg_b0(inst))?)?;
+                            handler.on_source_decoded(Operand::gprpair(reg_b16(inst))?)?;
+                            handler.on_source_decoded(Operand::gpr(reg_b8(inst)))?;
+                            return Ok(());
+                        },
+                        0b1110 => {
+                            handler.on_opcode_decoded(Opcode::Round)?;
+                        },
+                        0b1111 => {
+                            handler.on_opcode_decoded(Opcode::Round)?;
+                            handler.saturate()?;
+                        },
+                        _ => {
+                            opcode_check!(false);
+                        }
+                    }
+
+                    handler.on_dest_decoded(Operand::gpr(reg_b0(inst)))?;
+                    handler.on_source_decoded(Operand::gpr(reg_b16(inst)))?;
+                    handler.on_source_decoded(Operand::gpr(reg_b8(inst)))?;
                 }
                 0b0111 => {
-                    let minbits = (inst >> 21) & 0b111;
-                    // some ops have minbits at inst[5..7] too
+                    let op_hi = (inst >> 21) & 0b111;
+                    let op_lo = (inst >> 5) & 0b111;
+
+                    handler.on_dest_decoded(Operand::pred(reg_b0(inst) & 0b11))?;
+                    handler.on_source_decoded(Operand::gpr(reg_b16(inst)))?;
+                    handler.on_source_decoded(Operand::gpr(reg_b8(inst)))?;
+
+                    if op_hi < 0b110 {
+                        if op_hi & 0b001 == 1 {
+                            handler.negate_result()?;
+                        }
+                        match op_hi >> 1 {
+                            0b00 => {
+                                handler.on_opcode_decoded(Opcode::Tstbit)?;
+                            }
+                            0b01 => {
+                                handler.on_opcode_decoded(Opcode::Bitsset)?;
+                            }
+                            _ => {
+                                handler.on_opcode_decoded(Opcode::Bitsclr)?;
+                            }
+                        }
+                    } else if op_hi == 0b110 {
+                        static OPCODES: [Option<Opcode>; 8] = [
+                            None, None,
+                            Some(Opcode::CmpbGt), Some(Opcode::CmphGt),
+                            Some(Opcode::CmphEq), Some(Opcode::CmphGtu),
+                            Some(Opcode::CmpbEq), Some(Opcode::CmpbGtu),
+                        ];
+                        handler.on_opcode_decoded(decode_opcode!(OPCODES[op_lo as usize]))?;
+                    } else {
+                        // 1 1 0 0|0 1 1 1|1 1 1...
+                        static OPCODES: [Option<Opcode>; 8] = [
+                            Some(Opcode::SfCmpGe), Some(Opcode::SfCmpUo),
+                            None, Some(Opcode::SfCmpEq),
+                            Some(Opcode::SfCmpGt), None,
+                            None, None,
+                        ];
+                        handler.on_opcode_decoded(decode_opcode!(OPCODES[op_lo as usize]))?;
+                    }
                 }
                 0b1000 => {
-                    todo!("Rx=insert(Rs,Rtt)");
+                    handler.on_opcode_decoded(Opcode::Insert)?;
+                    handler.on_dest_decoded(Operand::gpr(reg_b0(inst)))?;
+                    handler.on_source_decoded(Operand::gpr(reg_b16(inst)))?;
+                    handler.on_source_decoded(Operand::gprpair(reg_b8(inst))?)?;
                 }
                 0b1001 => {
                     opcode_check!((inst >> 22) & 0b11 == 0b11);
                     let minbits = (inst >> 6) & 0b11;
-                    opcode_check!(minbits < 0b10);
-                    todo!("Rd=extractu(Rs,Rtt) or plain extract");
+
+                    handler.on_dest_decoded(Operand::gpr(reg_b0(inst)))?;
+                    handler.on_source_decoded(Operand::gpr(reg_b16(inst)))?;
+                    handler.on_source_decoded(Operand::gprpair(reg_b8(inst))?)?;
+
+                    if minbits == 0b00 {
+                        handler.on_opcode_decoded(Opcode::Extractu)?;
+                    } else if minbits == 0b01 {
+                        handler.on_opcode_decoded(Opcode::Extract)?;
+                    } else {
+                        opcode_check!(false);
+                    }
                 }
                 0b1010 => {
                     let minbits = (inst >> 21) & 0b111;
                     if minbits & 0b100 == 0 {
-                        todo!("Rxx=insert(Rss,Rtt)");
+                        handler.on_opcode_decoded(Opcode::Insert)?;
+                        handler.on_dest_decoded(Operand::gprpair(reg_b0(inst))?)?;
+                        handler.on_source_decoded(Operand::gprpair(reg_b16(inst))?)?;
+                        handler.on_source_decoded(Operand::gprpair(reg_b8(inst))?)?;
                     } else if minbits & 0b110 == 0b100 {
-                        todo!("Rxx^=xor(Rss,Rtt)");
+                        opcode_check!((inst >> 5) & 0b111 == 0);
+                        handler.on_opcode_decoded(Opcode::Xor)?;
+                        handler.assign_mode(AssignMode::XorAssign)?;
+                        handler.on_dest_decoded(Operand::gprpair(reg_b0(inst))?)?;
+                        handler.on_source_decoded(Operand::gprpair(reg_b16(inst))?)?;
+                        handler.on_source_decoded(Operand::gprpair(reg_b8(inst))?)?;
                     } else {
                         opcode_check!(false);
                     }
@@ -4323,7 +4834,7 @@ fn decode_instruction<
                         let op_hi = (inst >> 13) & 1;
                         let op = op_bits | (op_hi << 3);
                         let op = decode_opcode!(OPS[op as usize]);
-                        handler.on_opcode_decoded(op);
+                        handler.on_opcode_decoded(op)?;
                         if op == Opcode::Vrcnegh {
                             handler.assign_mode(AssignMode::AddAssign)?;
                         }
@@ -4414,75 +4925,1591 @@ fn decode_instruction<
                     handler.on_opcode_decoded(Opcode::Vmux)?;
                 }
                 0b0010 => {
-                    opcode_check!(inst & 0x80_00_00 == 0);
+                    let vector = inst & 0x80_00_00 == 0;
 
                     let ophi = (inst >> 13) & 1;
                     let oplo = (inst >> 5) & 0b111;
                     let opc = oplo | (ophi << 3);
-                    let dd = ddddd & 0b11;
+                    let dd = (ddddd & 0b11) as u8;
 
-                    handler.on_dest_decoded(Operand::pred(dd))?;
-                    handler.on_source_decoded(Operand::gprpair(sssss)?)?;
-                    if opc != 0b1011 {
-                        handler.on_source_decoded(Operand::gprpair(ttttt)?)?;
+                    if vector {
+                        handler.on_dest_decoded(Operand::pred(dd))?;
+                        handler.on_source_decoded(Operand::gprpair(sssss)?)?;
+                        if opc != 0b1011 {
+                            handler.on_source_decoded(Operand::gprpair(ttttt)?)?;
+                        } else {
+                            handler.on_source_decoded(Operand::gpr(ttttt))?;
+                        }
+
+                        match opc {
+                            0b0000 => {
+                                handler.on_opcode_decoded(Opcode::VcmpwEq)?;
+                            }
+                            0b0001 => {
+                                handler.on_opcode_decoded(Opcode::VcmpwGt)?;
+                            }
+                            0b0010 => {
+                                handler.on_opcode_decoded(Opcode::VcmpwGtu)?;
+                            }
+                            0b0011 => {
+                                handler.on_opcode_decoded(Opcode::VcmphEq)?;
+                            }
+                            0b0100 => {
+                                handler.on_opcode_decoded(Opcode::VcmphGt)?;
+                            }
+                            0b0101 => {
+                                handler.on_opcode_decoded(Opcode::VcmphGtu)?;
+                            }
+                            0b0110 => {
+                                handler.on_opcode_decoded(Opcode::VcmpbEq)?;
+                            }
+                            0b0111 => {
+                                handler.on_opcode_decoded(Opcode::VcmpbGtu)?;
+                            }
+                            0b1000 => {
+                                handler.on_opcode_decoded(Opcode::Any8VcmpbEq)?;
+                            }
+                            0b1001 => {
+                                handler.on_opcode_decoded(Opcode::Any8VcmpbEq)?;
+                                handler.negate_result()?;
+                            }
+                            0b1010 => {
+                                handler.on_opcode_decoded(Opcode::VcmpbGt)?;
+                            }
+                            0b1011 => {
+                                handler.on_opcode_decoded(Opcode::Tlbmatch)?;
+                            }
+                            0b1100 => {
+                                handler.on_opcode_decoded(Opcode::Boundscheck)?;
+                                handler.raw_mode(RawMode::Lo)?;
+                            }
+                            0b1101 => {
+                                handler.on_opcode_decoded(Opcode::Boundscheck)?;
+                                handler.raw_mode(RawMode::Hi)?;
+                            }
+                            _ => {
+                                return Err(DecodeError::InvalidOpcode);
+                            }
+                        }
                     } else {
-                        handler.on_source_decoded(Operand::gpr(ttttt))?;
+                        opcode_check!(inst & 0x00_60_00_00 == 0);
+                        handler.on_dest_decoded(Operand::pred(dd))?;
+                        handler.on_source_decoded(Operand::gprpair(sssss)?)?;
+                        handler.on_source_decoded(Operand::gprpair(ttttt)?)?;
+
+                        match oplo {
+                            0b000 => {
+                                handler.on_opcode_decoded(Opcode::CmpGt)?;
+                            }
+                            0b010 => {
+                                handler.on_opcode_decoded(Opcode::CmpEq)?;
+                            }
+                            0b0100 => {
+                                handler.on_opcode_decoded(Opcode::CmpGtu)?;
+                            }
+                            _ => {
+                                opcode_check!(false);
+                            }
+                        }
+                    }
+                }
+
+                0b0011 => {
+                    // 1101|0011
+                    let ddddd = reg_b0(inst);
+                    let ttttt = reg_b8(inst);
+                    let sssss = reg_b16(inst);
+
+                    let op_lo = ((inst >> 5) & 0b111) as u8;
+                    let op_hi = ((inst >> 21) & 0b111) as u8;
+
+                    type OpRes = Result<Operand, DecodeError>;
+
+                    fn gpr_result(nr: u8) -> OpRes {
+                        Ok(Operand::gpr(nr))
                     }
 
+                    let do_decode_dst = |handler: &mut H, op: Opcode, dest: fn(u8) -> OpRes, op1: fn(u8) -> OpRes, op2: fn(u8) -> OpRes| {
+                        handler.on_opcode_decoded(op)?;
+                        handler.on_dest_decoded(dest(ddddd)?)?;
+                        handler.on_source_decoded(op1(sssss)?)?;
+                        handler.on_source_decoded(op2(ttttt)?)?;
+                        Ok::<(), DecodeError>(())
+                    };
+
+                    let do_decode_dts = |handler: &mut H, op: Opcode, dest: fn(u8) -> OpRes, op1: fn(u8) -> OpRes, op2: fn(u8) -> OpRes| {
+                        handler.on_opcode_decoded(op)?;
+                        handler.on_dest_decoded(dest(ddddd)?)?;
+                        handler.on_source_decoded(op1(ttttt)?)?;
+                        handler.on_source_decoded(op2(sssss)?)?;
+                        Ok::<(), DecodeError>(())
+                    };
+
+                    let opc = op_lo | (op_hi << 3);
                     match opc {
-                        0b0000 => {
-                            handler.on_opcode_decoded(Opcode::VcmpwEq)?;
+                        0b000000 => {
+                            do_decode_dst(handler, Opcode::Vaddub, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
                         }
-                        0b0001 => {
-                            handler.on_opcode_decoded(Opcode::VcmpwGt)?;
+                        0b000001 => {
+                            do_decode_dst(handler, Opcode::Vaddub, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
+                            handler.saturate()?;
                         }
-                        0b0010 => {
-                            handler.on_opcode_decoded(Opcode::VcmpwGtu)?;
+                        0b000010 => {
+                            do_decode_dst(handler, Opcode::Vaddh, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
                         }
-                        0b0011 => {
-                            handler.on_opcode_decoded(Opcode::VcmphEq)?;
+                        0b000011 => {
+                            do_decode_dst(handler, Opcode::Vaddh, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
+                            handler.saturate()?;
                         }
-                        0b0100 => {
-                            handler.on_opcode_decoded(Opcode::VcmphGt)?;
+                        0b000100 => {
+                            do_decode_dst(handler, Opcode::Vadduh, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
+                            handler.saturate()?;
                         }
-                        0b0101 => {
-                            handler.on_opcode_decoded(Opcode::VcmphGtu)?;
+                        0b000101 => {
+                            do_decode_dst(handler, Opcode::Vaddw, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
                         }
-                        0b0110 => {
-                            handler.on_opcode_decoded(Opcode::VcmpbEq)?;
+                        0b000110 => {
+                            do_decode_dst(handler, Opcode::Vaddw, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
+                            handler.saturate()?;
                         }
-                        0b0111 => {
-                            handler.on_opcode_decoded(Opcode::VcmpbGtu)?;
+                        0b000111 => {
+                            do_decode_dst(handler, Opcode::Add, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
                         }
-                        0b1000 => {
-                            handler.on_opcode_decoded(Opcode::Any8VcmpbEq)?;
+                        0b001000 => {
+                            do_decode_dts(handler, Opcode::Vsubub, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
                         }
-                        0b1001 => {
-                            handler.on_opcode_decoded(Opcode::Any8VcmpbEq)?;
-                            handler.negate_result();
+                        0b001001 => {
+                            do_decode_dts(handler, Opcode::Vsubub, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
+                            handler.saturate()?;
                         }
-                        0b1010 => {
-                            handler.on_opcode_decoded(Opcode::VcmpbGt)?;
+                        0b001010 => {
+                            do_decode_dts(handler, Opcode::Vsubh, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
                         }
-                        0b1011 => {
-                            handler.on_opcode_decoded(Opcode::Tlbmatch)?;
+                        0b001011 => {
+                            do_decode_dts(handler, Opcode::Vsubh, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
+                            handler.saturate()?;
                         }
-                        0b1100 => {
-                            handler.on_opcode_decoded(Opcode::Boundscheck)?;
+                        0b001100 => {
+                            do_decode_dts(handler, Opcode::Vsubuh, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
+                            handler.saturate()?;
+                        }
+                        0b001101 => {
+                            do_decode_dts(handler, Opcode::Vsubw, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
+                        }
+                        0b001110 => {
+                            do_decode_dts(handler, Opcode::Vsubw, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
+                            handler.saturate()?;
+                        }
+                        0b001111 => {
+                            do_decode_dts(handler, Opcode::Sub, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
+                        }
+                        0b010000 => {
+                            do_decode_dst(handler, Opcode::Vavgub, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
+                        }
+                        0b010001 => {
+                            do_decode_dst(handler, Opcode::Vavgub, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
+                            handler.rounded(RoundingMode::Round)?;
+                        }
+                        0b010010 => {
+                            do_decode_dst(handler, Opcode::Vavgh, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
+                        }
+                        0b010011 => {
+                            do_decode_dst(handler, Opcode::Vavgh, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
+                            handler.rounded(RoundingMode::Round)?;
+                        }
+                        0b010100 => {
+                            do_decode_dst(handler, Opcode::Vavgh, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
+                            handler.rounded(RoundingMode::Cround)?;
+                        }
+                        0b010101 => {
+                            do_decode_dst(handler, Opcode::Vavguh, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
+                        }
+                        0b010110 | 0b010111 => {
+                            do_decode_dst(handler, Opcode::Vavguh, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
+                            handler.rounded(RoundingMode::Round)?;
+                        }
+                        0b011000 => {
+                            do_decode_dst(handler, Opcode::Vavgw, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
+                        }
+                        0b011001 => {
+                            do_decode_dst(handler, Opcode::Vavgw, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
+                            handler.rounded(RoundingMode::Round)?;
+                        }
+                        0b011010 => {
+                            do_decode_dst(handler, Opcode::Vavgw, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
+                            handler.rounded(RoundingMode::Cround)?;
+                        }
+                        0b011011 => {
+                            do_decode_dst(handler, Opcode::Vavguw, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
+                        }
+                        0b011100 => {
+                            do_decode_dst(handler, Opcode::Vavgw, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
+                            handler.rounded(RoundingMode::Round)?;
+                        }
+                        0b011101 => {
+                            do_decode_dst(handler, Opcode::Add, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
+                            handler.saturate()?;
+                        }
+                        0b011110 => {
+                            do_decode_dst(handler, Opcode::Add, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
                             handler.raw_mode(RawMode::Lo)?;
                         }
-                        0b1101 => {
-                            handler.on_opcode_decoded(Opcode::Boundscheck)?;
+                        0b011111 => {
+                            do_decode_dst(handler, Opcode::Add, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
                             handler.raw_mode(RawMode::Hi)?;
+                        }
+                        0b100000 => {
+                            do_decode_dst(handler, Opcode::Vnavgh, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
+                        }
+                        0b100001 => {
+                            do_decode_dst(handler, Opcode::Vnavgh, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
+                            handler.rounded(RoundingMode::Round)?;
+                            handler.saturate()?;
+                        }
+                        0b100010 => {
+                            do_decode_dst(handler, Opcode::Vnavgh, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
+                            handler.rounded(RoundingMode::Cround)?;
+                            handler.saturate()?;
+                        }
+                        0b100011 => {
+                            do_decode_dst(handler, Opcode::Vnavgh, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
+                        }
+                        // low bit of opc is `-`
+                        0b100100 | 0b100101 => {
+                            do_decode_dst(handler, Opcode::Vnavgh, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
+                            handler.rounded(RoundingMode::Round)?;
+                            handler.saturate()?;
+                        }
+                        // low bit of opc is `-`
+                        0b100110 | 0b100111  => {
+                            do_decode_dst(handler, Opcode::Vnavgh, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
+                            handler.rounded(RoundingMode::Cround)?;
+                            handler.saturate()?;
+                        }
+                        0b101000 => {
+                            do_decode_dts(handler, Opcode::Vminub, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
+                        }
+                        0b101001 => {
+                            do_decode_dts(handler, Opcode::Vminh, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
+                        }
+                        0b101010 => {
+                            do_decode_dts(handler, Opcode::Vminuh, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
+                        }
+                        0b101011 => {
+                            do_decode_dts(handler, Opcode::Vminuw, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
+                        }
+                        0b101100 => {
+                            do_decode_dts(handler, Opcode::Vminuw, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
+                        }
+                        0b101101 => {
+                            do_decode_dts(handler, Opcode::Vmaxuw, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
+                        }
+                        0b101110 => {
+                            do_decode_dts(handler, Opcode::Min, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
+                        }
+                        0b101111 => {
+                            do_decode_dts(handler, Opcode::Minu, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
+                        }
+                        0b110000 => {
+                            do_decode_dts(handler, Opcode::Vmaxub, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
+                        }
+                        0b110001 => {
+                            do_decode_dts(handler, Opcode::Vmaxh, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
+                        }
+                        0b110010 => {
+                            do_decode_dts(handler, Opcode::Vmaxuh, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
+                        }
+                        0b110011 => {
+                            do_decode_dts(handler, Opcode::Vmaxw, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
+                        }
+                        0b110100 => {
+                            do_decode_dst(handler, Opcode::Max, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
+                        }
+                        0b110101 => {
+                            do_decode_dst(handler, Opcode::Maxu, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
+                        }
+                        0b110110 => {
+                            do_decode_dts(handler, Opcode::Vmaxb, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
+                        }
+                        0b110111 => {
+                            do_decode_dts(handler, Opcode::Vminb, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
+                        }
+                        0b111000 => {
+                            do_decode_dst(handler, Opcode::And, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
+                        }
+                        0b111001 => {
+                            do_decode_dst(handler, Opcode::AndNot, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
+                        }
+                        0b111010 => {
+                            do_decode_dst(handler, Opcode::Or, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
+                        }
+                        0b111011 => {
+                            do_decode_dst(handler, Opcode::OrNot, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
+                        }
+                        0b111100 => {
+                            do_decode_dst(handler, Opcode::Xor, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
+                        }
+                        0b111111 => {
+                            handler.on_opcode_decoded(Opcode::Modwrap)?;
+                            handler.on_dest_decoded(Operand::gpr(ddddd))?;
+                            handler.on_source_decoded(Operand::gpr(sssss))?;
+                            handler.on_source_decoded(Operand::gpr(ttttt))?;
                         }
                         _ => {
                             return Err(DecodeError::InvalidOpcode);
                         }
                     }
                 }
+                0b0100 => {
+                    // 1101|0100
+                    let ddddd = reg_b0(inst);
+                    let ttttt = reg_b8(inst);
+                    let sssss = reg_b16(inst);
+
+                    opcode_check!((inst >> 21) & 1 == 1);
+
+                    handler.on_opcode_decoded(Opcode::Bitsplit)?;
+                    handler.on_dest_decoded(Operand::gprpair(ddddd)?)?;
+                    handler.on_source_decoded(Operand::gpr(sssss))?;
+                    handler.on_source_decoded(Operand::gpr(ttttt))?;
+                }
+                0b0101 => {
+                    // 1101|0101
+                    let ddddd = reg_b0(inst);
+                    let ttttt = reg_b8(inst);
+                    let sssss = reg_b16(inst);
+
+                    let op_hi = (inst >> 21) & 0b111;
+                    let op_lo = (inst >> 5) & 0b111;
+
+                    if op_hi < 0b100 {
+                        let addsub = op_hi & 0b001;
+                        let shl = op_hi & 0b010 != 0;
+                        let sat = op_lo & 0b100 != 0;
+
+                        handler.on_dest_decoded(Operand::gpr(ddddd))?;
+
+                        if addsub == 0 {
+                            handler.on_opcode_decoded(Opcode::Add)?;
+                        } else {
+                            handler.on_opcode_decoded(Opcode::Sub)?;
+                        }
+
+                        if sat {
+                            handler.saturate()?;
+                        }
+
+                        if shl {
+                            // 1101|0101|X1X|sssss|PP|-ttttt|xxx|ddddd
+                            handler.shift_left(1)?;
+                            if op_lo & 0b010 == 0 {
+                                handler.on_source_decoded(Operand::gpr_low(ttttt))?;
+                            } else {
+                                handler.on_source_decoded(Operand::gpr_high(ttttt))?;
+                            }
+                            if op_lo & 0b001 == 0 {
+                                handler.on_source_decoded(Operand::gpr_low(sssss))?;
+                            } else {
+                                handler.on_source_decoded(Operand::gpr_high(sssss))?;
+                            }
+                        } else {
+                            // 1101|0101|X0X|sssss|PP|-ttttt|xxx|ddddd
+                            handler.on_source_decoded(Operand::gpr_low(ttttt))?;
+                            if op_lo & 0b010 == 0 {
+                                handler.on_source_decoded(Operand::gpr_low(sssss))?;
+                            } else {
+                                handler.on_source_decoded(Operand::gpr_high(sssss))?;
+                            }
+                        }
+                    } else {
+                        handler.on_dest_decoded(Operand::gpr(ddddd))?;
+                        if op_hi == 0b001 {
+                            handler.on_source_decoded(Operand::gpr(ttttt))?;
+                            handler.on_source_decoded(Operand::gpr(sssss))?;
+                        } else {
+                            handler.on_source_decoded(Operand::gpr(sssss))?;
+                            handler.on_source_decoded(Operand::gpr(ttttt))?;
+                        }
+                        match op_hi {
+                            0b000 => {
+                                handler.on_opcode_decoded(Opcode::Add)?;
+                                handler.saturate()?;
+                                handler.deprecated()?;
+                            }
+                            0b001 => {
+                                handler.on_opcode_decoded(Opcode::Sub)?;
+                                handler.saturate()?;
+                                handler.deprecated()?;
+                            }
+                            0b010 => {
+                                handler.on_opcode_decoded(Opcode::Min)?;
+                            }
+                            0b011 => {
+                                handler.on_opcode_decoded(Opcode::Minu)?;
+                            }
+                            0b100 => {
+                                handler.on_opcode_decoded(Opcode::Max)?;
+                            }
+                            0b101 => {
+                                handler.on_opcode_decoded(Opcode::Maxu)?;
+                            }
+                            _o => {
+                                handler.on_opcode_decoded(Opcode::Parity)?;
+                            }
+                        }
+                    }
+                }
+                0b0110 => {
+                    // 1101|0110
+                    let op_hi = (inst >> 21) & 0b111;
+                    let op_lo = (inst >> 5) & 0b111;
+
+                    if op_hi & 0b100 == 0 {
+                        let i9 = (inst >> 5) & 0b1_1111_1111;
+                        let i_hi = (inst >> 21) & 1;
+                        let i = i9 | (i_hi << 9);
+
+                        handler.on_opcode_decoded(Opcode::SfMake)?;
+                        handler.on_dest_decoded(Operand::gpr(reg_b0(inst)))?;
+                        handler.on_source_decoded(Operand::imm_u16(i as u16))?;
+                        if op_hi & 0b010 == 0 {
+                            handler.rounded(RoundingMode::Pos)?;
+                        } else {
+                            handler.rounded(RoundingMode::Neg)?;
+                        }
+                        panic!("SfMake");
+                    } else {
+                        opcode_check!(op_hi == 0b111);
+                        static OPCODES: [Option<Opcode>; 8] = [
+                            Some(Opcode::DfCmpEq), Some(Opcode::DfCmpGt), None, Some(Opcode::DfCmpGe),
+                            Some(Opcode::DfCmpUo), None, None, None,
+                        ];
+
+                        handler.on_opcode_decoded(decode_opcode!(OPCODES[op_lo as usize]))?;
+                        handler.on_dest_decoded(Operand::gpr(reg_b0(inst)))?;
+                        handler.on_source_decoded(Operand::gprpair(reg_b16(inst))?)?;
+                        handler.on_source_decoded(Operand::gprpair(reg_b8(inst))?)?;
+                    }
+                }
+                0b0111 => {
+                    // 1101|0111
+                    let ddddd = reg_b0(inst);
+                    let ttttt = reg_b8(inst);
+                    let sssss = reg_b16(inst);
+
+                    let i_lo = (inst >> 5) & 0b111;
+                    let i_mid = (inst >> 13) & 0b1;
+                    let i_hi = (inst >> 21) & 0b11;
+                    let i = i_lo | (i_mid << 3) | (i_hi << 4);
+
+                    handler.on_opcode_decoded(Opcode::AddMpyi)?;
+                    handler.on_dest_decoded(Operand::gpr(ddddd))?;
+                    handler.on_source_decoded(Operand::imm_u8(i as u8))?;
+                    handler.on_source_decoded(Operand::gpr(sssss))?;
+                    handler.on_source_decoded(Operand::gpr(ttttt))?;
+                }
+                0b1000 => {
+                    // 1101|1000
+                    let lllll = reg_b0(inst);
+                    let ddddd = reg_b8(inst);
+                    let sssss = reg_b16(inst);
+
+                    let l_hi = ((inst >> 23) & 0b1) as u8;
+                    let l = lllll | (l_hi << 5);
+
+                    let i_lo = (inst >> 5) & 0b111;
+                    let i_mid = (inst >> 13) & 0b1;
+                    let i_hi = (inst >> 21) & 0b11;
+                    let i = i_lo | (i_mid << 3) | (i_hi << 4);
+
+                    handler.on_opcode_decoded(Opcode::AddMpyi)?;
+                    handler.on_dest_decoded(Operand::gpr(ddddd))?;
+                    handler.on_source_decoded(Operand::imm_u8(i as u8))?;
+                    handler.on_source_decoded(Operand::gpr(sssss))?;
+                    handler.on_source_decoded(Operand::imm_u8(l as u8))?;
+                }
+                0b1001 => {
+                    // 1101|1001
+                    let ddddd = reg_b0(inst);
+
+                    let i9 = (inst >> 5) & 0b1_1111_1111;
+                    let i_hi = (inst >> 21) & 1;
+                    let i10 = i9 | (i_hi << 9);
+                    let i = (i10 as i16) << 6 >> 6;
+
+                    let op = (inst >> 23) & 1;
+
+                    opcode_check!(op & 0b10 == 0);
+
+                    handler.on_dest_decoded(Operand::gpr(ddddd))?;
+                    handler.on_opcode_decoded(Opcode::DfMake)?;
+                    handler.on_source_decoded(Operand::imm_i16(i))?;
+                    if op == 0 {
+                        handler.rounded(RoundingMode::Pos)?;
+                    } else {
+                        handler.rounded(RoundingMode::Neg)?;
+                    }
+                }
+                0b1010 => {
+                    // 1101|1010
+                    let uuuuu = reg_b0(inst);
+                    let sssss = reg_b16(inst);
+
+                    let op = (inst >> 22) & 0b11;
+
+                    match op {
+                        0b00 => {
+                            let i9 = (inst >> 5) & 0b1_1111_1111;
+                            let i_hi = (inst >> 21) & 1;
+                            let i10 = i9 | (i_hi << 9);
+                            let i = (i10 as i16) << 6 >> 6;
+                            handler.on_opcode_decoded(Opcode::And)?;
+                            handler.assign_mode(AssignMode::OrAssign)?;
+                            handler.on_dest_decoded(Operand::gpr(uuuuu))?;
+                            handler.on_source_decoded(Operand::gpr(sssss))?;
+                            handler.on_source_decoded(Operand::imm_i16(i))?;
+                        }
+                        0b01 => {
+                            let i9 = (inst >> 5) & 0b1_1111_1111;
+                            let i_hi = (inst >> 21) & 1;
+                            let i10 = i9 | (i_hi << 9);
+                            let i = (i10 as i16) << 6 >> 6;
+                            handler.on_opcode_decoded(Opcode::OrAnd)?;
+                            handler.on_dest_decoded(Operand::gpr(sssss))?;
+                            handler.on_source_decoded(Operand::gpr(uuuuu))?;
+                            handler.on_source_decoded(Operand::gpr(sssss))?;
+                            handler.on_source_decoded(Operand::imm_i16(i))?;
+                        }
+                        0b10 => {
+                            let i9 = (inst >> 5) & 0b1_1111_1111;
+                            let i_hi = (inst >> 21) & 1;
+                            let i10 = i9 | (i_hi << 9);
+                            let i = (i10 as i16) << 6 >> 6;
+                            handler.on_opcode_decoded(Opcode::Or)?;
+                            handler.assign_mode(AssignMode::OrAssign)?;
+                            handler.on_dest_decoded(Operand::gpr(uuuuu))?;
+                            handler.on_source_decoded(Operand::gpr(sssss))?;
+                            handler.on_source_decoded(Operand::imm_i16(i))?;
+                        }
+                        _ => {
+                            return Err(DecodeError::InvalidOpcode);
+                        }
+                    }
+                }
+                0b1011 => {
+                    // 1101|1011
+                    let uuuuu = reg_b0(inst);
+                    let ddddd = reg_b8(inst);
+                    let sssss = reg_b16(inst);
+
+                    let i_lo = (inst >> 5) & 0b111;
+                    let i_mid = (inst >> 13) & 0b1;
+                    let i_hi = (inst >> 21) & 0b11;
+                    let i = i_lo | (i_mid << 3) | (i_hi << 4);
+                    let s6 = (i as i8) << 2 >> 2;
+
+                    let op = (inst >> 23) & 1;
+
+                    handler.on_dest_decoded(Operand::gpr(ddddd))?;
+                    handler.on_source_decoded(Operand::gpr(sssss))?;
+                    if op == 0 {
+                        handler.on_opcode_decoded(Opcode::AddAdd)?;
+                        handler.on_source_decoded(Operand::gpr(uuuuu))?;
+                        handler.on_source_decoded(Operand::imm_i8(s6))?;
+                    } else {
+                        handler.on_opcode_decoded(Opcode::AddSub)?;
+                        handler.on_source_decoded(Operand::imm_i8(s6))?;
+                        handler.on_source_decoded(Operand::gpr(uuuuu))?;
+                    }
+                }
+                0b1100 => {
+                    // 1101|1100
+                    let dd = (inst & 0b11) as u8;
+                    let imm = (inst >> 5) & 0b1111_1111;
+                    let sssss = reg_b16(inst);
+                    let op_lo = (inst >> 3) & 0b11;
+                    let op_hi = (inst >> 21) & 0b111;
+                    let opc = op_lo | (op_hi << 2);
+
+                    handler.on_dest_decoded(Operand::pred(dd))?;
+                    handler.on_source_decoded(Operand::gprpair(sssss)?)?;
+                    if opc >= 0b10000 {
+                        operand_check!(imm < 0b100000);
+                    } else if opc >= 0b1000 {
+                        operand_check!(imm < 0b10000000);
+                    }
+                    handler.on_source_decoded(Operand::imm_u8(imm as u8))?;
+
+                    const OPCODES: [Option<Opcode>; 64] = [
+                        Some(Opcode::VcmpbEq), Some(Opcode::VcmpbEq), Some(Opcode::VcmpbEq), None,
+                        None, None, None, None,
+                        Some(Opcode::VcmpbGt), Some(Opcode::VcmpbGt), Some(Opcode::VcmpbGt), None,
+                        None, None, None, None,
+                        Some(Opcode::VcmpbGtu), Some(Opcode::VcmpbGtu), Some(Opcode::VcmpbGtu), None,
+                        None, None, None, None,
+                        None, None, None, None, Some(DfClass), None, None, None,
+                        None, None, None, None, None, None, None, None,
+                        None, None, None, None, None, None, None, None,
+                        None, None, None, None, None, None, None, None,
+                        None, None, None, None, None, None, None, None,
+                    ];
+
+                    handler.on_opcode_decoded(decode_opcode!(OPCODES[opc as usize]))?;
+                }
+                0b1101 => {
+                    let dd = (inst & 0b11) as u8;
+                    let imm = (inst >> 5) & 0b1111_1111;
+                    let sssss = reg_b16(inst);
+                    let op_lo = ((inst >> 3) & 0b11) as u8;
+                    let op_hi = ((inst >> 21) & 0b11) as u8;
+
+                    const OPCODES: [Option<Opcode>; 16] = [
+                        Some(Opcode::CmpbGt), Some(Opcode::CmphGt), None, None,
+                        Some(Opcode::CmpbEq), Some(Opcode::CmphEq), None, None,
+                        Some(Opcode::CmpbGtu), Some(Opcode::CmphGtu), None, None,
+                        None, None, None, None,
+                    ];
+
+                    let opc = op_lo | (op_hi << 2);
+
+                    handler.on_opcode_decoded(decode_opcode!(OPCODES[opc as usize]))?;
+                    handler.on_dest_decoded(Operand::pred(dd))?;
+                    handler.on_source_decoded(Operand::gpr(sssss))?;
+                    if opc & 0b10_00 != 0 {
+                        operand_check!(imm < 0b1000_0000);
+                    }
+                    handler.on_source_decoded(Operand::imm_u8(imm as u8))?;
+                }
+                0b1110 => {
+                    let xxxxx = reg_b16(inst);
+                    let op_lo = (inst >> 1) & 0b11;
+                    let op_hi = (inst >> 4) & 0b1;
+                    let opc = op_lo | (op_hi << 2);
+                    let i_lo = (inst >> 3) & 0b1;
+                    let i_lo3 = (inst >> 5) & 0b111;
+                    let i_mid = (inst >> 13) & 0b1;
+                    let i_hi = (inst >> 21) & 0b11;
+                    let i = i_lo | (i_lo3 << 1) | (i_mid << 4) | (i_hi << 6);
+                    let u5 = reg_b8(inst);
+
+                    handler.on_dest_decoded(Operand::gpr(xxxxx))?;
+                    handler.on_source_decoded(Operand::imm_u8(i as u8))?;
+                    handler.on_dest_decoded(Operand::gpr(xxxxx))?;
+                    handler.on_source_decoded(Operand::imm_u8(u5))?;
+
+                    const OPCODES: [Opcode; 8] = [
+                        AndAsl, OrAsl,
+                        AddAsl, SubAsl,
+                        AndLsr, OrLsr,
+                        AddLsr, SubLsr,
+                    ];
+
+                    handler.on_opcode_decoded(OPCODES[opc as usize])?;
+                }
+                0b1111 => {
+                    let order = (inst >> 24) & 1;
+                    let uuuuu = reg_b0(inst);
+                    let ddddd = reg_b0(inst);
+                    let sssss = reg_b0(inst);
+                    let i_lo = (inst >> 5) & 0b111;
+                    let i_mid = (inst >> 13) & 0b1;
+                    let i_hi = (inst >> 21) & 0b11;
+                    let i6 = (i_lo | (i_mid << 3) | (i_hi << 4)) as u8;
+
+                    handler.on_opcode_decoded(Opcode::AddMpyi)?;
+                    handler.on_dest_decoded(Operand::gpr(ddddd))?;
+                    handler.on_source_decoded(Operand::gpr(uuuuu))?;
+
+                    if order == 0 {
+                        handler.on_source_decoded(Operand::imm_u8(i6 << 2))?;
+                        handler.on_source_decoded(Operand::gpr(sssss))?;
+                    } else {
+                        handler.on_source_decoded(Operand::gpr(sssss))?;
+                        handler.on_source_decoded(Operand::imm_u8(i6 << 2))?;
+                    }
+                }
                 _ => {
                     todo!("other");
                 },
+            }
+        }
+        0b1110 => {
+            let ddddd = reg_b0(inst);
+            let ttttt = reg_b8(inst);
+            let sssss = reg_b16(inst);
+
+            let opc = (inst >> 24) & 0b1111;
+
+            let op_hi = ((inst >> 21) & 0b111) as u8;
+            let op_lo = ((inst >> 5) & 0b111) as u8;
+
+            match opc {
+                0b0000 => {
+                    // mpyi +/-
+                    operand_check!(inst & 0b10_0000 == 0);
+                    let i = (inst >> 5) & 0b1111_1111;
+                    handler.on_dest_decoded(Operand::gpr(ddddd))?;
+                    handler.on_source_decoded(Operand::gpr(sssss))?;
+                    handler.on_source_decoded(Operand::imm_u8(i as u8))?;
+                    if op_hi < 0b100 {
+                        handler.on_opcode_decoded(Opcode::MpyiPos)?;
+                    } else {
+                        handler.on_opcode_decoded(Opcode::MpyiNeg)?;
+                    }
+                }
+                0b0001 => {
+                    // mpyi +/-
+                    operand_check!(inst & 0b10_0000 == 0);
+                    let i = (inst >> 5) & 0b1111_1111;
+                    handler.on_opcode_decoded(Opcode::Mpyi)?;
+                    handler.on_dest_decoded(Operand::gpr(reg_b0(inst)))?;
+                    handler.on_source_decoded(Operand::gpr(sssss))?;
+                    handler.on_source_decoded(Operand::imm_u8(i as u8))?;
+                    if op_hi < 0b100 {
+                        handler.assign_mode(AssignMode::AddAssign)?;
+                    } else {
+                        handler.assign_mode(AssignMode::SubAssign)?;
+                    }
+                }
+                0b0010 => {
+                    operand_check!(inst & 0b10_0000 == 0);
+                    let i = (inst >> 5) & 0b1111_1111;
+                    handler.on_opcode_decoded(Opcode::Add)?;
+                    handler.on_dest_decoded(Operand::gpr(reg_b0(inst)))?;
+                    handler.on_source_decoded(Operand::gpr(sssss))?;
+                    handler.on_source_decoded(Operand::imm_i8(i as i8))?;
+                }
+                0b0011 => {
+                    let uuuuu = reg_b0(inst);
+                    let yyyyy = reg_b8(inst);
+                    handler.on_opcode_decoded(Opcode::AddMpyi)?;
+                    handler.on_dest_decoded(Operand::gpr(yyyyy))?;
+                    handler.on_source_decoded(Operand::gpr(uuuuu))?;
+                    handler.on_source_decoded(Operand::gpr(yyyyy))?;
+                    handler.on_source_decoded(Operand::gpr(sssss))?;
+                }
+                0b0100 => {
+                    handler.on_dest_decoded(Operand::gprpair(ddddd)?)?;
+                    let opbits = op_hi & 0b11;
+                    match opbits {
+                        0b00 => {
+                            handler.on_opcode_decoded(Opcode::Mpy)?;
+                        }
+                        0b01 => {
+                            handler.on_opcode_decoded(Opcode::Mpy)?;
+                            handler.rounded(RoundingMode::Round)?;
+                        }
+                        0b10 => {
+                            handler.on_opcode_decoded(Opcode::Mpyu)?;
+                        }
+                        _ => {
+                            return Err(DecodeError::InvalidOpcode);
+                        }
+                    };
+
+                    if op_lo & 0b10 == 0 {
+                        handler.on_source_decoded(Operand::gpr_low(sssss))?;
+                    } else {
+                        handler.on_source_decoded(Operand::gpr_high(sssss))?;
+                    }
+                    if op_lo & 0b01 == 0 {
+                        handler.on_source_decoded(Operand::gpr_low(ttttt))?;
+                    } else {
+                        handler.on_source_decoded(Operand::gpr_high(ttttt))?;
+                    }
+
+                    handler.shift_left((op_hi >> 2) & 1)?;
+                }
+                0b0101 => {
+                    // some more mpy
+
+                    let opc = op_lo | (op_hi << 3);
+
+                    handler.on_dest_decoded(Operand::gprpair(ddddd)?)?;
+
+                    let masked = opc & 0b011_111;
+                    if masked == 0b00101 {
+                        handler.on_opcode_decoded(Opcode::Vmpyh)?;
+                        handler.on_source_decoded(Operand::gprpair(sssss)?)?;
+                        handler.on_source_decoded(Operand::gprpair(ttttt)?)?;
+                        handler.shift_left((opc >> 5) as u8)?;
+                        handler.saturate()?;
+                        return Ok(());
+                    }
+
+                    handler.on_source_decoded(Operand::gpr(sssss))?;
+
+                    if masked == 0b00110 {
+                        handler.on_opcode_decoded(Opcode::Cmpy)?;
+                        handler.on_source_decoded(Operand::gpr(ttttt))?;
+                        handler.shift_left((opc >> 5) as u8)?;
+                        handler.saturate()?;
+                        return Ok(());
+                    } else if masked == 0b00111 {
+                        handler.on_opcode_decoded(Opcode::Vmpyhsu)?;
+                        handler.on_source_decoded(Operand::gpr(ttttt))?;
+                        handler.shift_left((opc >> 5) as u8)?;
+                        handler.saturate()?;
+                        return Ok(());
+                    } else if masked == 0b10110 {
+                        handler.on_opcode_decoded(Opcode::Cmpy)?;
+                        handler.on_source_decoded(Operand::gpr_conjugate(ttttt))?;
+                        handler.shift_left((opc >> 5) as u8)?;
+                        handler.saturate()?;
+                        return Ok(());
+                    }
+
+                    handler.on_source_decoded(Operand::gpr(ttttt))?;
+
+                    static OPCODES: [Option<Opcode>; 64] = [
+                        Some(Mpy), Some(Cmpyi), Some(Cmpyr), None, None, None, None, None,
+                        Some(Mpyu), Some(Vmpybsu), None, Some(Pmpyw), None, None, None, None,
+                        None, None, None, None, None, None, None, None,
+                        None, Some(Vmpybu), None, None, None, None, None, None,
+                        None, None, None, None, None, None, None, None,
+                        None, None, None, None, None, None, None, Some(Vmpyh),
+                        None, None, None, None, None, None, None, None,
+                        None, None, None, None, None, None, None, None,
+                    ];
+
+                    handler.on_opcode_decoded(decode_opcode!(OPCODES[opc as usize]))?;
+                }
+                0b0110 => {
+                    // 1110|0110...
+
+                    if op_hi & 0b010 == 0 {
+                        handler.on_opcode_decoded(Opcode::Mpy)?;
+                    } else {
+                        handler.on_opcode_decoded(Opcode::Mpyu)?;
+                    }
+                    if op_hi & 0b001 == 0 {
+                        handler.assign_mode(AssignMode::AddAssign)?;
+                    } else {
+                        handler.assign_mode(AssignMode::SubAssign)?;
+                    }
+
+                    operand_check!(op_lo & 0b100 == 0);
+                    if op_lo & 0b10 == 0 {
+                        handler.on_source_decoded(Operand::gpr_low(sssss))?;
+                    } else {
+                        handler.on_source_decoded(Operand::gpr_high(sssss))?;
+                    }
+                    if op_lo & 0b01 == 0 {
+                        handler.on_source_decoded(Operand::gpr_low(ttttt))?;
+                    } else {
+                        handler.on_source_decoded(Operand::gpr_high(ttttt))?;
+                    }
+
+                    handler.shift_left((op_hi >> 2) & 1)?;
+                }
+                0b0111 => {
+                    opcode_check!(inst & 0b0010_0000_0000_0000 == 0);
+                    let xxxxx = reg_b0(inst);
+                    let ttttt = reg_b8(inst);
+                    let sssss = reg_b16(inst);
+
+                    match op_lo {
+                        0b000 => {
+                            opcode_check!(op_hi & 0b100 == 0);
+                            if op_hi & 0b010 == 0 {
+                                handler.on_opcode_decoded(Opcode::Mpy)?;
+                            } else {
+                                handler.on_opcode_decoded(Opcode::Mpyu)?;
+                            }
+                            if op_hi & 0b001 == 0 {
+                                handler.assign_mode(AssignMode::AddAssign)?;
+                            } else {
+                                handler.assign_mode(AssignMode::SubAssign)?;
+                            }
+                            handler.on_dest_decoded(Operand::gprpair(xxxxx)?)?;
+                            handler.on_source_decoded(Operand::gpr(sssss))?;
+                            handler.on_source_decoded(Operand::gpr(ttttt))?;
+                        }
+                        0b001 => {
+                            handler.on_dest_decoded(Operand::gprpair(xxxxx)?)?;
+                            if op_hi == 0b000 {
+                                handler.on_source_decoded(Operand::gpr(sssss))?;
+                                handler.on_source_decoded(Operand::gpr(ttttt))?;
+                            } else {
+                                handler.on_source_decoded(Operand::gprpair(sssss)?)?;
+                                handler.on_source_decoded(Operand::gprpair(ttttt)?)?;
+                            }
+                            static OPCODES: [Option<Opcode>; 8] = [
+                                Some(Cmpyi), Some(Vmpyh), None, None,
+                                Some(Vmpybu), None, Some(Vmpybsu), None,
+                            ];
+                            handler.on_opcode_decoded(decode_opcode!(OPCODES[op_hi as usize]))?;
+                        }
+                        0b010 => {
+                            opcode_check!(op_hi == 0);
+                            handler.on_dest_decoded(Operand::gprpair(xxxxx)?)?;
+                            handler.on_source_decoded(Operand::gpr(sssss))?;
+                            handler.on_source_decoded(Operand::gpr(ttttt))?;
+                            handler.on_opcode_decoded(Opcode::Cmpyr)?;
+                        }
+                        0b101 => {
+                            handler.on_dest_decoded(Operand::gprpair(xxxxx)?)?;
+                            handler.shift_left(op_hi >> 2)?;
+                            handler.saturate()?;
+
+                            match op_hi & 0b11 {
+                                0b00 => {
+                                    handler.on_opcode_decoded(Opcode::Vmpyh)?;
+                                    handler.on_source_decoded(Operand::gprpair(sssss)?)?;
+                                    handler.on_source_decoded(Operand::gprpair(ttttt)?)?;
+                                }
+                                0b11 => {
+                                    handler.on_opcode_decoded(Opcode::Vmpyhsu)?;
+                                    handler.on_source_decoded(Operand::gpr(sssss))?;
+                                    handler.on_source_decoded(Operand::gpr(ttttt))?;
+                                }
+                                _ => { return Err(DecodeError::InvalidOpcode); }
+                            }
+                        }
+                        0b110 => {
+                            handler.on_dest_decoded(Operand::gprpair(xxxxx)?)?;
+                            handler.on_source_decoded(Operand::gpr(sssss))?;
+                            // TODO: handle `cmpy(Rs,Rt*)`
+                            handler.on_source_decoded(Operand::gpr(ttttt))?;
+                            handler.shift_left(op_hi >> 2)?;
+                            handler.saturate()?;
+                        }
+                        0b111 => {
+                            handler.on_dest_decoded(Operand::gprpair(xxxxx)?)?;
+                            handler.on_source_decoded(Operand::gpr(sssss))?;
+                            if op_hi & 0b011 == 0b010 {
+                                // TODO: handle cmpy(Rs,Rt*)
+                                handler.on_source_decoded(Operand::gpr(ttttt))?;
+                            } else {
+                                handler.on_source_decoded(Operand::gpr(ttttt))?;
+                            }
+                            match op_hi {
+                                0b000 | 0b100 |
+                                0b010 | 0b110 => {
+                                    handler.assign_mode(AssignMode::SubAssign)?;
+                                    handler.on_opcode_decoded(Opcode::Cmpy)?;
+                                }
+                                0b001 => {
+                                    handler.assign_mode(AssignMode::XorAssign)?;
+                                    handler.on_opcode_decoded(Opcode::Pcmpyw)?;
+                                }
+                                0b101 => {
+                                    handler.assign_mode(AssignMode::XorAssign)?;
+                                    handler.on_opcode_decoded(Opcode::Vpcmpyw)?;
+                                }
+                                _ => {
+                                    return Err(DecodeError::InvalidOpcode);
+                                }
+                            }
+                        }
+                        _ => {
+                            return Err(DecodeError::InvalidOpcode);
+                        }
+                    }
+                }
+                0b1000 => {
+                    // 1110|1000
+                    opcode_check!(inst & 0b0010_0000_0000_0000 == 0);
+                    let ddddd = reg_b0(inst);
+                    let ttttt = reg_b8(inst);
+                    let sssss = reg_b16(inst);
+
+                    handler.on_dest_decoded(Operand::gprpair(ddddd)?)?;
+
+                    if op_lo & 0b100 == 0b100 || (op_lo == 0b010 && op_hi & 0b011 == 0b001) {
+                        // all of these may have `<<N`, though some are only valid with `<<1`.
+                        let n = (op_hi >> 2) & 1;
+                        handler.shift_left(n)?;
+                        if op_lo == 0b010 && op_hi & 0b011 == 0b001 {
+                            handler.on_opcode_decoded(Vrmpywoh)?;
+                        } else {
+                            handler.on_source_decoded(Operand::gprpair(sssss)?)?;
+                            handler.on_source_decoded(Operand::gprpair(ttttt)?)?;
+
+                            let opc = (op_lo & 0b11) | ((op_hi & 0b11) << 2);
+                            match opc {
+                                0b0000 => {
+                                    handler.on_opcode_decoded(Vdmpy)?;
+                                    handler.saturate()?;
+                                }
+                                0b0001 => {
+                                    handler.on_opcode_decoded(Vmpyweh)?;
+                                    handler.saturate()?;
+                                }
+                                0b0010 => {
+                                    handler.on_opcode_decoded(Vmpyeh)?;
+                                    handler.saturate()?;
+                                }
+                                0b0011 => {
+                                    handler.on_opcode_decoded(Vmpywoh)?;
+                                    handler.saturate()?;
+                                }
+                                0b0100 => {
+                                    opcode_check!(op_hi & 0b100 != 0);
+                                    handler.on_opcode_decoded(Vrcmpys)?;
+                                    handler.saturate()?;
+                                    handler.raw_mode(RawMode::Hi)?;
+                                }
+                                0b0101 => {
+                                    handler.on_opcode_decoded(Vmpyweh)?;
+                                    handler.saturate()?;
+                                    handler.rounded(RoundingMode::Round)?;
+                                }
+                                0b0110 => {
+                                    handler.on_opcode_decoded(Vcmpyr)?;
+                                    handler.saturate()?;
+                                }
+                                0b0111 => {
+                                    handler.on_opcode_decoded(Vmpywoh)?;
+                                    handler.saturate()?;
+                                    handler.rounded(RoundingMode::Round)?;
+                                }
+                                0b1000 => {
+                                    handler.on_opcode_decoded(Vmpywoh)?;
+                                    handler.saturate()?;
+                                    handler.rounded(RoundingMode::Round)?;
+                                }
+                                0b1001 => {
+                                    handler.on_opcode_decoded(Vrmpywoh)?;
+                                }
+                                0b1010 => {
+                                    handler.on_opcode_decoded(Vcmpyi)?;
+                                    handler.saturate()?;
+                                }
+                                0b1011 => {
+                                    handler.on_opcode_decoded(Vmpywouh)?;
+                                    handler.saturate()?;
+                                }
+                                0b1100 => {
+                                    opcode_check!(inst & 0b100 != 0);
+                                    handler.on_opcode_decoded(Vrcmpys)?;
+                                    handler.saturate()?;
+                                    handler.raw_mode(RawMode::Lo)?;
+                                }
+                                0b1101 => {
+                                    handler.on_opcode_decoded(Vmpyweuh)?;
+                                    handler.rounded(RoundingMode::Round)?;
+                                    handler.saturate()?;
+                                }
+                                0b1111 => {
+                                    handler.on_opcode_decoded(Vmpywouh)?;
+                                    handler.rounded(RoundingMode::Round)?;
+                                    handler.saturate()?;
+                                }
+                                _ => {
+                                    return Err(DecodeError::InvalidOpcode);
+                                }
+                            }
+                        }
+                    } else {
+                        static OPCODES: [Option<Opcode>; 32] = [
+                            None, None, Some(Vrmpyh), Some(DfAdd),
+                            Some(Vabsdiffw), None, None, Some(DfMax),
+                            None, Some(Vraddub), Some(Vrsadub), Some(DfMpyfix),
+                            Some(Vabsdiffh), None, Some(Cmpyiw), None,
+                            None, Some(Vrmpyu), Some(Cmpyrw), Some(DfSub),
+                            Some(Vabsdiffub), Some(Vdmpybsu), None, Some(DfMpyll),
+                            None, Some(Vrmpysu), Some(Cmpyrw), Some(DfMin),
+                            Some(Vabsdiffb), None, Some(Cmpyiw), None,
+                        ];
+                        let opc = (op_lo & 0b11) | (op_hi << 2);
+                        handler.on_opcode_decoded(decode_opcode!(OPCODES[opc as usize]))?;
+
+                        if opc == 0b0101 {
+                            handler.saturate()?;
+                        }
+
+                        if (op_lo & 0b11) == 0b00 {
+                            handler.on_source_decoded(Operand::gprpair(ttttt)?)?;
+                            handler.on_source_decoded(Operand::gprpair(sssss)?)?;
+                        } else if opc == 0b1010 || opc == 0b1110 {
+                            // cmpyiw(Rss,Rtt*)
+                            handler.on_source_decoded(Operand::gprpair(sssss)?)?;
+                            // TODO: Rtt*?
+                        } else {
+                            handler.on_source_decoded(Operand::gprpair(sssss)?)?;
+                            handler.on_source_decoded(Operand::gprpair(ttttt)?)?;
+                        }
+                    }
+                }
+                0b1001 => {
+                    // 1110|1001
+                    let opc = op_lo | (op_hi << 3);
+
+                    let mut rtt_star = false;
+                    let mut saturate = true;
+                    let mut shift_amt = 1;
+
+                    handler.on_dest_decoded(Operand::gpr(ddddd))?;
+                    handler.on_source_decoded(Operand::gprpair(sssss)?)?;
+
+                    match opc {
+                        o if o & 0b100011 == 0b100001 => {
+                            handler.on_opcode_decoded(Opcode::Vradduh)?;
+                            rtt_star = true;
+                            saturate = false;
+                            shift_amt = 0;
+                        }
+                        o if o & 0b101111 == 0b001111 => {
+                            handler.on_opcode_decoded(Opcode::Vraddh)?;
+                            rtt_star = true;
+                            saturate = false;
+                            shift_amt = 0;
+                        }
+                        0b000100 => {
+                            handler.on_opcode_decoded(Opcode::Cmpyiw)?;
+                            rtt_star = true;
+                        }
+                        0b001000 => {
+                            handler.on_opcode_decoded(Opcode::Cmpyiw)?;
+                        }
+                        0b010000 => {
+                            handler.on_opcode_decoded(Opcode::Cmpyrw)?;
+                        }
+                        0b011000 => {
+                            handler.on_opcode_decoded(Opcode::Cmpyrw)?;
+                            rtt_star = true;
+                        }
+                        o if o & 0b101111 == 0b101110 => {
+                            handler.on_opcode_decoded(Opcode::Vrcmpys)?;
+                            handler.rounded(RoundingMode::Round)?;
+                            handler.raw_mode(RawMode::Hi)?;
+                        }
+                        o if o & 0b101111 == 0b101111 => {
+                            handler.on_opcode_decoded(Opcode::Vrcmpys)?;
+                            handler.rounded(RoundingMode::Round)?;
+                            handler.raw_mode(RawMode::Lo)?;
+                        }
+                        0b100100 => {
+                            handler.on_opcode_decoded(Opcode::Cmpyiw)?;
+                            handler.rounded(RoundingMode::Round)?;
+                            rtt_star = true;
+                        }
+                        0b101000 => {
+                            handler.on_opcode_decoded(Opcode::Cmpyiw)?;
+                            handler.rounded(RoundingMode::Round)?;
+                        }
+                        0b110000 => {
+                            handler.on_opcode_decoded(Opcode::Cmpyrw)?;
+                            handler.rounded(RoundingMode::Round)?;
+                        }
+                        0b111000 => {
+                            handler.on_opcode_decoded(Opcode::Cmpyrw)?;
+                            handler.rounded(RoundingMode::Round)?;
+                            rtt_star = true;
+                        }
+                        o if o & 0b011111 == 0b000000 => {
+                            handler.on_opcode_decoded(Opcode::Vdmpy)?;
+                            handler.rounded(RoundingMode::Round)?;
+                            if o & 0b100000 == 0 {
+                                shift_amt = 0;
+                            }
+                            rtt_star = true;
+                        }
+                        _other => {
+                            return Err(DecodeError::InvalidOpcode);
+                        }
+                    }
+
+                    if saturate {
+                        handler.saturate()?;
+                    }
+                    if shift_amt == 1 {
+                        handler.shift_left(shift_amt)?;
+                    }
+                    if rtt_star {
+                        handler.on_source_decoded(Operand::gpr_conjugate(ttttt))?;
+                    } else {
+                        handler.on_source_decoded(Operand::gprpair(ttttt)?)?;
+                    }
+                }
+                0b1010 => {
+                    // 1110|1010
+                    opcode_check!(inst & 0b0010_0000_0000_0000 == 0);
+
+                    let opc = op_lo | (op_hi << 3);
+
+                    handler.on_dest_decoded(Operand::gprpair(ddddd)?)?;
+                    handler.on_source_decoded(Operand::gprpair(sssss)?)?;
+                    let mut rtt_star = false;
+
+                    match opc {
+                        0b000010 => {
+                            handler.on_opcode_decoded(Opcode::Vrmpyh)?;
+                        }
+                        0b000011 => {
+                            handler.on_opcode_decoded(Opcode::DfMpylh)?;
+                        }
+                        0b001001 => {
+                            handler.on_opcode_decoded(Opcode::Vdmpybsu)?;
+                            handler.saturate()?;
+                        }
+                        0b001010 => {
+                            handler.on_opcode_decoded(Opcode::Vmpyeh)?;
+                        }
+                        0b001100 => {
+                            handler.on_opcode_decoded(Opcode::Vcmpyr)?;
+                        }
+                        0b010001 => {
+                            handler.on_opcode_decoded(Opcode::Vraddub)?;
+                        }
+                        0b010010 => {
+                            handler.on_opcode_decoded(Opcode::Vrsadub)?;
+                        }
+                        0b010100 => {
+                            handler.on_opcode_decoded(Opcode::Vcmpyi)?;
+                            handler.saturate()?;
+                        }
+                        0b010110 => {
+                            handler.on_opcode_decoded(Opcode::Cmpyiw)?;
+                            rtt_star = true;
+                        }
+                        0b011010 => {
+                            handler.on_opcode_decoded(Opcode::Cmpyiw)?;
+                        }
+                        0b100001 => {
+                            handler.on_opcode_decoded(Opcode::Vrmpybu)?;
+                        }
+                        0b100010 => {
+                            handler.on_opcode_decoded(Opcode::Cmpyrw)?;
+                        }
+                        0b100011 => {
+                            handler.on_opcode_decoded(Opcode::DfMpyhh)?;
+                        }
+                        o if o & 0b111100 == 0b101000 => {
+                            handler.on_opcode_decoded(Opcode::Vacsh)?;
+                            handler.on_dest_decoded(Operand::pred(o as u8 & 0b11))?;
+                        }
+                        0b101100 => {
+                            handler.on_opcode_decoded(Opcode::Vrcmpys)?;
+                            handler.shift_left(1)?;
+                            handler.saturate()?;
+                            handler.rounded(RoundingMode::Hi)?;
+                        }
+                        0b110001 => {
+                            handler.on_opcode_decoded(Opcode::Vrmpybsu)?;
+                        }
+                        0b110010 => {
+                            handler.on_opcode_decoded(Opcode::Cmpyrw)?;
+                            rtt_star = true;
+                        }
+                        o if o & 0b111100 == 0b111000 => {
+                            handler.on_opcode_decoded(Opcode::Vminub)?;
+                            handler.on_dest_decoded(Operand::pred(o & 0b11))?;
+                        }
+                        0b111100 => {
+                            handler.on_opcode_decoded(Opcode::Vrcmpys)?;
+                            handler.shift_left(1)?;
+                            handler.saturate()?;
+                            handler.rounded(RoundingMode::Lo)?;
+                        }
+                        0b000_100 | 0b100_100 => {
+                            handler.on_opcode_decoded(Opcode::Vdmpy)?;
+                            handler.saturate()?;
+                            handler.shift_left((opc >> 5) as u8)?;
+                        }
+                        0b000_101 | 0b100_101 => {
+                            handler.on_opcode_decoded(Opcode::Vmpyweh)?;
+                            handler.saturate()?;
+                            handler.shift_left((opc >> 5) as u8)?;
+                        }
+                        0b000_110 | 0b100_110 => {
+                            handler.on_opcode_decoded(Opcode::Vmpyeh)?;
+                            handler.saturate()?;
+                            handler.shift_left((opc >> 5) as u8)?;
+                        }
+                        0b000_111 | 0b100_111 => {
+                            handler.on_opcode_decoded(Opcode::Vmpywoh)?;
+                            handler.saturate()?;
+                            handler.shift_left((opc >> 5) as u8)?;
+                        }
+                        0b001_101 | 0b101_101 => {
+                            handler.on_opcode_decoded(Opcode::Vmpyweh)?;
+                            handler.saturate()?;
+                            handler.rounded(RoundingMode::Round)?;
+                            handler.shift_left((opc >> 5) as u8)?;
+                        }
+                        0b001_110 | 0b101_110 => {
+                            handler.on_opcode_decoded(Opcode::Vrmpywoh)?;
+                            handler.shift_left((opc >> 5) as u8)?;
+                        }
+                        0b001_111 | 0b101_111 => {
+                            handler.on_opcode_decoded(Opcode::Vmpywoh)?;
+                            handler.saturate()?;
+                            handler.rounded(RoundingMode::Round)?;
+                            handler.shift_left((opc >> 5) as u8)?;
+                        }
+                        0b011_101 | 0b111_101 => {
+                            handler.on_opcode_decoded(Opcode::Vmpyweuh)?;
+                            handler.saturate()?;
+                            handler.rounded(RoundingMode::Round)?;
+                            handler.shift_left((opc >> 5) as u8)?;
+                        }
+                        0b011_110 | 0b111_110 => {
+                            handler.on_opcode_decoded(Opcode::Vrmpywoh)?;
+                            handler.shift_left((opc >> 5) as u8)?;
+                        }
+                        0b011_111 | 0b111_111 => {
+                            handler.on_opcode_decoded(Opcode::Vmpywoh)?;
+                            handler.saturate()?;
+                            handler.rounded(RoundingMode::Round)?;
+                            handler.shift_left((opc >> 5) as u8)?;
+                        }
+                        _ => {
+                            return Err(DecodeError::InvalidOpcode);
+                        }
+                    }
+
+                    if rtt_star {
+                        panic!("rtt_star");
+                    } else {
+                        handler.on_source_decoded(Operand::gprpair(ttttt)?)?;
+                    }
+                }
+                0b1011 => {
+                    // 1110|1011
+                    opcode_check!(inst & 0b0010_0000_0000_0000 == 0);
+                    handler.on_dest_decoded(Operand::gpr(ddddd))?;
+                    handler.on_source_decoded(Operand::gpr(sssss))?;
+                    handler.on_source_decoded(Operand::gpr(ttttt))?;
+
+                    let opc = op_lo | (op_hi << 3);
+
+                    match opc {
+                        0b000_001 => {
+                            handler.on_opcode_decoded(SfSub)?;
+                        }
+                        0b000_011 => {
+                            handler.on_opcode_decoded(SfAdd)?;
+                        }
+                        0b010_000 => {
+                            handler.on_opcode_decoded(SfMpy)?;
+                        }
+                        0b100_000 => {
+                            handler.on_opcode_decoded(SfMax)?;
+                        }
+                        0b100_001 => {
+                            handler.on_opcode_decoded(SfMin)?;
+                        }
+                        0b110_000 => {
+                            handler.on_opcode_decoded(SfFixupn)?;
+                        }
+                        0b110_001 => {
+                            handler.on_opcode_decoded(SfFixupd)?;
+                        }
+                        o if o >= 0b111100 => {
+                            let ee = o & 0b11;
+                            handler.on_opcode_decoded(SfRecipa)?;
+                            handler.on_dest_decoded(Operand::pred(ee))?;
+                        }
+                        _ => {
+                            opcode_check!(false);
+                        }
+                    }
+                }
+                0b1100 => {
+                    handler.on_opcode_decoded(Opcode::Mpy)?;
+                    handler.on_dest_decoded(Operand::gpr(ddddd))?;
+                    if op_hi & 0b100 != 0 {
+                        handler.shift_left(1)?;
+                    }
+                    opcode_check!(op_hi & 0b010 == 0);
+                    if op_hi & 0b001 != 0 {
+                        handler.rounded(RoundingMode::Round)?;
+                    }
+                    if op_lo & 0b100 != 0 {
+                        handler.saturate()?;
+                    }
+                    if op_lo & 0b010 != 0 {
+                        handler.on_source_decoded(Operand::gpr_high(sssss))?;
+                    } else {
+                        handler.on_source_decoded(Operand::gpr_low(sssss))?;
+                    }
+                    if op_lo & 0b001 != 0 {
+                        handler.on_source_decoded(Operand::gpr_high(ttttt))?;
+                    } else {
+                        handler.on_source_decoded(Operand::gpr_low(ttttt))?;
+                    }
+                }
+                0b1101 => {
+                    // 1110|1101
+                    opcode_check!(inst & 0b0010_0000_0000_0000 == 0);
+                    // TODO: can remove probably?
+                    let op_lo = ((inst >> 5) & 0b111) as u8;
+                    let op_hi = ((inst >> 21) & 0b111) as u8;
+
+                    handler.on_dest_decoded(Operand::gpr(reg_b0(inst)))?;
+                    handler.on_source_decoded(Operand::gpr(reg_b16(inst)))?;
+
+                    match op_lo {
+                        0b000 => {
+                            if op_hi == 0b000 {
+                                handler.on_opcode_decoded(Opcode::Mpyi)?;
+                                handler.on_source_decoded(Operand::gpr(reg_b8(inst)))?;
+                            } else if op_hi == 0b101 {
+                                handler.on_opcode_decoded(Opcode::Mpy)?;
+                                handler.on_source_decoded(Operand::gpr_high(reg_b8(inst)))?;
+                                handler.shift_left(1)?;
+                                handler.saturate()?;
+                            } else if op_hi == 0b111 {
+                                handler.on_opcode_decoded(Opcode::Mpy)?;
+                                handler.on_source_decoded(Operand::gpr(reg_b8(inst)))?;
+                                handler.shift_left(1)?;
+                                handler.saturate()?;
+                            } else {
+                                opcode_check!(false);
+                            }
+                        }
+                        0b001 => {
+                            match op_hi {
+                                0b000 => {
+                                    handler.on_opcode_decoded(Opcode::Mpy)?;
+                                    handler.on_source_decoded(Operand::gpr(reg_b8(inst)))?;
+                                }
+                                0b001 => {
+                                    handler.on_opcode_decoded(Opcode::Mpy)?;
+                                    handler.rounded(RoundingMode::Round)?;
+                                    handler.on_source_decoded(Operand::gpr(reg_b8(inst)))?;
+                                }
+                                0b010 => {
+                                    handler.on_opcode_decoded(Opcode::Mpyu)?;
+                                    handler.on_source_decoded(Operand::gpr(reg_b8(inst)))?;
+                                }
+                                0b011 => {
+                                    handler.on_opcode_decoded(Opcode::Mpysu)?;
+                                    handler.on_source_decoded(Operand::gpr(reg_b8(inst)))?;
+                                }
+                                0b101 => {
+                                    handler.on_opcode_decoded(Opcode::Mpy)?;
+                                    handler.on_source_decoded(Operand::gpr_low(reg_b8(inst)))?;
+                                }
+                                _ => {
+                                    opcode_check!(false);
+                                }
+                            }
+                        }
+                        0b010 => {
+                            opcode_check!(op_hi == 0b101);
+                            handler.on_opcode_decoded(Opcode::Mpy)?;
+                            handler.on_source_decoded(Operand::gpr(reg_b8(inst)))?;
+                            handler.shift_left(1)?;
+                        }
+                        0b100 => {
+                            handler.on_opcode_decoded(Opcode::Mpy)?;
+                            handler.shift_left(1)?;
+                            handler.rounded(RoundingMode::Round)?;
+                            handler.saturate()?;
+                            if op_hi == 0b101 {
+                                handler.on_source_decoded(Operand::gpr_high(reg_b8(inst)))?;
+                            } else if op_hi == 0b111 {
+                                handler.on_source_decoded(Operand::gpr_low(reg_b8(inst)))?;
+                            } else {
+                                opcode_check!(false);
+                            }
+                        }
+                        0b110 => {
+                            opcode_check!(op_hi & 0b001 == 0b001);
+                            handler.shift_left(op_hi >> 2)?;
+                            if op_hi & 0b010 == 0 {
+                                handler.on_dest_decoded(Operand::gpr(reg_b8(inst)))?;
+                            } else {
+                                todo!("reg rt_star");
+                            }
+                            handler.rounded(RoundingMode::Round)?;
+                            handler.saturate()?;
+                        }
+                        0b111 => {
+                            opcode_check!(op_hi & 0b011 == 0b001);
+                            handler.on_opcode_decoded(Opcode::Vcmpyh)?;
+                            handler.on_dest_decoded(Operand::gpr(reg_b8(inst)))?;
+                            handler.rounded(RoundingMode::Round)?;
+                            handler.saturate()?;
+                        }
+                        _ => {
+                            opcode_check!(false);
+                        }
+                    }
+                }
+                0b1110 => {
+                    handler.on_opcode_decoded(Opcode::Mpy)?;
+                    handler.on_dest_decoded(Operand::gpr(ddddd))?;
+                    if op_hi & 0b100 != 0 {
+                        handler.shift_left(1)?;
+                    }
+                    opcode_check!(op_hi & 0b010 == 0);
+                    if op_hi & 0b001 == 0 {
+                        handler.assign_mode(AssignMode::AddAssign)?;
+                    } else {
+                        handler.assign_mode(AssignMode::SubAssign)?;
+                    }
+                    if op_lo & 0b100 != 0 {
+                        handler.saturate()?;
+                    }
+                    if op_lo & 0b010 != 0 {
+                        handler.on_source_decoded(Operand::gpr_high(sssss))?;
+                    } else {
+                        handler.on_source_decoded(Operand::gpr_low(sssss))?;
+                    }
+                    if op_lo & 0b001 != 0 {
+                        handler.on_source_decoded(Operand::gpr_high(ttttt))?;
+                    } else {
+                        handler.on_source_decoded(Operand::gpr_low(ttttt))?;
+                    }
+                }
+                _ => { // only remaining pattern is 0b1111
+                    opcode_check!(inst & 0b0010_0000_0000_0000 == 0);
+
+                    let opc = op_lo | (op_hi << 3);
+
+                    use AssignMode::*;
+
+                    static OPCODES: [Option<(AssignMode, Opcode)>; 64] = [
+                        // 000_000
+                        Some((AddAssign, Mpyi)), Some((AddAssign, Add)), None, Some((AddAssign, Sub)),
+                        Some((AddAssign, SfMpy)), Some((SubAssign, SfMpy)), Some((AddAssign, SfMpy)), Some((SubAssign, SfMpy)),
+                        // 001_000
+                        Some((OrAssign, AndNot)), Some((AddAssign, AndNot)), Some((XorAssign, AndNot)), None,
+                        None, None, None, None,
+                        // 010_000
+                        Some((AndAssign, And)), Some((AndAssign, Or)), Some((AndAssign, Xor)), Some((OrAssign, And)),
+                        None, None, None, None,
+                        // 011_000
+                        Some((AddAssign, Mpy)), Some((SubAssign, Mpy)), None, None,
+                        Some((AddAssign, SfMpy)), Some((AddAssign, SfMpy)), Some((AddAssign, SfMpy)), Some((AddAssign, SfMpy)),
+                        // 100_000
+                        Some((SubAssign, Mpyi)), Some((SubAssign, Add)), None, Some((XorAssign, Xor)),
+                        None, None, None, None,
+                        // 101_000
+                        None, None, None, None,
+                        None, None, None, None,
+                        // 110_000
+                        Some((OrAssign, Or)), Some((OrAssign, Xor)), Some((XorAssign, And)), Some((XorAssign, Or)),
+                        None, None, None, None,
+                        // 111_000
+                        None, None, None, None,
+                        None, None, None, None,
+                    ];
+
+                    let (assign_mode, opcode) = decode_operand!(OPCODES[opc as usize]);
+                    handler.on_opcode_decoded(opcode)?;
+                    handler.assign_mode(assign_mode)?;
+
+                    if opc == 0b000100 || opc == 0b000101 {
+                        handler.on_source_decoded(Operand::gprpair(sssss)?)?;
+                        handler.on_source_decoded(Operand::gprpair(ttttt)?)?;
+                    } else {
+                        handler.on_source_decoded(Operand::gpr(sssss))?;
+                        handler.on_source_decoded(Operand::gpr(ttttt))?;
+                    }
+
+                    if opc == 0b011000 || opc == 0b011001 {
+                        handler.shift_left(1)?;
+                        handler.saturate()?;
+                    } else if opc >= 0b011100 && opc < 0b100000 {
+                        handler.on_source_decoded(Operand::pred(op_lo & 0b11))?;
+                        // TODO: :scale?
+                    }
+                }
             }
         }
         0b1111 => {
@@ -4515,10 +6542,6 @@ fn decode_instruction<
                         handler.on_source_decoded(Operand::gpr(sssss))?;
                         handler.on_source_decoded(Operand::gpr(ttttt))?;
                         let op_low = (inst >> 4) & 1;
-                        let op_high = (inst >> 21) & 0b11;
-                        let op = (op_high << 1) | op_low;
-                        // TODO: probably want the negated forms to be their own opcodes for
-                        // everyone's ease of mind, but for now track them as a negated result...
                         static OPC: [Option<Opcode>; 8] = [
                             Some(Opcode::CmpEq), None, Some(Opcode::CmpGt), Some(Opcode::CmpGtu),
                             Some(Opcode::CmpEq), None, Some(Opcode::CmpGt), Some(Opcode::CmpGtu),

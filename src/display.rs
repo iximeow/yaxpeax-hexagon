@@ -71,6 +71,42 @@ impl fmt::Display for Instruction {
                     return write!(f, "{} = or({}, or({}, !{}))", self.dest.as_ref().unwrap(),
                         self.sources[0], self.sources[1], self.sources[2]);
                 }
+                Opcode::AndLsr => {
+                    return write!(f, "{} = and({}, lsr({}, {}))", self.dest.as_ref().unwrap(),
+                        self.sources[0], self.sources[1], self.sources[2]);
+                },
+                Opcode::OrLsr => {
+                    return write!(f, "{} = or({}, lsr({}, {}))", self.dest.as_ref().unwrap(),
+                        self.sources[0], self.sources[1], self.sources[2]);
+                },
+                Opcode::AddLsr => {
+                    return write!(f, "{} = add({}, lsr({}, {}))", self.dest.as_ref().unwrap(),
+                        self.sources[0], self.sources[1], self.sources[2]);
+                },
+                Opcode::SubLsr => {
+                    return write!(f, "{} = sub({}, lsr({}, {}))", self.dest.as_ref().unwrap(),
+                        self.sources[0], self.sources[1], self.sources[2]);
+                },
+                Opcode::AddLsl => {
+                    return write!(f, "{} = add({}, lsl({}, {}))", self.dest.as_ref().unwrap(),
+                        self.sources[0], self.sources[1], self.sources[2]);
+                },
+                Opcode::AddAsl => {
+                    return write!(f, "{} = add({}, asl({}, {}))", self.dest.as_ref().unwrap(),
+                        self.sources[0], self.sources[1], self.sources[2]);
+                },
+                Opcode::SubAsl => {
+                    return write!(f, "{} = sub({}, asl({}, {}))", self.dest.as_ref().unwrap(),
+                        self.sources[0], self.sources[1], self.sources[2]);
+                },
+                Opcode::AndAsl => {
+                    return write!(f, "{} = and({}, asl({}, {}))", self.dest.as_ref().unwrap(),
+                        self.sources[0], self.sources[1], self.sources[2]);
+                },
+                Opcode::OrAsl => {
+                    return write!(f, "{} = or({}, asl({}, {}))", self.dest.as_ref().unwrap(),
+                        self.sources[0], self.sources[1], self.sources[2]);
+                },
                 Opcode::AddClb => {
                     return write!(f, "{} = add(clb({}), {})", self.dest.as_ref().unwrap(),
                         self.sources[0], self.sources[1]);
@@ -87,7 +123,7 @@ impl fmt::Display for Instruction {
                         self.sources[0], self.sources[1]);
                 }
                 _ => {
-                    unreachable!("TODO: should be exhaustive for opcodes with special display rules");
+                    unreachable!("should be exhaustive for opcodes with special display rules");
                 }
             }
         }
@@ -383,8 +419,14 @@ impl fmt::Display for Opcode {
             Opcode::Mux => { f.write_str("mux") },
             Opcode::Combine => { f.write_str("combine") },
             Opcode::CmpEq => { f.write_str("cmp.eq") },
+            Opcode::CmpbEq => { f.write_str("cmpb.eq") },
+            Opcode::CmphEq => { f.write_str("cmph.eq") },
             Opcode::CmpGt => { f.write_str("cmp.gt") },
+            Opcode::CmpbGt => { f.write_str("cmpb.gt") },
+            Opcode::CmphGt => { f.write_str("cmph.gt") },
             Opcode::CmpGtu => { f.write_str("cmp.gtu") },
+            Opcode::CmpbGtu => { f.write_str("cmpb.gtu") },
+            Opcode::CmphGtu => { f.write_str("cmph.gtu") },
             Opcode::Add => { f.write_str("add") },
             Opcode::And => { f.write_str("and") },
             Opcode::And_nRR => { f.write_str("and") },
@@ -440,6 +482,8 @@ impl fmt::Display for Opcode {
             Opcode::Vlsrh => { f.write_str("vlsrh") },
             Opcode::Vaslw => { f.write_str("vaslw") },
             Opcode::Vaslh => { f.write_str("vaslh") },
+            Opcode::Vlslw => { f.write_str("vlslw") },
+            Opcode::Vlslh => { f.write_str("vlslh") },
 
             Opcode::Not => { f.write_str("not") },
             Opcode::Neg => { f.write_str("neg") },
@@ -463,6 +507,93 @@ impl fmt::Display for Opcode {
             Opcode::Icinva => { f.write_str("icinva") }
             Opcode::Isync => { f.write_str("isync") }
             Opcode::Unpause => { f.write_str("unpause") }
+
+            Opcode::SfAdd => { f.write_str("sfadd") },
+            Opcode::SfSub => { f.write_str("sfsub") },
+            Opcode::SfMpy => { f.write_str("sfmpy") },
+            Opcode::SfMax => { f.write_str("sfmax") },
+            Opcode::SfMin => { f.write_str("sfmin") },
+
+            Opcode::DfAdd => { f.write_str("dfadd") },
+            Opcode::DfSub => { f.write_str("dfsub") },
+            Opcode::DfMax => { f.write_str("dfmax") },
+            Opcode::DfMin => { f.write_str("dfmin") },
+
+            Opcode::SfCmpEq => { f.write_str("sfcmp.eq") },
+            Opcode::SfCmpGt => { f.write_str("sfcmp.gt") },
+            Opcode::SfCmpGe => { f.write_str("sfcmp.ge") },
+            Opcode::SfCmpUo => { f.write_str("sfcmp.uo") },
+
+            Opcode::DfCmpEq => { f.write_str("dfcmp.eq") },
+            Opcode::DfCmpGt => { f.write_str("dfcmp.gt") },
+            Opcode::DfCmpGe => { f.write_str("dfcmp.ge") },
+            Opcode::DfCmpUo => { f.write_str("dfcmp.uo") },
+            Opcode::DfMpyll => { f.write_str("dfmpyll") },
+            Opcode::DfMpylh => { f.write_str("dfmpylh") },
+            Opcode::DfMpyhh => { f.write_str("dfmpyhh") },
+            Opcode::DfMpyfix => { f.write_str("dfmpyfix") },
+
+            Opcode::Cmpy => { f.write_str("cmpy") },
+            Opcode::Cmpyiw => { f.write_str("cmpyiw") },
+            Opcode::Cmpyrw => { f.write_str("cmpyrw") },
+            Opcode::Cmpyiwh => { f.write_str("cmpyiwh") },
+            Opcode::Cmpyrwh => { f.write_str("cmpyrwh") },
+            Opcode::Cmpyi => { f.write_str("cmpyi") },
+            Opcode::Cmpyr => { f.write_str("cmpyr") },
+            Opcode::Pcmpyw => { f.write_str("pcmpyw") },
+            Opcode::Vacsh => { f.write_str("vacsh") },
+            Opcode::Vcmpyi => { f.write_str("vcmpyi") },
+            Opcode::Vcmpyr => { f.write_str("vcmpyr") },
+            Opcode::Vmpybu => { f.write_str("vmpybu") },
+            Opcode::Vmpyh => { f.write_str("vmpyh") },
+            Opcode::Vmpyhsu => { f.write_str("vmpyhsu") },
+            Opcode::Vmpybsu => { f.write_str("vmpybsu") },
+            Opcode::Vpcmpyw => { f.write_str("vpcmpyw") },
+            Opcode::Vrmpybsu => { f.write_str("vrmpybsu") },
+            Opcode::Vdmpybsu => { f.write_str("vdmpybsu") },
+            Opcode::Vrmpybu => { f.write_str("vrmpybu") },
+            Opcode::Vrmpyh => { f.write_str("vrmpyh") },
+            Opcode::Vraddub => { f.write_str("vraddub") },
+            Opcode::Vraddh => { f.write_str("vraddh") },
+            Opcode::Vradduh => { f.write_str("vradduh") },
+            Opcode::Vrsadub => { f.write_str("vrsadub") },
+            Opcode::Vaddub => { f.write_str("vaddub") },
+            Opcode::Vsubub => { f.write_str("vsubub") },
+            Opcode::Vaddhub => { f.write_str("vaddhub") },
+            Opcode::Vaddw => { f.write_str("vaddw") },
+            Opcode::Vsubw => { f.write_str("vsubw") },
+            Opcode::Vavgub => { f.write_str("vavgub") },
+            Opcode::Vavgw => { f.write_str("vavgw") },
+            Opcode::Vavguw => { f.write_str("vavguw") },
+            Opcode::Vavguh => { f.write_str("vavguh") },
+            Opcode::Max => { f.write_str("max") },
+            Opcode::Maxu => { f.write_str("maxu") },
+            Opcode::Min => { f.write_str("min") },
+            Opcode::Minu => { f.write_str("minu") },
+            Opcode::Vcrotate => { f.write_str("vcrotate") },
+            Opcode::Vtrunowh => { f.write_str("vtrunowh") },
+            Opcode::Vtrunewh => { f.write_str("vtrunewh") },
+            Opcode::Vmaxb => { f.write_str("vmaxb") },
+            Opcode::Vmaxub => { f.write_str("vmaxub") },
+            Opcode::Vminb => { f.write_str("vminb") },
+            Opcode::Vminub => { f.write_str("vminub") },
+            Opcode::Vminuw => { f.write_str("vminuw") },
+            Opcode::Vminh => { f.write_str("vminh") },
+            Opcode::Vminuh => { f.write_str("vminuh") },
+            Opcode::Vmaxw => { f.write_str("vmaxw") },
+            Opcode::Vmaxuw => { f.write_str("vmaxuw") },
+            Opcode::Vmaxh => { f.write_str("vmaxh") },
+            Opcode::Vmaxuh => { f.write_str("vmaxuh") },
+            Opcode::Vnegh => { f.write_str("vnegh") },
+            Opcode::Vcnegh => { f.write_str("vcnegh") },
+
+            Opcode:: Pmpyw => { f.write_str("pmpyw") },
+            Opcode::Lfs => { f.write_str("lfs") },
+
+            Opcode:: Vxaddsubh => { f.write_str("vxaddsubh") },
+            Opcode::Vxaddsubw => { f.write_str("vxaddsubw") },
+            Opcode::Vxsubaddh => { f.write_str("vxsubaddh") },
+            Opcode::Vxsubaddw => { f.write_str("vxsubaddw") },
 
             Opcode::Vaddh => { f.write_str("vaddh") },
             Opcode::Vadduh => { f.write_str("vadduh") },
@@ -525,7 +656,19 @@ impl fmt::Display for Opcode {
             Opcode::OrAndNot => { f.write_str("orandnot") },
             Opcode::OrNot => { f.write_str("ornot") },
             Opcode::OrOrNot => { f.write_str("orornot") },
+            Opcode::AndLsr => { f.write_str("andlsr") },
+            Opcode::OrLsr => { f.write_str("orlsr") },
+            Opcode::OrAsl => { f.write_str("orasl") },
+            Opcode::AddLsr => { f.write_str("addlsr") },
+            Opcode::SubLsr => { f.write_str("sublsr") },
+            Opcode::AddLsl => { f.write_str("addlsl") },
+            Opcode::AddAsl => { f.write_str("addasl") },
+            Opcode::SubAsl => { f.write_str("subasl") },
+            Opcode::AndAsl => { f.write_str("andasl") },
             Opcode::AddClb => { f.write_str("addclb") },
+            Opcode::AddAdd => { f.write_str("addadd") },
+            Opcode::AddSub => { f.write_str("addsub") },
+            Opcode::AddMpyi => { f.write_str("addmpyi") },
             Opcode::Any8 => { f.write_str("any8") },
             Opcode::All8 => { f.write_str("all8") },
             Opcode::Valignb => { f.write_str("valignb") },
@@ -546,6 +689,10 @@ impl fmt::Display for Opcode {
             Opcode::Vrminuh => { f.write_str("vrminuh") },
             Opcode::Vrminuw => { f.write_str("vrminuw") },
             Opcode::Vrcnegh => { f.write_str("vrcnegh") },
+            Opcode::Vabsdiffb => { f.write_str("vabsdiffb") },
+            Opcode::Vabsdiffub => { f.write_str("vabsdiffub") },
+            Opcode::Vabsdiffh => { f.write_str("vabsdiffh") },
+            Opcode::Vabsdiffw => { f.write_str("vabsdiffw") },
             Opcode::ConvertDf2D => { f.write_str("convert_df2d") },
             Opcode::ConvertDf2Ud => { f.write_str("convert_df2ud") },
             Opcode::ConvertUd2Df => { f.write_str("convert_ud2df") },
@@ -568,7 +715,12 @@ impl fmt::Display for Opcode {
             Opcode::Tstbit => { f.write_str("tstbit") },
             Opcode::Togglebit => { f.write_str("togglebit") },
             Opcode::Bitsclr => { f.write_str("bitsclr") },
-            Opcode::Sfclass => { f.write_str("sfclass") },
+            Opcode::Bitsset => { f.write_str("bitsset") },
+            Opcode::Modwrap => { f.write_str("modwrap") },
+            Opcode::SfClass => { f.write_str("sfclass") },
+            Opcode::DfClass => { f.write_str("dfclass") },
+            Opcode::SfMake => { f.write_str("sfmake") },
+            Opcode::DfMake => { f.write_str("dfmake") },
             Opcode::Tableidxb => { f.write_str("tableidxb") },
             Opcode::Tableidxh => { f.write_str("tableidxh") },
             Opcode::Tableidxw => { f.write_str("tableidxw") },
@@ -596,8 +748,16 @@ impl fmt::Display for Opcode {
             Opcode::Ct1 => { f.write_str("ct1") },
             Opcode::Vitpack => { f.write_str("vitpack") },
             Opcode::SfFixupr => { f.write_str("sffixupr") },
+            Opcode::SfFixupn => { f.write_str("sffixupn") },
+            Opcode::SfFixupd => { f.write_str("sffixupd") },
+            Opcode::SfRecipa => { f.write_str("sfrecipa") },
+            Opcode::Swiz => { f.write_str("Swiz") },
+            Opcode::Shuffeb => { f.write_str("shuffeb") },
+            Opcode::Shuffob => { f.write_str("shuffob") },
+            Opcode::Shuffeh => { f.write_str("shuffeh") },
+            Opcode::Shuffoh => { f.write_str("shuffoh") },
+            Opcode::Decbin => { f.write_str("decbin") },
             Opcode::SfInvsqrta => { f.write_str("sfinvsqrta") },
-            Opcode::Swiz => { f.write_str("swiz") },
             Opcode::Parity => { f.write_str("parity") },
             Opcode::Tlbmatch => { f.write_str("tlbmatch") },
             Opcode::Boundscheck => { f.write_str("boundscheck") },
@@ -612,6 +772,23 @@ impl fmt::Display for Opcode {
             Opcode::VcmpbEq => { f.write_str("vcmpb.eq") },
             Opcode::VcmpbGt => { f.write_str("vcmpb.gt") },
             Opcode::VcmpbGtu => { f.write_str("vcmpb.gtu") },
+            Opcode::Mpy => { f.write_str("mpy") },
+            Opcode::Mpyu => { f.write_str("mpyu") },
+            Opcode::Mpyi => { f.write_str("mpyi") },
+            Opcode::MpyiNeg => { f.write_str("mpyineg") },
+            Opcode::MpyiPos => { f.write_str("mpyipos") },
+            Opcode::Mpysu => { f.write_str("mpysu") },
+            Opcode::Vcmpyh => { f.write_str("vcmpyh") },
+            Opcode::Vrcmpys => { f.write_str("vrcmpys") },
+            Opcode::Vdmpy => { f.write_str("vdmpy") },
+            Opcode::Vmpyeh => { f.write_str("vmpyeh") },
+            Opcode::Vmpyweh => { f.write_str("vmpyweh") },
+            Opcode::Vmpywoh => { f.write_str("vmpywoh") },
+            Opcode::Vrmpywoh => { f.write_str("vrmpywoh") },
+            Opcode::Vrmpyu => { f.write_str("vrmpyu") },
+            Opcode::Vrmpysu => { f.write_str("vrmpysu") },
+            Opcode::Vmpyweuh => { f.write_str("vmpyweuh") },
+            Opcode::Vmpywouh => { f.write_str("vmpywouh") },
         }
     }
 }
@@ -649,6 +826,9 @@ impl fmt::Display for Operand {
             }
             Operand::GprHigh { reg } => {
                 write!(f, "R{}.H", reg)
+            }
+            Operand::GprConjugate { reg } => {
+                write!(f, "R{}*", reg)
             }
             Operand::Gpr64b { reg_low } => {
                 write!(f, "R{}:{}", reg_low + 1, reg_low)

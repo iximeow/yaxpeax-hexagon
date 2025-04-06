@@ -1117,6 +1117,10 @@ fn inst_1101() {
     test_display(&0b1101_0010_000_10100_11_100110_011_10110u32.to_le_bytes(), "{ P2 = tlbmatch(R21:20, R6) }");
     test_display(&0b1101_0010_000_10100_11_100110_100_10110u32.to_le_bytes(), "{ P2 = boundscheck(R21:20, R7:6):raw:lo }");
     test_display(&0b1101_0010_000_10100_11_100110_101_10110u32.to_le_bytes(), "{ P2 = boundscheck(R21:20, R7:6):raw:hi }");
+
+    test_display(&0b1101_0010_100_10100_11_100110_000_10110u32.to_le_bytes(), "{ P2 = cmp.gt(R21:20, R7:6) }");
+    test_display(&0b1101_0010_100_10100_11_100110_010_10110u32.to_le_bytes(), "{ P2 = cmp.eq(R21:20, R7:6) }");
+    test_display(&0b1101_0010_100_10100_11_100110_100_10110u32.to_le_bytes(), "{ P2 = cmp.gtu(R21:20, R7:6) }");
 }
 
 #[test]

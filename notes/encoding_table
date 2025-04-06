@@ -1015,9 +1015,9 @@ A L I A S     A L I A S     A L I A S    A L I A S     A L I A S   | Rd=zxtb(Rs)
 |1 0 0 0|1 1 0 0|1 1 1|s s s s s| P P |i i i i i i|0 1 -|d d d d d| Rdd=cround(Rss,#u6)                 - XTYPE ALU/slot 2,3
 
 |1 1 0 0|0 1 1 0|1 1 -|s s s s s| P P |- t t t t t|0 0 -|d d d d d| Rd=cround(Rs,Rt)                 - XTYPE ALU/slot 2,3
-|1 1 0 0|0 1 1 0|1 1 -|s s s s s| P P |- t t t t t|1 0 -|d d d d d| Rdd=round(Rss,Rt)                 - XTYPE ALU/slot 2,3
+|1 1 0 0|0 1 1 0|1 1 -|s s s s s| P P |- t t t t t|1 1 -|d d d d d| Rd=round(Rs,Rt):sat                 - XTYPE ALU/slot 2,3
 |1 1 0 0|0 1 1 0|1 1 -|s s s s s| P P |- t t t t t|1 0 -|d d d d d| Rd=round(Rs,Rt)                 - XTYPE ALU/slot 2,3
-|1 1 0 0|0 1 1 0|1 1 -|s s s s s| P P |- t t t t t|0 1 -|d d d d d| Rd=cround(Rs,Rt):sat                 - XTYPE ALU/slot 2,3
+|1 1 0 0|0 1 1 0|1 1 -|s s s s s| P P |- t t t t t|0 1 -|d d d d d| Rdd=cround(Rss,Rt)                 - XTYPE ALU/slot 2,3
 |ICLASS |RegType|MajOp|s5       |Parse|           |MinOp|d5       |
 |1 1 0 1|0 0 1 1|0 0 1|s s s s s| P P |- t t t t t|1 1 1|d d d d d| Rdd=sub(Rtt,Rss)                 - XTYPE ALU/slot 2,3
 |1 1 0 1|0 1 0 1|1 0 0|s s s s s| P P |- t t t t t|1 - -|d d d d d| Rd=sub(Rt,Rs):sat:deprecated                 - XTYPE ALU/slot 2,3
@@ -1060,8 +1060,8 @@ A L I A S     A L I A S     A L I A S    A L I A S     A L I A S   | Rd=zxtb(Rs)
 |1 1 0 1|0 0 1 1|0 0 0|s s s s s| P P |- t t t t t|0 0 0|d d d d d| Rdd=vaddub(Rss,Rtt)                 - XTYPE ALU/slot 2,3
 |1 1 0 1|0 0 1 1|0 0 0|s s s s s| P P |- t t t t t|0 0 1|d d d d d| Rdd=vaddub(Rss,Rtt):sat                 - XTYPE ALU/slot 2,3
 
-|1 1 0 1|0 0 1 1|0 0 0|s s s s s| P P |- t t t t t|1 0 0|d d d d d| Rdd=vaddw(Rss,Rtt)                 - XTYPE ALU/slot 2,3
-|1 1 0 1|0 0 1 1|0 0 0|s s s s s| P P |- t t t t t|1 1 1|d d d d d| Rdd=vaddw(Rss,Rtt):sat                 - XTYPE ALU/slot 2,3
+|1 1 0 1|0 0 1 1|0 0 0|s s s s s| P P |- t t t t t|1 0 1|d d d d d| Rdd=vaddw(Rss,Rtt)                 - XTYPE ALU/slot 2,3
+|1 1 0 1|0 0 1 1|0 0 0|s s s s s| P P |- t t t t t|1 1 0|d d d d d| Rdd=vaddw(Rss,Rtt):sat                 - XTYPE ALU/slot 2,3
 
 |1 1 0 1|0 0 1 1|0 1 0|s s s s s| P P |- t t t t t|0 1 0|d d d d d| Rdd=vavgh(Rss,Rtt)                 - XTYPE ALU/slot 2,3
 |1 1 0 1|0 0 1 1|0 1 0|s s s s s| P P |- t t t t t|0 1 1|d d d d d| Rdd=vavgh(Rss,Rtt):rnd                 - XTYPE ALU/slot 2,3
@@ -1189,8 +1189,8 @@ A L I A S     A L I A S     A L I A S    A L I A S     A L I A S   | Rd=zxtb(Rs)
 |1 1 0 0|0 0 0 1|1 1 -|s s s s s| P P |- t t t t t|0 0 -|d d d d d| Rdd=vxaddsubh(Rss,Rtt):rnd:>>1:sat                 - XTYPE COMPLEX/slot 2,3
 |1 1 0 0|0 0 0 1|1 1 -|s s s s s| P P |- t t t t t|0 1 -|d d d d d| Rdd=vxsubaddh(Rss,Rtt):rnd:>>1:sat                 - XTYPE COMPLEX/slot 2,3
 
-|1 1 0 0|0 0 0 1|0 1 -|s s s s s| P P |- t t t t t|0 0 0|d d d d d| Rdd=vxaddsubh(Rss,Rtt):sat                 - XTYPE COMPLEX/slot 2,3
-|1 1 0 0|0 0 0 1|0 1 -|s s s s s| P P |- t t t t t|0 1 0|d d d d d| Rdd=vxsubaddh(Rss,Rtt):sat                 - XTYPE COMPLEX/slot 2,3
+|1 1 0 0|0 0 0 1|0 1 -|s s s s s| P P |- t t t t t|0 0 0|d d d d d| Rdd=vxaddsubw(Rss,Rtt):sat                 - XTYPE COMPLEX/slot 2,3
+|1 1 0 0|0 0 0 1|0 1 -|s s s s s| P P |- t t t t t|0 1 0|d d d d d| Rdd=vxsubaddw(Rss,Rtt):sat                 - XTYPE COMPLEX/slot 2,3
 
 |1 1 1 0|0 1 0 1|N 0 0|s s s s s| P P |0 t t t t t|1 1 0|d d d d d| Rdd=cmpy(Rs,Rt)[:<<N]:sat                 - XTYPE COMPLEX/slot 2,3
 |1 1 1 0|0 1 0 1|N 1 0|s s s s s| P P |0 t t t t t|1 1 0|d d d d d| Rdd=cmpy(Rs,Rt*)[:<<N]:sat                 - XTYPE COMPLEX/slot 2,3
