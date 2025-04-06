@@ -637,6 +637,7 @@ pub enum Opcode {
     Vavgh,
     Vavguh,
     Vnavgh,
+    Vnavgw,
 
     Packhl,
 
@@ -706,6 +707,7 @@ pub enum Opcode {
     Vminuw,
     Vminh,
     Vminuh,
+    Vminw,
     Vmaxw,
     Vmaxuw,
     Vmaxh,
@@ -4488,14 +4490,14 @@ fn decode_instruction<
 
                     match op_hi {
                         0b00 => {
-                            static OPCODES: [Opcode; 4] = [
-                                Opcode::Extractu, Opcode::Shuffeb,
-                                Opcode::Shuffob, Opcode::Shuffeh
+                            static OPCODES: [Opcode; 8] = [
+                                Opcode::Extractu, Opcode::Extractu, Opcode::Shuffeb, Opcode::Shuffeb,
+                                Opcode::Shuffob, Opcode::Shuffob, Opcode::Shuffeh, Opcode::Shuffeh,
                             ];
 
                             handler.on_opcode_decoded(OPCODES[op_lo as usize])?;
                             handler.on_dest_decoded(Operand::gprpair(ddddd)?)?;
-                            if op_lo < 0b10 {
+                            if op_lo < 0b100 {
                                 handler.on_source_decoded(Operand::gprpair(sssss)?)?;
                                 handler.on_source_decoded(Operand::gprpair(ttttt)?)?;
                             } else {
@@ -5143,7 +5145,7 @@ fn decode_instruction<
                             do_decode_dst(handler, Opcode::Vavguw, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
                         }
                         0b011100 => {
-                            do_decode_dst(handler, Opcode::Vavgw, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
+                            do_decode_dst(handler, Opcode::Vavguw, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
                             handler.rounded(RoundingMode::Round)?;
                         }
                         0b011101 => {
@@ -5159,30 +5161,30 @@ fn decode_instruction<
                             handler.raw_mode(RawMode::Hi)?;
                         }
                         0b100000 => {
-                            do_decode_dst(handler, Opcode::Vnavgh, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
+                            do_decode_dts(handler, Opcode::Vnavgh, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
                         }
                         0b100001 => {
-                            do_decode_dst(handler, Opcode::Vnavgh, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
+                            do_decode_dts(handler, Opcode::Vnavgh, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
                             handler.rounded(RoundingMode::Round)?;
                             handler.saturate()?;
                         }
                         0b100010 => {
-                            do_decode_dst(handler, Opcode::Vnavgh, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
+                            do_decode_dts(handler, Opcode::Vnavgh, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
                             handler.rounded(RoundingMode::Cround)?;
                             handler.saturate()?;
                         }
                         0b100011 => {
-                            do_decode_dst(handler, Opcode::Vnavgh, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
+                            do_decode_dts(handler, Opcode::Vnavgw, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
                         }
                         // low bit of opc is `-`
                         0b100100 | 0b100101 => {
-                            do_decode_dst(handler, Opcode::Vnavgh, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
+                            do_decode_dts(handler, Opcode::Vnavgw, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
                             handler.rounded(RoundingMode::Round)?;
                             handler.saturate()?;
                         }
                         // low bit of opc is `-`
                         0b100110 | 0b100111  => {
-                            do_decode_dst(handler, Opcode::Vnavgh, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
+                            do_decode_dts(handler, Opcode::Vnavgw, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
                             handler.rounded(RoundingMode::Cround)?;
                             handler.saturate()?;
                         }
@@ -5196,7 +5198,7 @@ fn decode_instruction<
                             do_decode_dts(handler, Opcode::Vminuh, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
                         }
                         0b101011 => {
-                            do_decode_dts(handler, Opcode::Vminuw, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
+                            do_decode_dts(handler, Opcode::Vminw, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
                         }
                         0b101100 => {
                             do_decode_dts(handler, Opcode::Vminuw, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
@@ -5238,13 +5240,13 @@ fn decode_instruction<
                             do_decode_dst(handler, Opcode::And, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
                         }
                         0b111001 => {
-                            do_decode_dst(handler, Opcode::AndNot, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
+                            do_decode_dst(handler, Opcode::And_RnR, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
                         }
                         0b111010 => {
                             do_decode_dst(handler, Opcode::Or, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
                         }
                         0b111011 => {
-                            do_decode_dst(handler, Opcode::OrNot, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
+                            do_decode_dst(handler, Opcode::Or_RnR, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
                         }
                         0b111100 => {
                             do_decode_dst(handler, Opcode::Xor, Operand::gprpair, Operand::gprpair, Operand::gprpair)?;
@@ -5301,7 +5303,7 @@ fn decode_instruction<
 
                         if shl {
                             // 1101|0101|X1X|sssss|PP|-ttttt|xxx|ddddd
-                            handler.shift_left(1)?;
+                            handler.shift_left(16)?;
                             if op_lo & 0b010 == 0 {
                                 handler.on_source_decoded(Operand::gpr_low(ttttt))?;
                             } else {
@@ -5323,14 +5325,15 @@ fn decode_instruction<
                         }
                     } else {
                         handler.on_dest_decoded(Operand::gpr(ddddd))?;
-                        if op_hi == 0b001 {
+                        let op = ((inst >> 7) & 1) | (op_hi & 0b11) << 1;
+                        if op == 0b001 {
                             handler.on_source_decoded(Operand::gpr(ttttt))?;
                             handler.on_source_decoded(Operand::gpr(sssss))?;
                         } else {
                             handler.on_source_decoded(Operand::gpr(sssss))?;
                             handler.on_source_decoded(Operand::gpr(ttttt))?;
                         }
-                        match op_hi {
+                        match op {
                             0b000 => {
                                 handler.on_opcode_decoded(Opcode::Add)?;
                                 handler.saturate()?;
@@ -5377,7 +5380,6 @@ fn decode_instruction<
                         } else {
                             handler.rounded(RoundingMode::Neg)?;
                         }
-                        panic!("SfMake");
                     } else {
                         opcode_check!(op_hi == 0b111);
                         static OPCODES: [Option<Opcode>; 8] = [
@@ -5386,7 +5388,7 @@ fn decode_instruction<
                         ];
 
                         handler.on_opcode_decoded(decode_opcode!(OPCODES[op_lo as usize]))?;
-                        handler.on_dest_decoded(Operand::gpr(reg_b0(inst)))?;
+                        handler.on_dest_decoded(Operand::pred(reg_b0(inst) & 0b11))?;
                         handler.on_source_decoded(Operand::gprpair(reg_b16(inst))?)?;
                         handler.on_source_decoded(Operand::gprpair(reg_b8(inst))?)?;
                     }
@@ -5396,6 +5398,8 @@ fn decode_instruction<
                     let ddddd = reg_b0(inst);
                     let ttttt = reg_b8(inst);
                     let sssss = reg_b16(inst);
+
+                    opcode_check!(inst & 0x80_00_00 == 0);
 
                     let i_lo = (inst >> 5) & 0b111;
                     let i_mid = (inst >> 13) & 0b1;

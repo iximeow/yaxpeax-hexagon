@@ -1045,10 +1045,10 @@ fn inst_1011() {
 fn inst_1100() {
     test_display(&0b1100_0000_000_00100_11_0_1_0000_010_10110u32.to_le_bytes(), "{ R23:22 = valignb(R17:16, R5:4, #0x2) }");
     test_display(&0b1100_0000_100_00100_11_0_1_0000_010_10110u32.to_le_bytes(), "{ R23:22 = vspliceb(R5:4, R17:16, #0x2) }");
-//    test_display(&0b1100_0001_000_00100_11_0_1_0000_000_10110u32.to_le_bytes(), "{ R23:22 = extractu(R5:4, R17:16) }");
-//    test_display(&0b1100_0001_000_00100_11_0_1_0000_010_10110u32.to_le_bytes(), "{ R23:22 = shuffeb(R5:4, R17:16) }");
-//    test_display(&0b1100_0001_000_00100_11_0_1_0000_100_10110u32.to_le_bytes(), "{ R23:22 = shuffob(R17:16, R5:4) }");
-//    test_display(&0b1100_0001_000_00100_11_0_1_0000_110_10110u32.to_le_bytes(), "{ R23:22 = shuffeh(R17:16, R5:4) }");
+    test_display(&0b1100_0001_000_00100_11_0_1_0000_000_10110u32.to_le_bytes(), "{ R23:22 = extractu(R5:4, R17:16) }");
+    test_display(&0b1100_0001_000_00100_11_0_1_0000_010_10110u32.to_le_bytes(), "{ R23:22 = shuffeb(R5:4, R17:16) }");
+    test_display(&0b1100_0001_000_00100_11_0_1_0000_100_10110u32.to_le_bytes(), "{ R23:22 = shuffob(R17:16, R5:4) }");
+    test_display(&0b1100_0001_000_00100_11_0_1_0000_110_10110u32.to_le_bytes(), "{ R23:22 = shuffeh(R17:16, R5:4) }");
 
 //    test_display(&0b1100_0011110_10100_11_000110_011_10110u32.to_le_bytes(), "{ R23:22 = vcnegh(R21:20, R6) }");
 
@@ -1121,6 +1121,117 @@ fn inst_1101() {
     test_display(&0b1101_0010_100_10100_11_100110_000_10110u32.to_le_bytes(), "{ P2 = cmp.gt(R21:20, R7:6) }");
     test_display(&0b1101_0010_100_10100_11_100110_010_10110u32.to_le_bytes(), "{ P2 = cmp.eq(R21:20, R7:6) }");
     test_display(&0b1101_0010_100_10100_11_100110_100_10110u32.to_le_bytes(), "{ P2 = cmp.gtu(R21:20, R7:6) }");
+
+    test_display(&0b1101_0011_000_10100_11_100110_000_10110u32.to_le_bytes(), "{ R23:22 = vaddub(R21:20, R7:6) }");
+    test_display(&0b1101_0011_000_10100_11_100110_001_10110u32.to_le_bytes(), "{ R23:22 = vaddub(R21:20, R7:6):sat }");
+    test_display(&0b1101_0011_000_10100_11_100110_010_10110u32.to_le_bytes(), "{ R23:22 = vaddh(R21:20, R7:6) }");
+    test_display(&0b1101_0011_000_10100_11_100110_011_10110u32.to_le_bytes(), "{ R23:22 = vaddh(R21:20, R7:6):sat }");
+    test_display(&0b1101_0011_000_10100_11_100110_100_10110u32.to_le_bytes(), "{ R23:22 = vadduh(R21:20, R7:6):sat }");
+    test_display(&0b1101_0011_000_10100_11_100110_101_10110u32.to_le_bytes(), "{ R23:22 = vaddw(R21:20, R7:6) }");
+    test_display(&0b1101_0011_000_10100_11_100110_110_10110u32.to_le_bytes(), "{ R23:22 = vaddw(R21:20, R7:6):sat }");
+    test_display(&0b1101_0011_000_10100_11_100110_111_10110u32.to_le_bytes(), "{ R23:22 = add(R21:20, R7:6) }");
+    test_display(&0b1101_0011_001_10100_11_100110_000_10110u32.to_le_bytes(), "{ R23:22 = vsubub(R7:6, R21:20) }");
+    test_display(&0b1101_0011_001_10100_11_100110_001_10110u32.to_le_bytes(), "{ R23:22 = vsubub(R7:6, R21:20):sat }");
+    test_display(&0b1101_0011_001_10100_11_100110_010_10110u32.to_le_bytes(), "{ R23:22 = vsubh(R7:6, R21:20) }");
+    test_display(&0b1101_0011_001_10100_11_100110_011_10110u32.to_le_bytes(), "{ R23:22 = vsubh(R7:6, R21:20):sat }");
+    test_display(&0b1101_0011_001_10100_11_100110_100_10110u32.to_le_bytes(), "{ R23:22 = vsubuh(R7:6, R21:20):sat }");
+    test_display(&0b1101_0011_001_10100_11_100110_101_10110u32.to_le_bytes(), "{ R23:22 = vsubw(R7:6, R21:20) }");
+    test_display(&0b1101_0011_001_10100_11_100110_110_10110u32.to_le_bytes(), "{ R23:22 = vsubw(R7:6, R21:20):sat }");
+    test_display(&0b1101_0011_001_10100_11_100110_111_10110u32.to_le_bytes(), "{ R23:22 = sub(R7:6, R21:20) }");
+
+    test_display(&0b1101_0011_010_10100_11_100110_000_10110u32.to_le_bytes(), "{ R23:22 = vavgub(R21:20, R7:6) }");
+    test_display(&0b1101_0011_010_10100_11_100110_001_10110u32.to_le_bytes(), "{ R23:22 = vavgub(R21:20, R7:6):rnd }");
+    test_display(&0b1101_0011_010_10100_11_100110_010_10110u32.to_le_bytes(), "{ R23:22 = vavgh(R21:20, R7:6) }");
+    test_display(&0b1101_0011_010_10100_11_100110_011_10110u32.to_le_bytes(), "{ R23:22 = vavgh(R21:20, R7:6):rnd }");
+    test_display(&0b1101_0011_010_10100_11_100110_100_10110u32.to_le_bytes(), "{ R23:22 = vavgh(R21:20, R7:6):crnd }");
+    test_display(&0b1101_0011_010_10100_11_100110_101_10110u32.to_le_bytes(), "{ R23:22 = vavguh(R21:20, R7:6) }");
+    test_display(&0b1101_0011_010_10100_11_100110_110_10110u32.to_le_bytes(), "{ R23:22 = vavguh(R21:20, R7:6):rnd }");
+
+    test_display(&0b1101_0011_011_10100_11_100110_000_10110u32.to_le_bytes(), "{ R23:22 = vavgw(R21:20, R7:6) }");
+    test_display(&0b1101_0011_011_10100_11_100110_001_10110u32.to_le_bytes(), "{ R23:22 = vavgw(R21:20, R7:6):rnd }");
+    test_display(&0b1101_0011_011_10100_11_100110_010_10110u32.to_le_bytes(), "{ R23:22 = vavgw(R21:20, R7:6):crnd }");
+    test_display(&0b1101_0011_011_10100_11_100110_011_10110u32.to_le_bytes(), "{ R23:22 = vavguw(R21:20, R7:6) }");
+    test_display(&0b1101_0011_011_10100_11_100110_100_10110u32.to_le_bytes(), "{ R23:22 = vavguw(R21:20, R7:6):rnd }");
+    test_display(&0b1101_0011_011_10100_11_100110_101_10110u32.to_le_bytes(), "{ R23:22 = add(R21:20, R7:6):sat }");
+    test_display(&0b1101_0011_011_10100_11_100110_110_10110u32.to_le_bytes(), "{ R23:22 = add(R21:20, R7:6):raw:lo }");
+    test_display(&0b1101_0011_011_10100_11_100110_111_10110u32.to_le_bytes(), "{ R23:22 = add(R21:20, R7:6):raw:hi }");
+
+    test_display(&0b1101_0011_100_10100_11_100110_000_10110u32.to_le_bytes(), "{ R23:22 = vnavgh(R7:6, R21:20) }");
+    test_display(&0b1101_0011_100_10100_11_100110_001_10110u32.to_le_bytes(), "{ R23:22 = vnavgh(R7:6, R21:20):rnd:sat }");
+    test_display(&0b1101_0011_100_10100_11_100110_010_10110u32.to_le_bytes(), "{ R23:22 = vnavgh(R7:6, R21:20):crnd:sat }");
+    test_display(&0b1101_0011_100_10100_11_100110_011_10110u32.to_le_bytes(), "{ R23:22 = vnavgw(R7:6, R21:20) }");
+    test_display(&0b1101_0011_100_10100_11_100110_100_10110u32.to_le_bytes(), "{ R23:22 = vnavgw(R7:6, R21:20):rnd:sat }");
+    test_display(&0b1101_0011_100_10100_11_100110_101_10110u32.to_le_bytes(), "{ R23:22 = vnavgw(R7:6, R21:20):rnd:sat }");
+    test_display(&0b1101_0011_100_10100_11_100110_110_10110u32.to_le_bytes(), "{ R23:22 = vnavgw(R7:6, R21:20):crnd:sat }");
+    test_display(&0b1101_0011_100_10100_11_100110_111_10110u32.to_le_bytes(), "{ R23:22 = vnavgw(R7:6, R21:20):crnd:sat }");
+
+    test_display(&0b1101_0011_101_10100_11_100110_000_10110u32.to_le_bytes(), "{ R23:22 = vminub(R7:6, R21:20) }");
+    test_display(&0b1101_0011_101_10100_11_100110_001_10110u32.to_le_bytes(), "{ R23:22 = vminh(R7:6, R21:20) }");
+    test_display(&0b1101_0011_101_10100_11_100110_010_10110u32.to_le_bytes(), "{ R23:22 = vminuh(R7:6, R21:20) }");
+    test_display(&0b1101_0011_101_10100_11_100110_011_10110u32.to_le_bytes(), "{ R23:22 = vminw(R7:6, R21:20) }");
+    test_display(&0b1101_0011_101_10100_11_100110_100_10110u32.to_le_bytes(), "{ R23:22 = vminuw(R7:6, R21:20) }");
+    test_display(&0b1101_0011_101_10100_11_100110_101_10110u32.to_le_bytes(), "{ R23:22 = vmaxuw(R7:6, R21:20) }");
+    test_display(&0b1101_0011_101_10100_11_100110_110_10110u32.to_le_bytes(), "{ R23:22 = min(R7:6, R21:20) }");
+    test_display(&0b1101_0011_101_10100_11_100110_111_10110u32.to_le_bytes(), "{ R23:22 = minu(R7:6, R21:20) }");
+
+    test_display(&0b1101_0011_110_10100_11_100110_000_10110u32.to_le_bytes(), "{ R23:22 = vmaxub(R7:6, R21:20) }");
+    test_display(&0b1101_0011_110_10100_11_100110_001_10110u32.to_le_bytes(), "{ R23:22 = vmaxh(R7:6, R21:20) }");
+    test_display(&0b1101_0011_110_10100_11_100110_010_10110u32.to_le_bytes(), "{ R23:22 = vmaxuh(R7:6, R21:20) }");
+    test_display(&0b1101_0011_110_10100_11_100110_011_10110u32.to_le_bytes(), "{ R23:22 = vmaxw(R7:6, R21:20) }");
+    test_display(&0b1101_0011_110_10100_11_100110_100_10110u32.to_le_bytes(), "{ R23:22 = max(R21:20, R7:6) }");
+    test_display(&0b1101_0011_110_10100_11_100110_101_10110u32.to_le_bytes(), "{ R23:22 = maxu(R21:20, R7:6) }");
+    test_display(&0b1101_0011_110_10100_11_100110_110_10110u32.to_le_bytes(), "{ R23:22 = vmaxb(R7:6, R21:20) }");
+    test_display(&0b1101_0011_110_10100_11_100110_111_10110u32.to_le_bytes(), "{ R23:22 = vminb(R7:6, R21:20) }");
+
+    test_display(&0b1101_0011_111_10100_11_100110_000_10110u32.to_le_bytes(), "{ R23:22 = and(R21:20, R7:6) }");
+    test_display(&0b1101_0011_111_10100_11_100110_001_10110u32.to_le_bytes(), "{ R23:22 = and(R21:20, ~R7:6) }");
+    test_display(&0b1101_0011_111_10100_11_100110_010_10110u32.to_le_bytes(), "{ R23:22 = or(R21:20, R7:6) }");
+    test_display(&0b1101_0011_111_10100_11_100110_011_10110u32.to_le_bytes(), "{ R23:22 = or(R21:20, ~R7:6) }");
+    test_display(&0b1101_0011_111_10100_11_100110_100_10110u32.to_le_bytes(), "{ R23:22 = xor(R21:20, R7:6) }");
+    test_invalid(&0b1101_0011_111_10100_11_100110_101_10110u32.to_le_bytes(), DecodeError::InvalidOpcode);
+    test_invalid(&0b1101_0011_111_10100_11_100110_110_10110u32.to_le_bytes(), DecodeError::InvalidOpcode);
+    test_display(&0b1101_0011_111_10100_11_100110_111_10110u32.to_le_bytes(), "{ R22 = modwrap(R20, R6) }");
+
+    test_invalid(&0b1101_0100_000_10100_11_100110_101_10110u32.to_le_bytes(), DecodeError::InvalidOpcode);
+    test_display(&0b1101_0100_001_10100_11_100110_101_10110u32.to_le_bytes(), "{ R23:22 = bitsplit(R20, R6) }");
+
+    test_display(&0b1101_0101_000_10100_11_100110_000_10110u32.to_le_bytes(), "{ R22 = add(R6.L, R20.L) }");
+    test_display(&0b1101_0101_000_10100_11_100110_010_10110u32.to_le_bytes(), "{ R22 = add(R6.L, R20.H) }");
+    test_display(&0b1101_0101_000_10100_11_100110_100_10110u32.to_le_bytes(), "{ R22 = add(R6.L, R20.L):sat }");
+    test_display(&0b1101_0101_000_10100_11_100110_110_10110u32.to_le_bytes(), "{ R22 = add(R6.L, R20.H):sat }");
+    test_display(&0b1101_0101_001_10100_11_100110_000_10110u32.to_le_bytes(), "{ R22 = sub(R6.L, R20.L) }");
+    test_display(&0b1101_0101_001_10100_11_100110_010_10110u32.to_le_bytes(), "{ R22 = sub(R6.L, R20.H) }");
+    test_display(&0b1101_0101_001_10100_11_100110_100_10110u32.to_le_bytes(), "{ R22 = sub(R6.L, R20.L):sat }");
+    test_display(&0b1101_0101_001_10100_11_100110_110_10110u32.to_le_bytes(), "{ R22 = sub(R6.L, R20.H):sat }");
+    test_display(&0b1101_0101_010_10100_11_100110_000_10110u32.to_le_bytes(), "{ R22 = add(R6.L, R20.L):<<16 }");
+    test_display(&0b1101_0101_010_10100_11_100110_001_10110u32.to_le_bytes(), "{ R22 = add(R6.L, R20.H):<<16 }");
+    test_display(&0b1101_0101_010_10100_11_100110_010_10110u32.to_le_bytes(), "{ R22 = add(R6.H, R20.L):<<16 }");
+    test_display(&0b1101_0101_010_10100_11_100110_011_10110u32.to_le_bytes(), "{ R22 = add(R6.H, R20.H):<<16 }");
+    test_display(&0b1101_0101_010_10100_11_100110_100_10110u32.to_le_bytes(), "{ R22 = add(R6.L, R20.L):sat:<<16 }");
+    test_display(&0b1101_0101_010_10100_11_100110_101_10110u32.to_le_bytes(), "{ R22 = add(R6.L, R20.H):sat:<<16 }");
+    test_display(&0b1101_0101_010_10100_11_100110_110_10110u32.to_le_bytes(), "{ R22 = add(R6.H, R20.L):sat:<<16 }");
+    test_display(&0b1101_0101_010_10100_11_100110_111_10110u32.to_le_bytes(), "{ R22 = add(R6.H, R20.H):sat:<<16 }");
+
+    test_display(&0b1101_0101_100_10100_11_100110_000_10110u32.to_le_bytes(), "{ R22 = add(R20, R6):sat:deprecated }");
+    test_display(&0b1101_0101_100_10100_11_100110_100_10110u32.to_le_bytes(), "{ R22 = sub(R6, R20):sat:deprecated }");
+    test_display(&0b1101_0101_101_10100_11_100110_000_10110u32.to_le_bytes(), "{ R22 = min(R20, R6) }");
+    test_display(&0b1101_0101_101_10100_11_100110_100_10110u32.to_le_bytes(), "{ R22 = minu(R20, R6) }");
+    test_display(&0b1101_0101_110_10100_11_100110_000_10110u32.to_le_bytes(), "{ R22 = max(R20, R6) }");
+    test_display(&0b1101_0101_110_10100_11_100110_100_10110u32.to_le_bytes(), "{ R22 = maxu(R20, R6) }");
+    test_display(&0b1101_0101_111_10100_11_100110_000_10110u32.to_le_bytes(), "{ R22 = parity(R20, R6) }");
+    test_display(&0b1101_0101_111_10100_11_100110_100_10110u32.to_le_bytes(), "{ R22 = parity(R20, R6) }");
+
+    test_display(&0b1101_0110_001_10100_11_100110_100_10110u32.to_le_bytes(), "{ R22 = sfmake(#0x334):pos }");
+    test_display(&0b1101_0110_011_10100_11_100110_100_10110u32.to_le_bytes(), "{ R22 = sfmake(#0x334):neg }");
+    test_display(&0b1101_0110_111_10100_11_100110_000_10110u32.to_le_bytes(), "{ P2 = dfcmp.eq(R21:20, R7:6) }");
+    test_display(&0b1101_0110_111_10100_11_100110_001_10110u32.to_le_bytes(), "{ P2 = dfcmp.gt(R21:20, R7:6) }");
+    test_display(&0b1101_0110_111_10100_11_100110_011_10110u32.to_le_bytes(), "{ P2 = dfcmp.ge(R21:20, R7:6) }");
+    test_display(&0b1101_0110_111_10100_11_100110_100_10110u32.to_le_bytes(), "{ P2 = dfcmp.uo(R21:20, R7:6) }");
+
+    test_display(&0b1101_0111_010_10100_11_100110_100_10110u32.to_le_bytes(), "{ R22 = add(#0x2c, mpyi(R20, R6)) }");
+    test_invalid(&0b1101_0111_110_10100_11_100110_100_10110u32.to_le_bytes(), DecodeError::InvalidOpcode);
+
+    test_display(&0b1101_1000_110_10100_11_100110_100_10110u32.to_le_bytes(), "{ R6 = add(#0x2c, mpyi(R20, #0x36)) }");
 }
 
 #[test]

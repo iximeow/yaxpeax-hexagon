@@ -107,6 +107,10 @@ impl fmt::Display for Instruction {
                     return write!(f, "{} = or({}, asl({}, {}))", self.dest.as_ref().unwrap(),
                         self.sources[0], self.sources[1], self.sources[2]);
                 },
+                Opcode::AddMpyi => {
+                    return write!(f, "{} = add({}, mpyi({}, {}))", self.dest.as_ref().unwrap(),
+                        self.sources[0], self.sources[1], self.sources[2]);
+                },
                 Opcode::AddClb => {
                     return write!(f, "{} = add(clb({}), {})", self.dest.as_ref().unwrap(),
                         self.sources[0], self.sources[1]);
@@ -345,6 +349,15 @@ impl fmt::Display for Instruction {
         if self.flags.saturate {
             f.write_str(":sat")?;
         }
+        if let Some(shift) = self.flags.shift_left {
+            write!(f, ":<<{}", shift)?;
+        }
+        if let Some(shift) = self.flags.shift_right {
+            write!(f, ":>>{}", shift)?;
+        }
+        if self.flags.deprecated {
+            f.write_str(":deprecated")?;
+        }
         match self.flags.branch_hint {
             Some(BranchHint::Taken) => { f.write_str(":t")? },
             Some(BranchHint::NotTaken) => { f.write_str(":nt")? },
@@ -430,11 +443,11 @@ impl fmt::Display for Opcode {
             Opcode::Add => { f.write_str("add") },
             Opcode::And => { f.write_str("and") },
             Opcode::And_nRR => { f.write_str("and") },
-            Opcode::And_RnR => { f.write_str("and_RnR") },
+            Opcode::And_RnR => { f.write_str("and") },
             Opcode::Sub => { f.write_str("sub") },
             Opcode::Or => { f.write_str("or") },
             Opcode::Or_nRR => { f.write_str("or") },
-            Opcode::Or_RnR => { f.write_str("or_RnR") },
+            Opcode::Or_RnR => { f.write_str("or") },
             Opcode::Xor => { f.write_str("xor") },
             Opcode::Contains => { f.write_str("contains") },
 
@@ -580,6 +593,7 @@ impl fmt::Display for Opcode {
             Opcode::Vminuw => { f.write_str("vminuw") },
             Opcode::Vminh => { f.write_str("vminh") },
             Opcode::Vminuh => { f.write_str("vminuh") },
+            Opcode::Vminw => { f.write_str("vminw") },
             Opcode::Vmaxw => { f.write_str("vmaxw") },
             Opcode::Vmaxuw => { f.write_str("vmaxuw") },
             Opcode::Vmaxh => { f.write_str("vmaxh") },
@@ -601,6 +615,7 @@ impl fmt::Display for Opcode {
             Opcode::Vsubuh => { f.write_str("vsubuh") },
             Opcode::Vavgh => { f.write_str("vavgh") },
             Opcode::Vnavgh => { f.write_str("vnavgh") },
+            Opcode::Vnavgw => { f.write_str("vnavgw") },
             Opcode::Packhl => { f.write_str("packhl") },
 
             Opcode::DcCleanA => { f.write_str("dccleana") },
@@ -751,7 +766,7 @@ impl fmt::Display for Opcode {
             Opcode::SfFixupn => { f.write_str("sffixupn") },
             Opcode::SfFixupd => { f.write_str("sffixupd") },
             Opcode::SfRecipa => { f.write_str("sfrecipa") },
-            Opcode::Swiz => { f.write_str("Swiz") },
+            Opcode::Swiz => { f.write_str("swiz") },
             Opcode::Shuffeb => { f.write_str("shuffeb") },
             Opcode::Shuffob => { f.write_str("shuffob") },
             Opcode::Shuffeh => { f.write_str("shuffeh") },
