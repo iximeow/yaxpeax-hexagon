@@ -1073,7 +1073,110 @@ fn inst_1100() {
     test_display(&0b1100_0001_110_10100_11_000110_100_10110u32.to_le_bytes(), "{ R23:22 = extractu(R21:20, R7:6) }");
     test_display(&0b1100_0001_110_10100_11_000110_110_10110u32.to_le_bytes(), "{ R23:22 = decbin(R21:20, R7:6) }");
 
-//    test_display(&0b1100_0011110_10100_11_000110_011_10110u32.to_le_bytes(), "{ R23:22 = vcnegh(R21:20, R6) }");
+    test_display(&0b1100_0010_000_10100_11_000110_001_10110u32.to_le_bytes(), "{ R23:22 = valignb(R7:6, R21:20, P1) }");
+    test_display(&0b1100_0010_001_10100_11_000110_001_10110u32.to_le_bytes(), "{ R23:22 = valignb(R7:6, R21:20, P1) }");
+    test_display(&0b1100_0010_010_10100_11_000110_001_10110u32.to_le_bytes(), "{ R23:22 = valignb(R7:6, R21:20, P1) }");
+    test_display(&0b1100_0010_011_10100_11_000110_001_10110u32.to_le_bytes(), "{ R23:22 = valignb(R7:6, R21:20, P1) }");
+    test_display(&0b1100_0010_100_10100_11_000110_001_10110u32.to_le_bytes(), "{ R23:22 = vspliceb(R21:20, R7:6, P1) }");
+    test_invalid(&0b1100_0010_101_10100_11_000110_001_10110u32.to_le_bytes(), DecodeError::InvalidOpcode);
+    test_display(&0b1100_0010_110_10100_11_000110_001_10110u32.to_le_bytes(), "{ R23:22 = add(R21:20, R7:6, P1):carry }");
+    test_display(&0b1100_0010_111_10100_11_000110_001_10110u32.to_le_bytes(), "{ R23:22 = sub(R21:20, R7:6, P1):carry }");
+
+    test_display(&0b1100_0011_000_10100_11_000110_000_10110u32.to_le_bytes(), "{ R23:22 = vasrw(R21:20, R6) }");
+    test_display(&0b1100_0011_000_10100_11_000110_010_10110u32.to_le_bytes(), "{ R23:22 = vlsrw(R21:20, R6) }");
+    test_display(&0b1100_0011_000_10100_11_000110_100_10110u32.to_le_bytes(), "{ R23:22 = vaslw(R21:20, R6) }");
+    test_display(&0b1100_0011_000_10100_11_000110_110_10110u32.to_le_bytes(), "{ R23:22 = vlslw(R21:20, R6) }");
+    test_display(&0b1100_0011_010_10100_11_000110_000_10110u32.to_le_bytes(), "{ R23:22 = vasrh(R21:20, R6) }");
+    test_display(&0b1100_0011_010_10100_11_000110_010_10110u32.to_le_bytes(), "{ R23:22 = vlsrh(R21:20, R6) }");
+    test_display(&0b1100_0011_010_10100_11_000110_100_10110u32.to_le_bytes(), "{ R23:22 = vaslh(R21:20, R6) }");
+    test_display(&0b1100_0011_010_10100_11_000110_110_10110u32.to_le_bytes(), "{ R23:22 = vlslh(R21:20, R6) }");
+    test_display(&0b1100_0011_100_10100_11_000110_000_10110u32.to_le_bytes(), "{ R23:22 = asr(R21:20, R6) }");
+    test_display(&0b1100_0011_100_10100_11_000110_010_10110u32.to_le_bytes(), "{ R23:22 = lsr(R21:20, R6) }");
+    test_display(&0b1100_0011_100_10100_11_000110_100_10110u32.to_le_bytes(), "{ R23:22 = asl(R21:20, R6) }");
+    test_display(&0b1100_0011_100_10100_11_000110_110_10110u32.to_le_bytes(), "{ R23:22 = lsl(R21:20, R6) }");
+
+    test_display(&0b1100_0011_110_10100_11_000110_000_10110u32.to_le_bytes(), "{ R23:22 = vcrotate(R21:20, R6) }");
+    test_display(&0b1100_0011_110_10100_11_000110_010_10110u32.to_le_bytes(), "{ R23:22 = vcnegh(R21:20, R6) }");
+    test_invalid(&0b1100_0011_110_10100_11_000110_100_10110u32.to_le_bytes(), DecodeError::InvalidOpcode);
+    test_display(&0b1100_0011_110_10100_11_100110_110_10110u32.to_le_bytes(), "{ R23:22 = vrcrotate(R21:20, R6, #0x2) }");
+
+    test_display(&0b1100_0100_000_10100_11_000110_011_10110u32.to_le_bytes(), "{ R22 = addasl(R6, R20, #0x3) }");
+    test_invalid(&0b1100_0100_001_10100_11_000110_011_10110u32.to_le_bytes(), DecodeError::InvalidOpcode);
+    test_invalid(&0b1100_0100_011_10100_11_000110_011_10110u32.to_le_bytes(), DecodeError::InvalidOpcode);
+    test_invalid(&0b1100_0100_101_10100_11_000110_011_10110u32.to_le_bytes(), DecodeError::InvalidOpcode);
+    test_invalid(&0b1100_0100_111_10100_11_000110_011_10110u32.to_le_bytes(), DecodeError::InvalidOpcode);
+
+    test_invalid(&0b1100_0101_000_10100_11_000110_000_10110u32.to_le_bytes(), DecodeError::InvalidOpcode);
+    test_invalid(&0b1100_0101_000_10100_11_000110_001_10110u32.to_le_bytes(), DecodeError::InvalidOpcode);
+    test_display(&0b1100_0101_000_10100_11_000110_010_10110u32.to_le_bytes(), "{ R22 = vasrw(R20, R6) }");
+    test_invalid(&0b1100_0101_000_10100_11_000110_011_10110u32.to_le_bytes(), DecodeError::InvalidOpcode);
+    test_display(&0b1100_0101_000_10100_11_000110_100_10110u32.to_le_bytes(), "{ R22 = cmpyiwh(R21:20, R6):<<1:rnd:sat }");
+    test_display(&0b1100_0101_000_10100_11_000110_101_10110u32.to_le_bytes(), "{ R22 = cmpyiwh(R21:20, R6*):<<1:rnd:sat }");
+    test_display(&0b1100_0101_000_10100_11_000110_110_10110u32.to_le_bytes(), "{ R22 = cmpyrwh(R21:20, R6):<<1:rnd:sat }");
+    test_display(&0b1100_0101_000_10100_11_000110_111_10110u32.to_le_bytes(), "{ R22 = cmpyrwh(R21:20, R6*):<<1:rnd:sat }");
+
+    test_display(&0b1100_0110_000_10100_11_000110_000_10110u32.to_le_bytes(), "{ R22 = asr(R20, R6):sat }");
+    test_invalid(&0b1100_0110_000_10100_11_000110_010_10110u32.to_le_bytes(), DecodeError::InvalidOpcode);
+    test_display(&0b1100_0110_000_10100_11_000110_100_10110u32.to_le_bytes(), "{ R22 = asl(R20, R6):sat }");
+    test_invalid(&0b1100_0110_000_10100_11_000110_110_10110u32.to_le_bytes(), DecodeError::InvalidOpcode);
+    test_display(&0b1100_0110_010_10100_11_000110_000_10110u32.to_le_bytes(), "{ R22 = asr(R20, R6) }");
+    test_display(&0b1100_0110_010_10100_11_000110_010_10110u32.to_le_bytes(), "{ R22 = lsr(R20, R6) }");
+    test_display(&0b1100_0110_010_10100_11_000110_100_10110u32.to_le_bytes(), "{ R22 = asl(R20, R6) }");
+    test_display(&0b1100_0110_010_10100_11_000110_110_10110u32.to_le_bytes(), "{ R22 = lsl(R20, R6) }");
+
+    test_invalid(&0b1100_0110_100_10100_11_000110_000_10110u32.to_le_bytes(), DecodeError::InvalidOpcode);
+    test_invalid(&0b1100_0110_100_10100_11_000110_010_10110u32.to_le_bytes(), DecodeError::InvalidOpcode);
+    test_invalid(&0b1100_0110_100_10100_11_000110_100_10110u32.to_le_bytes(), DecodeError::InvalidOpcode);
+    test_display(&0b1100_0110_100_10100_11_000110_110_10110u32.to_le_bytes(), "{ R22 = lsl(#-24, R6) }");
+    test_display(&0b1100_0110_100_10100_11_000110_111_10110u32.to_le_bytes(), "{ R22 = lsl(#-23, R6) }");
+
+    test_display(&0b1100_0110_110_10100_11_000110_000_10110u32.to_le_bytes(), "{ R22 = cround(R20, R6) }");
+    test_display(&0b1100_0110_110_10100_11_000110_010_10110u32.to_le_bytes(), "{ R23:22 = cround(R21:20, R6) }");
+    test_display(&0b1100_0110_110_10100_11_000110_100_10110u32.to_le_bytes(), "{ R22 = round(R20, R6) }");
+    test_display(&0b1100_0110_110_10100_11_000110_110_10110u32.to_le_bytes(), "{ R22 = round(R20, R6):sat }");
+
+    test_display(&0b1100_0111_000_10100_11_000110_110_10110u32.to_le_bytes(), "{ P2 = tstbit(R20, R6) }");
+    test_display(&0b1100_0111_001_10100_11_000110_110_10110u32.to_le_bytes(), "{ P2 = !tstbit(R20, R6) }");
+    test_display(&0b1100_0111_010_10100_11_000110_110_10110u32.to_le_bytes(), "{ P2 = bitsset(R20, R6) }");
+    test_display(&0b1100_0111_011_10100_11_000110_110_10110u32.to_le_bytes(), "{ P2 = !bitsset(R20, R6) }");
+    test_display(&0b1100_0111_100_10100_11_000110_110_10110u32.to_le_bytes(), "{ P2 = bitsclr(R20, R6) }");
+    test_display(&0b1100_0111_101_10100_11_000110_110_10110u32.to_le_bytes(), "{ P2 = !bitsclr(R20, R6) }");
+    test_invalid(&0b1100_0111_110_10100_11_000110_000_10110u32.to_le_bytes(), DecodeError::InvalidOpcode);
+    test_invalid(&0b1100_0111_110_10100_11_000110_001_10110u32.to_le_bytes(), DecodeError::InvalidOpcode);
+    test_display(&0b1100_0111_110_10100_11_000110_010_10110u32.to_le_bytes(), "{ P2 = cmpb.gt(R20, R6) }");
+    test_display(&0b1100_0111_110_10100_11_000110_011_10110u32.to_le_bytes(), "{ P2 = cmph.gt(R20, R6) }");
+    test_display(&0b1100_0111_110_10100_11_000110_100_10110u32.to_le_bytes(), "{ P2 = cmph.eq(R20, R6) }");
+    test_display(&0b1100_0111_110_10100_11_000110_101_10110u32.to_le_bytes(), "{ P2 = cmph.gtu(R20, R6) }");
+    test_display(&0b1100_0111_110_10100_11_000110_110_10110u32.to_le_bytes(), "{ P2 = cmpb.eq(R20, R6) }");
+    test_display(&0b1100_0111_110_10100_11_000110_111_10110u32.to_le_bytes(), "{ P2 = cmpb.gtu(R20, R6) }");
+    test_display(&0b1100_0111_111_10100_11_000110_000_10110u32.to_le_bytes(), "{ P2 = sfcmp.ge(R20, R6) }");
+    test_display(&0b1100_0111_111_10100_11_000110_001_10110u32.to_le_bytes(), "{ P2 = sfcmp.uo(R20, R6) }");
+    test_invalid(&0b1100_0111_111_10100_11_000110_010_10110u32.to_le_bytes(), DecodeError::InvalidOpcode);
+    test_display(&0b1100_0111_111_10100_11_000110_011_10110u32.to_le_bytes(), "{ P2 = sfcmp.eq(R20, R6) }");
+    test_display(&0b1100_0111_111_10100_11_000110_100_10110u32.to_le_bytes(), "{ P2 = sfcmp.gt(R20, R6) }");
+    test_invalid(&0b1100_0111_111_10100_11_000110_101_10110u32.to_le_bytes(), DecodeError::InvalidOpcode);
+    test_invalid(&0b1100_0111_111_10100_11_000110_110_10110u32.to_le_bytes(), DecodeError::InvalidOpcode);
+    test_invalid(&0b1100_0111_111_10100_11_000110_111_10110u32.to_le_bytes(), DecodeError::InvalidOpcode);
+
+    test_display(&0b1100_1000_111_10100_11_000110_000_10110u32.to_le_bytes(), "{ R22 = insert(R20, R7:6) }");
+
+    test_invalid(&0b1100_1001_000_10100_11_000110_000_10110u32.to_le_bytes(), DecodeError::InvalidOpcode);
+    test_invalid(&0b1100_1001_010_10100_11_000110_000_10110u32.to_le_bytes(), DecodeError::InvalidOpcode);
+    test_invalid(&0b1100_1001_100_10100_11_000110_000_10110u32.to_le_bytes(), DecodeError::InvalidOpcode);
+    test_display(&0b1100_1001_111_10100_11_000110_000_10110u32.to_le_bytes(), "{ R22 = extractu(R20, R7:6) }");
+    test_display(&0b1100_1001_111_10100_11_000110_010_10110u32.to_le_bytes(), "{ R22 = extract(R20, R7:6) }");
+    test_invalid(&0b1100_1001_111_10100_11_000110_100_10110u32.to_le_bytes(), DecodeError::InvalidOpcode);
+    test_invalid(&0b1100_1001_111_10100_11_000110_110_10110u32.to_le_bytes(), DecodeError::InvalidOpcode);
+
+    test_display(&0b1100_1010_000_10100_11_000110_000_10110u32.to_le_bytes(), "{ R23:22 = insert(R21:20, R7:6) }");
+    test_invalid(&0b1100_1010_000_10100_11_100110_000_10110u32.to_le_bytes(), DecodeError::InvalidOpcode);
+    test_display(&0b1100_1010_100_10100_11_000110_000_10110u32.to_le_bytes(), "{ R23:22 ^= xor(R21:20, R7:6) }");
+    test_invalid(&0b1100_1010_100_10100_11_100110_000_10110u32.to_le_bytes(), DecodeError::InvalidOpcode);
+    test_invalid(&0b1100_1010_100_10100_11_000110_001_10110u32.to_le_bytes(), DecodeError::InvalidOpcode);
+    test_invalid(&0b1100_1010_100_10100_11_000110_010_10110u32.to_le_bytes(), DecodeError::InvalidOpcode);
+    test_invalid(&0b1100_1010_100_10100_11_000110_011_10110u32.to_le_bytes(), DecodeError::InvalidOpcode);
+    test_invalid(&0b1100_1010_110_10100_11_000110_000_10110u32.to_le_bytes(), DecodeError::InvalidOpcode);
+
 
     test_display(&0b1100_1011_000_10100_11_000110_000_10110u32.to_le_bytes(), "{ R23:22 |= asr(R21:20, R6) }");
     test_display(&0b1100_1011_000_10100_11_000110_010_10110u32.to_le_bytes(), "{ R23:22 |= lsr(R21:20, R6) }");

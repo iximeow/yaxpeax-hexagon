@@ -340,17 +340,22 @@ impl fmt::Display for Instruction {
         }
         if needs_parens { f.write_str(")")?; }
 
+        // ... vxaddsubh has the right shift after round, but cmpyiwh and friends have the left
+        // shift before round.
+        if let Some(shift) = self.flags.shift_left {
+            write!(f, ":<<{}", shift)?;
+        }
         if let Some(mode) = self.flags.rounded {
             write!(f, "{}", mode.as_label())?;
         }
         if self.flags.chop {
             f.write_str(":chop")?;
         }
-        if let Some(shift) = self.flags.shift_left {
-            write!(f, ":<<{}", shift)?;
-        }
         if let Some(shift) = self.flags.shift_right {
             write!(f, ":>>{}", shift)?;
+        }
+        if self.flags.carry {
+            f.write_str(":carry")?;
         }
         if self.flags.saturate {
             f.write_str(":sat")?;

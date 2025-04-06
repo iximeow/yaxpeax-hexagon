@@ -822,6 +822,10 @@ pub enum Opcode {
     Vrmpyu,
     Vrmpysu,
 
+    // `Rd=addasl(Rt,Rs,#u3)` sure makes this look like it should not have special
+    // display rules. but wth?
+    AddAsl,
+
     AndAnd = 0x8000,
     AndOr,
     OrAnd,
@@ -837,7 +841,6 @@ pub enum Opcode {
     AddLsr,
     SubLsr,
     AddLsl,
-    AddAsl,
     SubAsl,
     AndAsl,
     OrAsl,
@@ -4641,12 +4644,12 @@ fn decode_instruction<
                     let minbits = (inst >> 5) & 0b111;
 
                     handler.on_dest_decoded(Operand::gpr(ddddd))?;
-                    handler.on_source_decoded(Operand::gpr(sssss))?;
 
                     if minbits < 0b100 {
                         opcode_check!(minbits == 0b010);
                         handler.on_opcode_decoded(Opcode::Vasrw)?;
-                        handler.on_dest_decoded(Operand::gpr(ttttt))?;
+                        handler.on_source_decoded(Operand::gpr(sssss))?;
+                        handler.on_source_decoded(Operand::gpr(ttttt))?;
                     } else {
                         handler.shift_left(1)?;
                         handler.rounded(RoundingMode::Round)?;
@@ -4656,11 +4659,11 @@ fn decode_instruction<
                         } else {
                             handler.on_opcode_decoded(Opcode::Cmpyrwh)?;
                         }
+                        handler.on_source_decoded(Operand::gprpair(sssss)?)?;
                         if minbits & 0b001 == 0 {
                             handler.on_source_decoded(Operand::gpr(ttttt))?;
                         } else {
-                            panic!("star?");
-//                            handler.on_source_decoded(Operand::gprstar(ttttt))?;
+                            handler.on_source_decoded(Operand::gpr_conjugate(ttttt))?;
                         }
                     }
                 }
@@ -4692,7 +4695,7 @@ fn decode_instruction<
                             handler.on_opcode_decoded(Opcode::Lsl)?;
                         },
                         0b1011 => {
-                            let i_hi = reg_b8(inst);
+                            let i_hi = reg_b16(inst);
                             let i_lo = ((inst >> 5) & 1) as u8;
                             let i6 = i_lo | (i_hi << 1);
                             let i6 = i6 as i8;
@@ -4795,6 +4798,7 @@ fn decode_instruction<
                 }
                 0b1010 => {
                     let minbits = (inst >> 21) & 0b111;
+                    opcode_check!(inst & 0b0010_0000_0000_0000 == 0);
                     if minbits & 0b100 == 0 {
                         handler.on_opcode_decoded(Opcode::Insert)?;
                         handler.on_dest_decoded(Operand::gprpair(reg_b0(inst))?)?;
@@ -6261,7 +6265,7 @@ fn decode_instruction<
                     }
 
                     if rtt_star {
-                        panic!("rtt_star");
+                        handler.on_source_decoded(Operand::gpr_conjugate(ttttt))?;
                     } else {
                         handler.on_source_decoded(Operand::gprpair(ttttt)?)?;
                     }
@@ -6413,7 +6417,7 @@ fn decode_instruction<
                             if op_hi & 0b010 == 0 {
                                 handler.on_dest_decoded(Operand::gpr(reg_b8(inst)))?;
                             } else {
-                                todo!("reg rt_star");
+                                handler.on_source_decoded(Operand::gpr_conjugate(reg_b8(inst)))?;
                             }
                             handler.rounded(RoundingMode::Round)?;
                             handler.saturate()?;
