@@ -1050,6 +1050,29 @@ fn inst_1100() {
     test_display(&0b1100_0001_000_00100_11_0_1_0000_100_10110u32.to_le_bytes(), "{ R23:22 = shuffob(R17:16, R5:4) }");
     test_display(&0b1100_0001_000_00100_11_0_1_0000_110_10110u32.to_le_bytes(), "{ R23:22 = shuffeh(R17:16, R5:4) }");
 
+    test_display(&0b1100_0001_010_10100_11_000110_000_10110u32.to_le_bytes(), "{ R23:22 = vxaddsubw(R21:20, R7:6):sat }");
+    test_display(&0b1100_0001_010_10100_11_000110_001_10110u32.to_le_bytes(), "{ R22 = vaddhub(R21:20, R7:6):sat }");
+    test_display(&0b1100_0001_010_10100_11_000110_010_10110u32.to_le_bytes(), "{ R23:22 = vxsubaddw(R21:20, R7:6):sat }");
+    test_invalid(&0b1100_0001_010_10100_11_000110_011_10110u32.to_le_bytes(), DecodeError::InvalidOpcode);
+    test_display(&0b1100_0001_010_10100_11_000110_100_10110u32.to_le_bytes(), "{ R23:22 = vxaddsubh(R21:20, R7:6):sat }");
+    test_invalid(&0b1100_0001_010_10100_11_000110_101_10110u32.to_le_bytes(), DecodeError::InvalidOpcode);
+    test_display(&0b1100_0001_010_10100_11_000110_110_10110u32.to_le_bytes(), "{ R23:22 = vxsubaddh(R21:20, R7:6):sat }");
+    test_invalid(&0b1100_0001_010_10100_11_000110_111_10110u32.to_le_bytes(), DecodeError::InvalidOpcode);
+
+    test_display(&0b1100_0001_100_10100_11_000110_000_10110u32.to_le_bytes(), "{ R23:22 = shuffoh(R7:6, R21:20) }");
+    test_invalid(&0b1100_0001_100_10100_11_000110_001_10110u32.to_le_bytes(), DecodeError::InvalidOpcode);
+    test_display(&0b1100_0001_100_10100_11_000110_010_10110u32.to_le_bytes(), "{ R23:22 = vtrunewh(R21:20, R7:6) }");
+    test_display(&0b1100_0001_100_10100_11_000110_011_10110u32.to_le_bytes(), "{ R23:22 = vtrunehb(R21:20, R7:6) }");
+    test_display(&0b1100_0001_100_10100_11_000110_100_10110u32.to_le_bytes(), "{ R23:22 = vtrunowh(R21:20, R7:6) }");
+    test_display(&0b1100_0001_100_10100_11_000110_101_10110u32.to_le_bytes(), "{ R23:22 = vtrunohb(R21:20, R7:6) }");
+    test_display(&0b1100_0001_100_10100_11_000110_110_10110u32.to_le_bytes(), "{ R23:22 = lfs(R21:20, R7:6) }");
+    test_invalid(&0b1100_0001_100_10100_11_000110_111_10110u32.to_le_bytes(), DecodeError::InvalidOpcode);
+
+    test_display(&0b1100_0001_110_10100_11_000110_000_10110u32.to_le_bytes(), "{ R23:22 = vxaddsubh(R21:20, R7:6):rnd:>>1:sat }");
+    test_display(&0b1100_0001_110_10100_11_000110_010_10110u32.to_le_bytes(), "{ R23:22 = vxsubaddh(R21:20, R7:6):rnd:>>1:sat }");
+    test_display(&0b1100_0001_110_10100_11_000110_100_10110u32.to_le_bytes(), "{ R23:22 = extractu(R21:20, R7:6) }");
+    test_display(&0b1100_0001_110_10100_11_000110_110_10110u32.to_le_bytes(), "{ R23:22 = decbin(R21:20, R7:6) }");
+
 //    test_display(&0b1100_0011110_10100_11_000110_011_10110u32.to_le_bytes(), "{ R23:22 = vcnegh(R21:20, R6) }");
 
     test_display(&0b1100_1011_000_10100_11_000110_000_10110u32.to_le_bytes(), "{ R23:22 |= asr(R21:20, R6) }");

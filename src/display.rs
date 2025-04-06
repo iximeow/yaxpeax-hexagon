@@ -346,14 +346,14 @@ impl fmt::Display for Instruction {
         if self.flags.chop {
             f.write_str(":chop")?;
         }
-        if self.flags.saturate {
-            f.write_str(":sat")?;
-        }
         if let Some(shift) = self.flags.shift_left {
             write!(f, ":<<{}", shift)?;
         }
         if let Some(shift) = self.flags.shift_right {
             write!(f, ":>>{}", shift)?;
+        }
+        if self.flags.saturate {
+            f.write_str(":sat")?;
         }
         if self.flags.deprecated {
             f.write_str(":deprecated")?;

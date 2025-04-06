@@ -4520,13 +4520,8 @@ fn decode_instruction<
                             } else {
                                 handler.on_dest_decoded(Operand::gprpair(ddddd)?)?;
                             }
-                            if op_lo < 0b10 {
-                                handler.on_source_decoded(Operand::gprpair(sssss)?)?;
-                                handler.on_source_decoded(Operand::gprpair(ttttt)?)?;
-                            } else {
-                                handler.on_source_decoded(Operand::gprpair(ttttt)?)?;
-                                handler.on_source_decoded(Operand::gprpair(sssss)?)?;
-                            }
+                            handler.on_source_decoded(Operand::gprpair(sssss)?)?;
+                            handler.on_source_decoded(Operand::gprpair(ttttt)?)?;
                         }
                         0b10 => {
                             static OPCODES: [Option<Opcode>; 8] = [
@@ -4548,8 +4543,9 @@ fn decode_instruction<
                             }
                         }
                         _ => {
-                            static OPCODES: [Opcode; 4] = [
-                                Opcode::Vxaddsubh, Opcode::Vxsubaddh, Opcode::Extractu, Opcode::Decbin,
+                            static OPCODES: [Opcode; 8] = [
+                                Opcode::Vxaddsubh, Opcode::Vxaddsubh, Opcode::Vxsubaddh, Opcode::Vxsubaddh,
+                                Opcode::Extractu, Opcode::Extractu, Opcode::Decbin, Opcode::Decbin,
                             ];
 
                             handler.on_opcode_decoded(OPCODES[op_lo as usize])?;
@@ -4557,7 +4553,7 @@ fn decode_instruction<
                             handler.on_source_decoded(Operand::gprpair(sssss)?)?;
                             handler.on_source_decoded(Operand::gprpair(ttttt)?)?;
 
-                            if op_lo < 0b10 {
+                            if op_lo < 0b100 {
                                 handler.rounded(RoundingMode::Round)?;
                                 handler.shift_right(1)?;
                                 handler.saturate()?;

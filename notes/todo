@@ -921,25 +921,25 @@ A L I A S     A L I A S     A L I A S    A L I A S     A L I A S   | Rd=zxtb(Rs)
 
 
 
-test|1 1 0 0|0 0 0 1|0 0 -|s s s s s| P P |- t t t t t|0 0 -|d d d d d| Rdd=extractu(Rss,Rtt)                 - XTYPE ALU/slot 2,3
-test|1 1 0 0|0 0 0 1|0 0 -|s s s s s| P P |- t t t t t|0 1 -|d d d d d| Rdd=shuffeb(Rss,Rtt)                 - XTYPE PERM/slot 2,3
-test|1 1 0 0|0 0 0 1|0 0 -|s s s s s| P P |- t t t t t|1 0 -|d d d d d| Rdd=shuffob(Rtt,Rss)                 - XTYPE PERM/slot 2,3
-test|1 1 0 0|0 0 0 1|0 0 -|s s s s s| P P |- t t t t t|1 1 -|d d d d d| Rdd=shuffeh(Rtt,Rss)                 - XTYPE PERM/slot 2,3
-test|1 1 0 0|0 0 0 1|0 1 -|s s s s s| P P |- t t t t t|0 0 0|d d d d d| Rdd=vxaddsubw(Rss,Rtt):sat                 - XTYPE COMPLEX/slot 2,3
-test|1 1 0 0|0 0 0 1|0 1 -|s s s s s| P P |- t t t t t|0 0 1|d d d d d| Rd=vaddhub(Rss,Rtt):sat                 - XTYPE ALU/slot 2,3
-test|1 1 0 0|0 0 0 1|0 1 -|s s s s s| P P |- t t t t t|0 1 0|d d d d d| Rdd=vxsubaddw(Rss,Rtt):sat                 - XTYPE COMPLEX/slot 2,3
-test|1 1 0 0|0 0 0 1|0 1 -|s s s s s| P P |- t t t t t|1 0 0|d d d d d| Rdd=vxaddsubh(Rss,Rtt):sat                 - XTYPE COMPLEX/slot 2,3
-test|1 1 0 0|0 0 0 1|0 1 -|s s s s s| P P |- t t t t t|1 1 0|d d d d d| Rdd=vxsubaddh(Rss,Rtt):sat                 - XTYPE COMPLEX/slot 2,3
-test|1 1 0 0|0 0 0 1|1 0 -|s s s s s| P P |- t t t t t|0 0 0|d d d d d| Rdd=shuffoh(Rtt,Rss)                 - XTYPE PERM/slot 2,3
-test|1 1 0 0|0 0 0 1|1 0 -|s s s s s| P P |- t t t t t|0 1 0|d d d d d| Rdd=vtrunewh(Rss,Rtt)                 - XTYPE PERM/slot 2,3
-test|1 1 0 0|0 0 0 1|1 0 -|s s s s s| P P |- t t t t t|0 1 1|d d d d d| Rdd=vtrunehb(Rss,Rtt)                 - XTYPE PERM/slot 2,3
-test|1 1 0 0|0 0 0 1|1 0 -|s s s s s| P P |- t t t t t|1 0 0|d d d d d| Rdd=vtrunowh(Rss,Rtt)                 - XTYPE PERM/slot 2,3
-test|1 1 0 0|0 0 0 1|1 0 -|s s s s s| P P |- t t t t t|1 0 1|d d d d d| Rdd=vtrunohb(Rss,Rtt)                 - XTYPE PERM/slot 2,3
-test|1 1 0 0|0 0 0 1|1 0 -|s s s s s| P P |- t t t t t|1 1 0|d d d d d| Rdd=lfs(Rss,Rtt)                 - XTYPE ALU/slot 2,3
-test|1 1 0 0|0 0 0 1|1 1 -|s s s s s| P P |- t t t t t|0 0 -|d d d d d| Rdd=vxaddsubh(Rss,Rtt):rnd:>>1:sat                 - XTYPE COMPLEX/slot 2,3
-test|1 1 0 0|0 0 0 1|1 1 -|s s s s s| P P |- t t t t t|0 1 -|d d d d d| Rdd=vxsubaddh(Rss,Rtt):rnd:>>1:sat                 - XTYPE COMPLEX/slot 2,3
-test|1 1 0 0|0 0 0 1|1 1 -|s s s s s| P P |- t t t t t|1 0 -|d d d d d| Rdd=extractu(Rss,Rtt)                 - XTYPE ALU/slot 2,3
-test|1 1 0 0|0 0 0 1|1 1 -|s s s s s| P P |- t t t t t|1 1 -|d d d d d| Rdd=decbin(Rss,Rtt)                 - XTYPE PERM/slot 2,3
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 test|1 1 0 0|0 0 1 0|0 - -|s s s s s| P P |- t t t t t|- u u|d d d d d| Rdd=valignb(Rtt,Rss,Pu)                 - XTYPE PERM/slot 2,3
 test|1 1 0 0|0 0 1 0|1 0 0|s s s s s| P P |- t t t t t|- u u|d d d d d| Rdd=vspliceb(Rss,Rtt,Pu)                 - XTYPE PERM/slot 2,3
 test|1 1 0 0|0 0 1 0|1 1 0|s s s s s| P P |- t t t t t|- x x|d d d d d| Rdd=add(Rss,Rtt,Px):carry                 - XTYPE ALU/slot 2,3
@@ -1033,9 +1033,6 @@ test|1 1 0 0|1 0 1 0|1 0 -|s s s s s| P P |0 t t t t t|0 0 0|x x x x x| Rxx^=xor
 
 
 
-test|1 1 0 1|0 0 1 0|1 0 0|s s s s s| P P |- t t t t t|0 0 0|- - - d d| Pd=cmp.gt(Rss,Rtt)                 - XTYPE PERM/slot 2,3
-test|1 1 0 1|0 0 1 0|1 0 0|s s s s s| P P |- t t t t t|0 1 0|- - - d d| Pd=cmp.eq(Rss,Rtt)                 - XTYPE PERM/slot 2,3
-test|1 1 0 1|0 0 1 0|1 0 0|s s s s s| P P |- t t t t t|1 0 0|- - - d d| Pd=cmp.gtu(Rss,Rtt)                 - XTYPE PERM/slot 2,3
 
 
 
@@ -1062,105 +1059,108 @@ test|1 1 0 1|0 0 1 0|1 0 0|s s s s s| P P |- t t t t t|1 0 0|- - - d d| Pd=cmp.g
 
 
 
-test|1 1 0 1|0 0 1 1|0 0 0|s s s s s| P P |- t t t t t|0 0 0|d d d d d| Rdd=vaddub(Rss,Rtt)                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 0 1 1|0 0 0|s s s s s| P P |- t t t t t|0 0 1|d d d d d| Rdd=vaddub(Rss,Rtt):sat                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 0 1 1|0 0 0|s s s s s| P P |- t t t t t|0 1 0|d d d d d| Rdd=vaddh(Rss,Rtt)                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 0 1 1|0 0 0|s s s s s| P P |- t t t t t|0 1 1|d d d d d| Rdd=vaddh(Rss,Rtt):sat                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 0 1 1|0 0 0|s s s s s| P P |- t t t t t|1 0 0|d d d d d| Rdd=vadduh(Rss,Rtt):sat                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 0 1 1|0 0 0|s s s s s| P P |- t t t t t|1 0 1|d d d d d| Rdd=vaddw(Rss,Rtt)                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 0 1 1|0 0 0|s s s s s| P P |- t t t t t|1 1 0|d d d d d| Rdd=vaddw(Rss,Rtt):sat                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 0 1 1|0 0 0|s s s s s| P P |- t t t t t|1 1 1|d d d d d| Rdd=add(Rss,Rtt)                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 0 1 1|0 0 1|s s s s s| P P |- t t t t t|0 0 0|d d d d d| Rdd=vsubub(Rtt,Rss)                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 0 1 1|0 0 1|s s s s s| P P |- t t t t t|0 0 1|d d d d d| Rdd=vsubub(Rtt,Rss):sat                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 0 1 1|0 0 1|s s s s s| P P |- t t t t t|0 1 0|d d d d d| Rdd=vsubh(Rtt,Rss)                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 0 1 1|0 0 1|s s s s s| P P |- t t t t t|0 1 1|d d d d d| Rdd=vsubh(Rtt,Rss):sat                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 0 1 1|0 0 1|s s s s s| P P |- t t t t t|1 0 0|d d d d d| Rdd=vsubuh(Rtt,Rss):sat                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 0 1 1|0 0 1|s s s s s| P P |- t t t t t|1 0 1|d d d d d| Rdd=vsubw(Rtt,Rss)                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 0 1 1|0 0 1|s s s s s| P P |- t t t t t|1 1 0|d d d d d| Rdd=vsubw(Rtt,Rss):sat                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 0 1 1|0 0 1|s s s s s| P P |- t t t t t|1 1 1|d d d d d| Rdd=sub(Rtt,Rss)                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 0 1 1|0 1 0|s s s s s| P P |- t t t t t|0 0 0|d d d d d| Rdd=vavgub(Rss,Rtt)                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 0 1 1|0 1 0|s s s s s| P P |- t t t t t|0 0 1|d d d d d| Rdd=vavgub(Rss,Rtt):rnd                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 0 1 1|0 1 0|s s s s s| P P |- t t t t t|0 1 0|d d d d d| Rdd=vavgh(Rss,Rtt)                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 0 1 1|0 1 0|s s s s s| P P |- t t t t t|0 1 1|d d d d d| Rdd=vavgh(Rss,Rtt):rnd                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 0 1 1|0 1 0|s s s s s| P P |- t t t t t|1 0 0|d d d d d| Rdd=vavgh(Rss,Rtt):crnd                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 0 1 1|0 1 0|s s s s s| P P |- t t t t t|1 0 1|d d d d d| Rdd=vavguh(Rss,Rtt)                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 0 1 1|0 1 0|s s s s s| P P |- t t t t t|1 1 -|d d d d d| Rdd=vavguh(Rss,Rtt):rnd                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 0 1 1|0 1 1|s s s s s| P P |- t t t t t|0 0 0|d d d d d| Rdd=vavgw(Rss,Rtt)                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 0 1 1|0 1 1|s s s s s| P P |- t t t t t|0 0 1|d d d d d| Rdd=vavgw(Rss,Rtt):rnd                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 0 1 1|0 1 1|s s s s s| P P |- t t t t t|0 1 0|d d d d d| Rdd=vavgw(Rss,Rtt):crnd                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 0 1 1|0 1 1|s s s s s| P P |- t t t t t|0 1 1|d d d d d| Rdd=vavguw(Rss,Rtt)                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 0 1 1|0 1 1|s s s s s| P P |- t t t t t|1 0 0|d d d d d| Rdd=vavguw(Rss,Rtt):rnd                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 0 1 1|0 1 1|s s s s s| P P |- t t t t t|1 0 1|d d d d d| Rdd=add(Rss,Rtt):sat                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 0 1 1|0 1 1|s s s s s| P P |- t t t t t|1 1 0|d d d d d| Rdd=add(Rss,Rtt):raw:lo                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 0 1 1|0 1 1|s s s s s| P P |- t t t t t|1 1 1|d d d d d| Rdd=add(Rss,Rtt):raw:hi                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 0 1 1|1 0 0|s s s s s| P P |- t t t t t|0 0 0|d d d d d| Rdd=vnavgh(Rtt,Rss)                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 0 1 1|1 0 0|s s s s s| P P |- t t t t t|0 0 1|d d d d d| Rdd=vnavgh(Rtt,Rss):rnd:sat                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 0 1 1|1 0 0|s s s s s| P P |- t t t t t|0 1 0|d d d d d| Rdd=vnavgh(Rtt,Rss):crnd:sat                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 0 1 1|1 0 0|s s s s s| P P |- t t t t t|0 1 1|d d d d d| Rdd=vnavgw(Rtt,Rss)                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 0 1 1|1 0 0|s s s s s| P P |- t t t t t|1 0 -|d d d d d| Rdd=vnavgw(Rtt,Rss):rnd:sat                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 0 1 1|1 0 0|s s s s s| P P |- t t t t t|1 1 -|d d d d d| Rdd=vnavgw(Rtt,Rss):crnd:sat                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 0 1 1|1 0 1|s s s s s| P P |- t t t t t|0 0 0|d d d d d| Rdd=vminub(Rtt,Rss)                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 0 1 1|1 0 1|s s s s s| P P |- t t t t t|0 0 1|d d d d d| Rdd=vminh(Rtt,Rss)                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 0 1 1|1 0 1|s s s s s| P P |- t t t t t|0 1 0|d d d d d| Rdd=vminuh(Rtt,Rss)                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 0 1 1|1 0 1|s s s s s| P P |- t t t t t|1 0 1|d d d d d| Rdd=vmaxuw(Rtt,Rss)                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 0 1 1|1 0 1|s s s s s| P P |- t t t t t|1 1 0|d d d d d| Rdd=min(Rtt,Rss)                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 0 1 1|1 0 1|s s s s s| P P |- t t t t t|1 1 1|d d d d d| Rdd=minu(Rtt,Rss)                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 0 1 1|1 0 1|s s s s s| P P |- x x x x x|0 1 1|d d d d d| Rdd=vminw(Rtt,Rss)                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 0 1 1|1 0 1|s s s s s| P P |- x x x x x|1 0 0|d d d d d| Rdd=vminuw(Rtt,Rss)                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 0 1 1|1 1 0|s s s s s| P P |- t t t t t|0 0 0|d d d d d| Rdd=vmaxub(Rtt,Rss)                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 0 1 1|1 1 0|s s s s s| P P |- t t t t t|0 0 1|d d d d d| Rdd=vmaxh(Rtt,Rss)                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 0 1 1|1 1 0|s s s s s| P P |- t t t t t|0 1 0|d d d d d| Rdd=vmaxuh(Rtt,Rss)                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 0 1 1|1 1 0|s s s s s| P P |- t t t t t|0 1 1|d d d d d| Rdd=vmaxw(Rtt,Rss)                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 0 1 1|1 1 0|s s s s s| P P |- t t t t t|1 0 0|d d d d d| Rdd=max(Rss,Rtt)                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 0 1 1|1 1 0|s s s s s| P P |- t t t t t|1 0 1|d d d d d| Rdd=maxu(Rss,Rtt)                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 0 1 1|1 1 0|s s s s s| P P |- t t t t t|1 1 0|d d d d d| Rdd=vmaxb(Rtt,Rss)                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 0 1 1|1 1 0|s s s s s| P P |- t t t t t|1 1 1|d d d d d| Rdd=vminb(Rtt,Rss)                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 0 1 1|1 1 1|s s s s s| P P |- t t t t t|0 0 0|d d d d d| Rdd=and(Rss,Rtt)                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 0 1 1|1 1 1|s s s s s| P P |- t t t t t|0 0 1|d d d d d| Rdd=and(Rss,~Rtt)                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 0 1 1|1 1 1|s s s s s| P P |- t t t t t|0 1 0|d d d d d| Rdd=or(Rss,Rtt)                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 0 1 1|1 1 1|s s s s s| P P |- t t t t t|0 1 1|d d d d d| Rdd=or(Rss,~Rtt)                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 0 1 1|1 1 1|s s s s s| P P |- t t t t t|1 0 0|d d d d d| Rdd=xor(Rss,Rtt)                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 0 1 1|1 1 1|s s s s s| P P |- t t t t t|1 1 1|d d d d d| Rd=modwrap(Rs,Rt)                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 1 0 0|- - 1|s s s s s| P P |- t t t t t|- - -|d d d d d| Rdd=bitsplit(Rs,Rt)                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 1 0 1|0 0 0|s s s s s| P P |- t t t t t|0 0 -|d d d d d| Rd=add(Rt.L,Rs.L)                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 1 0 1|0 0 0|s s s s s| P P |- t t t t t|0 1 -|d d d d d| Rd=add(Rt.L,Rs.H)                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 1 0 1|0 0 0|s s s s s| P P |- t t t t t|1 0 -|d d d d d| Rd=add(Rt.L,Rs.L):sat                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 1 0 1|0 0 0|s s s s s| P P |- t t t t t|1 1 -|d d d d d| Rd=add(Rt.L,Rs.H):sat                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 1 0 1|0 0 1|s s s s s| P P |- t t t t t|0 0 -|d d d d d| Rd=sub(Rt.L,Rs.L)                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 1 0 1|0 0 1|s s s s s| P P |- t t t t t|0 1 -|d d d d d| Rd=sub(Rt.L,Rs.H)                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 1 0 1|0 0 1|s s s s s| P P |- t t t t t|1 0 -|d d d d d| Rd=sub(Rt.L,Rs.L):sat                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 1 0 1|0 0 1|s s s s s| P P |- t t t t t|1 1 -|d d d d d| Rd=sub(Rt.L,Rs.H):sat                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 1 0 1|0 1 0|s s s s s| P P |- t t t t t|0 0 0|d d d d d| Rd=add(Rt.L,Rs.L):<<16                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 1 0 1|0 1 0|s s s s s| P P |- t t t t t|0 0 1|d d d d d| Rd=add(Rt.L,Rs.H):<<16                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 1 0 1|0 1 0|s s s s s| P P |- t t t t t|0 1 0|d d d d d| Rd=add(Rt.H,Rs.L):<<16                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 1 0 1|0 1 0|s s s s s| P P |- t t t t t|0 1 1|d d d d d| Rd=add(Rt.H,Rs.H):<<16                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 1 0 1|0 1 0|s s s s s| P P |- t t t t t|1 0 0|d d d d d| Rd=add(Rt.L,Rs.L):sat:<<16                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 1 0 1|0 1 0|s s s s s| P P |- t t t t t|1 0 1|d d d d d| Rd=add(Rt.L,Rs.H):sat:<<16                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 1 0 1|0 1 0|s s s s s| P P |- t t t t t|1 1 0|d d d d d| Rd=add(Rt.H,Rs.L):sat:<<16                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 1 0 1|0 1 0|s s s s s| P P |- t t t t t|1 1 1|d d d d d| Rd=add(Rt.H,Rs.H):sat:<<16                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 1 0 1|0 1 1|s s s s s| P P |- t t t t t|0 0 0|d d d d d| Rd=sub(Rt.L,Rs.L):<<16                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 1 0 1|0 1 1|s s s s s| P P |- t t t t t|0 0 1|d d d d d| Rd=sub(Rt.L,Rs.H):<<16                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 1 0 1|0 1 1|s s s s s| P P |- t t t t t|0 1 0|d d d d d| Rd=sub(Rt.H,Rs.L):<<16                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 1 0 1|0 1 1|s s s s s| P P |- t t t t t|0 1 1|d d d d d| Rd=sub(Rt.H,Rs.H):<<16                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 1 0 1|0 1 1|s s s s s| P P |- t t t t t|1 0 0|d d d d d| Rd=sub(Rt.L,Rs.L):sat:<<16                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 1 0 1|0 1 1|s s s s s| P P |- t t t t t|1 0 1|d d d d d| Rd=sub(Rt.L,Rs.H):sat:<<16                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 1 0 1|0 1 1|s s s s s| P P |- t t t t t|1 1 0|d d d d d| Rd=sub(Rt.H,Rs.L):sat:<<16                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 1 0 1|0 1 1|s s s s s| P P |- t t t t t|1 1 1|d d d d d| Rd=sub(Rt.H,Rs.H):sat:<<16                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 1 0 1|1 0 0|s s s s s| P P |- t t t t t|0 - -|d d d d d| Rd=add(Rs,Rt):sat:deprecated                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 1 0 1|1 0 0|s s s s s| P P |- t t t t t|1 - -|d d d d d| Rd=sub(Rt,Rs):sat:deprecated                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 1 0 1|1 0 1|s s s s s| P P |- t t t t t|0 - -|d d d d d| Rd=min(Rs,Rt)                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 1 0 1|1 0 1|s s s s s| P P |- t t t t t|1 - -|d d d d d| Rd=minu(Rs,Rt)                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 1 0 1|1 1 0|s s s s s| P P |- t t t t t|0 - -|d d d d d| Rd=max(Rs,Rt)                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 1 0 1|1 1 0|s s s s s| P P |- t t t t t|1 - -|d d d d d| Rd=maxu(Rs,Rt)                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 1 0 1|1 1 1|s s s s s| P P |- t t t t t|- - -|d d d d d| Rd=parity(Rs,Rt)                 - XTYPE ALU/slot 2,3
-test|1 1 0 1|0 1 1 0|0 0 i|- - - - -| P P |i i i i i i|i i i|d d d d d| Rd=sfmake(#u10):pos                 - XTYPE FP/slot 2,3
-test|1 1 0 1|0 1 1 0|0 1 i|- - - - -| P P |i i i i i i|i i i|d d d d d| Rd=sfmake(#u10):neg                 - XTYPE FP/slot 2,3
-test|1 1 0 1|0 1 1 0|1 1 1|s s s s s| P P |- t t t t t|0 0 0|- - - d d| Pd=dfcmp.eq(Rss,Rtt)                 - XTYPE FP/slot 2,3
-test|1 1 0 1|0 1 1 0|1 1 1|s s s s s| P P |- t t t t t|0 0 1|- - - d d| Pd=dfcmp.gt(Rss,Rtt)                 - XTYPE FP/slot 2,3
-test|1 1 0 1|0 1 1 0|1 1 1|s s s s s| P P |- t t t t t|0 1 1|- - - d d| Pd=dfcmp.ge(Rss,Rtt)                 - XTYPE FP/slot 2,3
-test|1 1 0 1|0 1 1 0|1 1 1|s s s s s| P P |- t t t t t|1 0 0|- - - d d| Pd=dfcmp.uo(Rss,Rtt)                 - XTYPE FP/slot 2,3
-test|1 1 0 1|0 1 1 1|0 i i|s s s s s| P P |i t t t t t|i i i|d d d d d| Rd=add(#u6,mpyi(Rs,Rt))                 - XTYPE FP/slot 2,3
-test|1 1 0 1|1 0 0 0|l i i|s s s s s| P P |i d d d d d|i i i|l l l l l| Rd=add(#u6,mpyi(Rs,#U6))                 - XTYPE FP/slot 2,3
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 test|1 1 0 1|1 0 0 1|0 0 i|- - - - -| P P |i i i i i i|i i i|d d d d d| Rdd=dfmake(#u10):pos                 - XTYPE FP/slot 2,3
 test|1 1 0 1|1 0 0 1|0 1 i|- - - - -| P P |i i i i i i|i i i|d d d d d| Rdd=dfmake(#u10):neg                 - XTYPE FP/slot 2,3
 test|1 1 0 1|1 0 1 0|0 0 i|s s s s s| P P |i i i i i i|i i i|x x x x x| Rx|=and(Rs,#s10)                 - XTYPE ALU/slot 2,3
