@@ -596,7 +596,6 @@ pub enum Opcode {
     Cmpyrwh,
     Cmpyi,
     Cmpyr,
-    Pcmpyw,
     Vacsh,
     Vcmpyi,
     Vcmpyr,
@@ -604,7 +603,6 @@ pub enum Opcode {
     Vmpyh,
     Vmpyhsu,
     Vmpybsu,
-    Vpcmpyw,
     Vrmpybsu,
     Vdmpybsu,
     Vrmpybu,
@@ -5817,6 +5815,7 @@ fn decode_instruction<
                     }
 
                     operand_check!(op_lo & 0b100 == 0);
+                    handler.on_dest_decoded(Operand::gprpair(ddddd)?)?;
                     if op_lo & 0b10 == 0 {
                         handler.on_source_decoded(Operand::gpr_low(sssss))?;
                     } else {
@@ -5866,6 +5865,7 @@ fn decode_instruction<
                                 Some(Cmpyi), Some(Vmpyh), None, None,
                                 Some(Vmpybu), None, Some(Vmpybsu), None,
                             ];
+                            handler.assign_mode(AssignMode::AddAssign)?;
                             handler.on_opcode_decoded(decode_opcode!(OPCODES[op_hi as usize]))?;
                         }
                         0b010 => {
@@ -5873,12 +5873,14 @@ fn decode_instruction<
                             handler.on_dest_decoded(Operand::gprpair(xxxxx)?)?;
                             handler.on_source_decoded(Operand::gpr(sssss))?;
                             handler.on_source_decoded(Operand::gpr(ttttt))?;
+                            handler.assign_mode(AssignMode::AddAssign)?;
                             handler.on_opcode_decoded(Opcode::Cmpyr)?;
                         }
                         0b101 => {
                             handler.on_dest_decoded(Operand::gprpair(xxxxx)?)?;
                             handler.shift_left(op_hi >> 2)?;
                             handler.saturate()?;
+                            handler.assign_mode(AssignMode::AddAssign)?;
 
                             match op_hi & 0b11 {
                                 0b00 => {
@@ -5895,10 +5897,15 @@ fn decode_instruction<
                             }
                         }
                         0b110 => {
+                            handler.on_opcode_decoded(Opcode::Cmpy)?;
                             handler.on_dest_decoded(Operand::gprpair(xxxxx)?)?;
                             handler.on_source_decoded(Operand::gpr(sssss))?;
-                            // TODO: handle `cmpy(Rs,Rt*)`
-                            handler.on_source_decoded(Operand::gpr(ttttt))?;
+                            if op_hi & 0b010 == 0 {
+                                handler.on_source_decoded(Operand::gpr(ttttt))?;
+                            } else {
+                                handler.on_source_decoded(Operand::gpr_conjugate(ttttt))?;
+                            }
+                            handler.assign_mode(AssignMode::AddAssign)?;
                             handler.shift_left(op_hi >> 2)?;
                             handler.saturate()?;
                         }
@@ -5906,8 +5913,7 @@ fn decode_instruction<
                             handler.on_dest_decoded(Operand::gprpair(xxxxx)?)?;
                             handler.on_source_decoded(Operand::gpr(sssss))?;
                             if op_hi & 0b011 == 0b010 {
-                                // TODO: handle cmpy(Rs,Rt*)
-                                handler.on_source_decoded(Operand::gpr(ttttt))?;
+                                handler.on_source_decoded(Operand::gpr_conjugate(ttttt))?;
                             } else {
                                 handler.on_source_decoded(Operand::gpr(ttttt))?;
                             }
@@ -5915,15 +5921,17 @@ fn decode_instruction<
                                 0b000 | 0b100 |
                                 0b010 | 0b110 => {
                                     handler.assign_mode(AssignMode::SubAssign)?;
+                                    handler.saturate()?;
                                     handler.on_opcode_decoded(Opcode::Cmpy)?;
+                                    handler.shift_left(op_hi >> 2)?;
                                 }
                                 0b001 => {
                                     handler.assign_mode(AssignMode::XorAssign)?;
-                                    handler.on_opcode_decoded(Opcode::Pcmpyw)?;
+                                    handler.on_opcode_decoded(Opcode::Pmpyw)?;
                                 }
                                 0b101 => {
                                     handler.assign_mode(AssignMode::XorAssign)?;
-                                    handler.on_opcode_decoded(Opcode::Vpcmpyw)?;
+                                    handler.on_opcode_decoded(Opcode::Vpmpyh)?;
                                 }
                                 _ => {
                                     return Err(DecodeError::InvalidOpcode);
