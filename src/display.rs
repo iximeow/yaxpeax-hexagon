@@ -146,6 +146,16 @@ impl fmt::Display for Instruction {
                     return write!(f, "{} = add(clb({}), {})", self.dest.as_ref().unwrap(),
                         self.sources[0], self.sources[1]);
                 }
+                Opcode::Vacsh => {
+                    return write!(f, "{}, {} = {}({}, {})",
+                        self.dest.as_ref().unwrap(), self.alt_dest.as_ref().unwrap(),
+                        self.opcode, self.sources[0], self.sources[1]);
+                }
+                Opcode::Vminub => {
+                    return write!(f, "{}, {} = {}({}, {})",
+                        self.dest.as_ref().unwrap(), self.alt_dest.as_ref().unwrap(),
+                        self.opcode, self.sources[0], self.sources[1]);
+                }
                 Opcode::SfRecipa => {
                     return write!(f, "{}, {} = {}({}, {})",
                         self.dest.as_ref().unwrap(), self.alt_dest.as_ref().unwrap(),
@@ -871,6 +881,7 @@ impl fmt::Display for Opcode {
             Opcode::Vmpyeh => { f.write_str("vmpyeh") },
             Opcode::Vmpyweh => { f.write_str("vmpyweh") },
             Opcode::Vmpywoh => { f.write_str("vmpywoh") },
+            Opcode::Vrmpyweh => { f.write_str("vrmpyweh") },
             Opcode::Vrmpywoh => { f.write_str("vrmpywoh") },
             Opcode::Vrmpyu => { f.write_str("vrmpyu") },
             Opcode::Vrmpysu => { f.write_str("vrmpysu") },

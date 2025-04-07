@@ -281,8 +281,6 @@ enum RoundingMode {
     Round,
     Cround,
     Raw,
-    Hi,
-    Lo,
     Pos,
     Neg,
 }
@@ -293,8 +291,6 @@ impl RoundingMode {
             RoundingMode::Round => ":rnd",
             RoundingMode::Cround => ":crnd",
             RoundingMode::Raw => ":raw",
-            RoundingMode::Lo => ":lo",
-            RoundingMode::Hi => ":hi",
             RoundingMode::Pos => ":pos",
             RoundingMode::Neg => ":neg",
         }
@@ -600,7 +596,6 @@ pub enum Opcode {
     Cmpyrwh,
     Cmpyi,
     Cmpyr,
-    Vacsh,
     Vcmpyi,
     Vcmpyr,
     Vmpybu,
@@ -706,7 +701,6 @@ pub enum Opcode {
     Vmaxb,
     Vmaxub,
     Vminb,
-    Vminub,
     Vminuw,
     Vminh,
     Vminuh,
@@ -820,6 +814,7 @@ pub enum Opcode {
     Vmpywoh,
     Vmpyweuh,
     Vmpywouh,
+    Vrmpyweh,
     Vrmpywoh,
     Vrmpyu,
     Vrmpysu,
@@ -850,6 +845,8 @@ pub enum Opcode {
     AddClb,
     AddAdd,
     AddSub,
+    Vacsh,
+    Vminub,
     SfRecipa,
     SfInvsqrta,
     Any8VcmpbEq,
@@ -6102,15 +6099,13 @@ fn decode_instruction<
                     handler.on_source_decoded(Operand::gprpair(sssss)?)?;
 
                     match opc {
-                        o if o & 0b100011 == 0b100001 => {
+                        o if o & 0b100011 == 0b000001 => {
                             handler.on_opcode_decoded(Opcode::Vradduh)?;
-                            rtt_star = true;
                             saturate = false;
                             shift_amt = 0;
                         }
                         o if o & 0b101111 == 0b001111 => {
                             handler.on_opcode_decoded(Opcode::Vraddh)?;
-                            rtt_star = true;
                             saturate = false;
                             shift_amt = 0;
                         }
@@ -6162,7 +6157,6 @@ fn decode_instruction<
                             if o & 0b100000 == 0 {
                                 shift_amt = 0;
                             }
-                            rtt_star = true;
                         }
                         _other => {
                             return Err(DecodeError::InvalidOpcode);
@@ -6176,7 +6170,7 @@ fn decode_instruction<
                         handler.shift_left(shift_amt)?;
                     }
                     if rtt_star {
-                        handler.on_source_decoded(Operand::gpr_conjugate(ttttt))?;
+                        handler.on_source_decoded(Operand::gprpair_conjugate(ttttt)?)?;
                     } else {
                         handler.on_source_decoded(Operand::gprpair(ttttt)?)?;
                     }
@@ -6190,6 +6184,7 @@ fn decode_instruction<
                     handler.on_dest_decoded(Operand::gprpair(ddddd)?)?;
                     handler.on_source_decoded(Operand::gprpair(sssss)?)?;
                     let mut rtt_star = false;
+                    let mut add_assign = true;
 
                     match opc {
                         0b000010 => {
@@ -6207,6 +6202,7 @@ fn decode_instruction<
                         }
                         0b001100 => {
                             handler.on_opcode_decoded(Opcode::Vcmpyr)?;
+                            handler.saturate()?;
                         }
                         0b010001 => {
                             handler.on_opcode_decoded(Opcode::Vraddub)?;
@@ -6242,7 +6238,7 @@ fn decode_instruction<
                             handler.on_opcode_decoded(Opcode::Vrcmpys)?;
                             handler.shift_left(1)?;
                             handler.saturate()?;
-                            handler.rounded(RoundingMode::Hi)?;
+                            handler.raw_mode(RawMode::Hi)?;
                         }
                         0b110001 => {
                             handler.on_opcode_decoded(Opcode::Vrmpybsu)?;
@@ -6254,12 +6250,13 @@ fn decode_instruction<
                         o if o & 0b111100 == 0b111000 => {
                             handler.on_opcode_decoded(Opcode::Vminub)?;
                             handler.on_dest_decoded(Operand::pred(o & 0b11))?;
+                            add_assign = false;
                         }
                         0b111100 => {
                             handler.on_opcode_decoded(Opcode::Vrcmpys)?;
                             handler.shift_left(1)?;
                             handler.saturate()?;
-                            handler.rounded(RoundingMode::Lo)?;
+                            handler.raw_mode(RawMode::Lo)?;
                         }
                         0b000_100 | 0b100_100 => {
                             handler.on_opcode_decoded(Opcode::Vdmpy)?;
@@ -6288,13 +6285,23 @@ fn decode_instruction<
                             handler.shift_left((opc >> 5) as u8)?;
                         }
                         0b001_110 | 0b101_110 => {
-                            handler.on_opcode_decoded(Opcode::Vrmpywoh)?;
+                            handler.on_opcode_decoded(Opcode::Vrmpyweh)?;
                             handler.shift_left((opc >> 5) as u8)?;
                         }
                         0b001_111 | 0b101_111 => {
                             handler.on_opcode_decoded(Opcode::Vmpywoh)?;
                             handler.saturate()?;
                             handler.rounded(RoundingMode::Round)?;
+                            handler.shift_left((opc >> 5) as u8)?;
+                        }
+                        0b010_101 | 0b110_101 => {
+                            handler.on_opcode_decoded(Opcode::Vmpyweuh)?;
+                            handler.saturate()?;
+                            handler.shift_left((opc >> 5) as u8)?;
+                        }
+                        0b010_111 | 0b110_111 => {
+                            handler.on_opcode_decoded(Opcode::Vmpywouh)?;
+                            handler.saturate()?;
                             handler.shift_left((opc >> 5) as u8)?;
                         }
                         0b011_101 | 0b111_101 => {
@@ -6308,7 +6315,7 @@ fn decode_instruction<
                             handler.shift_left((opc >> 5) as u8)?;
                         }
                         0b011_111 | 0b111_111 => {
-                            handler.on_opcode_decoded(Opcode::Vmpywoh)?;
+                            handler.on_opcode_decoded(Opcode::Vmpywouh)?;
                             handler.saturate()?;
                             handler.rounded(RoundingMode::Round)?;
                             handler.shift_left((opc >> 5) as u8)?;
@@ -6319,9 +6326,12 @@ fn decode_instruction<
                     }
 
                     if rtt_star {
-                        handler.on_source_decoded(Operand::gpr_conjugate(ttttt))?;
+                        handler.on_source_decoded(Operand::gprpair_conjugate(ttttt)?)?;
                     } else {
                         handler.on_source_decoded(Operand::gprpair(ttttt)?)?;
+                    }
+                    if add_assign {
+                        handler.assign_mode(AssignMode::AddAssign)?;
                     }
                 }
                 0b1011 => {

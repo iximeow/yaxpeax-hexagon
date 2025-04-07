@@ -1225,198 +1225,195 @@ A L I A S     A L I A S     A L I A S    A L I A S     A L I A S   | Rd=zxtb(Rs)
 
 
 
-test|1 1 1 0|0 1 1 0|N 0 0|s s s s s| P P |- t t t t t|0 0 0|x x x x x| Rxx+=mpy(Rs.L,Rt.L)[:<<N]                 - XTYPE FP/slot 2,3
-test|1 1 1 0|0 1 1 0|N 0 0|s s s s s| P P |- t t t t t|0 0 1|x x x x x| Rxx+=mpy(Rs.L,Rt.H)[:<<N]                 - XTYPE FP/slot 2,3
-test|1 1 1 0|0 1 1 0|N 0 0|s s s s s| P P |- t t t t t|0 1 0|x x x x x| Rxx+=mpy(Rs.H,Rt.L)[:<<N]                 - XTYPE FP/slot 2,3
-test|1 1 1 0|0 1 1 0|N 0 0|s s s s s| P P |- t t t t t|0 1 1|x x x x x| Rxx+=mpy(Rs.H,Rt.H)[:<<N]                 - XTYPE FP/slot 2,3
-test|1 1 1 0|0 1 1 0|N 0 1|s s s s s| P P |- t t t t t|0 0 0|x x x x x| Rxx-=mpy(Rs.L,Rt.L)[:<<N]                 - XTYPE FP/slot 2,3
-test|1 1 1 0|0 1 1 0|N 0 1|s s s s s| P P |- t t t t t|0 0 1|x x x x x| Rxx-=mpy(Rs.L,Rt.H)[:<<N]                 - XTYPE FP/slot 2,3
-test|1 1 1 0|0 1 1 0|N 0 1|s s s s s| P P |- t t t t t|0 1 0|x x x x x| Rxx-=mpy(Rs.H,Rt.L)[:<<N]                 - XTYPE FP/slot 2,3
-test|1 1 1 0|0 1 1 0|N 0 1|s s s s s| P P |- t t t t t|0 1 1|x x x x x| Rxx-=mpy(Rs.H,Rt.H)[:<<N]                 - XTYPE FP/slot 2,3
-test|1 1 1 0|0 1 1 0|N 1 0|s s s s s| P P |- t t t t t|0 0 0|x x x x x| Rxx+=mpyu(Rs.L,Rt.L)[:<<N]                 - XTYPE FP/slot 2,3
-test|1 1 1 0|0 1 1 0|N 1 0|s s s s s| P P |- t t t t t|0 0 1|x x x x x| Rxx+=mpyu(Rs.L,Rt.H)[:<<N]                 - XTYPE FP/slot 2,3
-test|1 1 1 0|0 1 1 0|N 1 0|s s s s s| P P |- t t t t t|0 1 0|x x x x x| Rxx+=mpyu(Rs.H,Rt.L)[:<<N]                 - XTYPE FP/slot 2,3
-test|1 1 1 0|0 1 1 0|N 1 0|s s s s s| P P |- t t t t t|0 1 1|x x x x x| Rxx+=mpyu(Rs.H,Rt.H)[:<<N]                 - XTYPE FP/slot 2,3
-test|1 1 1 0|0 1 1 0|N 1 1|s s s s s| P P |- t t t t t|0 0 0|x x x x x| Rxx-=mpyu(Rs.L,Rt.L)[:<<N]                 - XTYPE FP/slot 2,3
-test|1 1 1 0|0 1 1 0|N 1 1|s s s s s| P P |- t t t t t|0 0 1|x x x x x| Rxx-=mpyu(Rs.L,Rt.H)[:<<N]                 - XTYPE FP/slot 2,3
-test|1 1 1 0|0 1 1 0|N 1 1|s s s s s| P P |- t t t t t|0 1 0|x x x x x| Rxx-=mpyu(Rs.H,Rt.L)[:<<N]                 - XTYPE FP/slot 2,3
-test|1 1 1 0|0 1 1 0|N 1 1|s s s s s| P P |- t t t t t|0 1 1|x x x x x| Rxx-=mpyu(Rs.H,Rt.H)[:<<N]                 - XTYPE FP/slot 2,3
-test|1 1 1 0|0 1 1 1|0 0 0|s s s s s| P P |0 t t t t t|0 0 0|x x x x x| Rxx+=mpy(Rs,Rt)                 - XTYPE FP/slot 2,3
-test|1 1 1 0|0 1 1 1|0 0 1|s s s s s| P P |0 t t t t t|0 0 0|x x x x x| Rxx-=mpy(Rs,Rt)                 - XTYPE FP/slot 2,3
-test|1 1 1 0|0 1 1 1|0 1 0|s s s s s| P P |0 t t t t t|0 0 0|x x x x x| Rxx+=mpyu(Rs,Rt)                 - XTYPE FP/slot 2,3
-test|1 1 1 0|0 1 1 1|0 1 1|s s s s s| P P |0 t t t t t|0 0 0|x x x x x| Rxx-=mpyu(Rs,Rt)                 - XTYPE FP/slot 2,3
-test|1 1 1 0|0 1 1 1|0 0 0|s s s s s| P P |0 t t t t t|0 0 1|x x x x x| Rxx+=cmpyi(Rs,Rt)                 - XTYPE COMPLEX/slot 2,3
-test|1 1 1 0|0 1 1 1|0 0 1|s s s s s| P P |0 t t t t t|0 0 1|x x x x x| Rxx+=vmpyh(Rss,Rtt)                 - XTYPE FP/slot 2,3
-test|1 1 1 0|0 1 1 1|1 0 0|s s s s s| P P |0 t t t t t|0 0 1|x x x x x| Rxx+=vmpybu(Rss,Rtt)                 - XTYPE FP/slot 2,3
-test|1 1 1 0|0 1 1 1|1 1 0|s s s s s| P P |0 t t t t t|0 0 1|x x x x x| Rxx+=vmpybsu(Rss,Rtt)                 - XTYPE FP/slot 2,3
-test|1 1 1 0|0 1 1 1|0 0 0|s s s s s| P P |0 t t t t t|0 1 0|x x x x x| Rxx+=cmpyr(Rs,Rt)                 - XTYPE COMPLEX/slot 2,3
-test|1 1 1 0|0 1 1 1|N 0 0|s s s s s| P P |0 t t t t t|1 0 1|x x x x x| Rxx+=vmpyh(Rss,Rtt)[:<<N]:sat                 - XTYPE FP/slot 2,3
-test|1 1 1 0|0 1 1 1|N 1 1|s s s s s| P P |0 t t t t t|1 0 1|x x x x x| Rxx+=vmpyhsu(Rs,Rt)[:<<N]:sat                 - XTYPE FP/slot 2,3
-test|1 1 1 0|0 1 1 1|N 0 0|s s s s s| P P |0 t t t t t|1 1 0|x x x x x| Rxx+=cmpy(Rs,Rt)[:<<N]:sat                 - XTYPE COMPLEX/slot 2,3
-test|1 1 1 0|0 1 1 1|N 1 0|s s s s s| P P |0 t t t t t|1 1 0|x x x x x| Rxx+=cmpy(Rs,Rt*)[:<<N]:sat                 - XTYPE COMPLEX/slot 2,3
-test|1 1 1 0|0 1 1 1|N 0 0|s s s s s| P P |0 t t t t t|1 1 1|x x x x x| Rxx-=cmpy(Rs,Rt)[:<<N]:sat                 - XTYPE COMPLEX/slot 2,3
-test|1 1 1 0|0 1 1 1|0 0 1|s s s s s| P P |0 t t t t t|1 1 1|x x x x x| Rxx^=pmpyw(Rs,Rt)                 - XTYPE FP/slot 2,3
-test|1 1 1 0|0 1 1 1|1 0 1|s s s s s| P P |0 t t t t t|1 1 1|x x x x x| Rxx^=vpmpyh(Rs,Rt)                 - XTYPE FP/slot 2,3
-test|1 1 1 0|0 1 1 1|N 1 0|s s s s s| P P |0 t t t t t|1 1 1|x x x x x| Rxx-=cmpy(Rs,Rt*)[:<<N]:sat                 - XTYPE COMPLEX/slot 2,3
-test|1 1 1 0|1 0 0 0|0 0 0|s s s s s| P P |0 t t t t t|0 1 0|d d d d d| Rdd=vrmpyh(Rss,Rtt)                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 0 0 0|0 0 0|s s s s s| P P |0 t t t t t|0 1 1|d d d d d| Rdd=dfadd(Rss,Rtt)                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 0 0 0|0 0 1|s s s s s| P P |0 t t t t t|0 0 0|d d d d d| Rdd=vabsdiffw(Rtt,Rss)                 - XTYPE ALU/slot 2,3
-test|1 1 1 0|1 0 0 0|0 0 1|s s s s s| P P |0 t t t t t|0 1 1|d d d d d| Rdd=dfmax(Rss,Rtt)                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 0 0 0|0 1 0|s s s s s| P P |0 t t t t t|0 0 1|d d d d d| Rdd=vraddub(Rss,Rtt)                 - XTYPE ALU/slot 2,3
-test|1 1 1 0|1 0 0 0|0 1 0|s s s s s| P P |- t t t t t|0 1 0|d d d d d| Rdd=vrsadub(Rss,Rtt)                 - XTYPE ALU/slot 2,3
-test|1 1 1 0|1 0 0 0|0 1 0|s s s s s| P P |0 t t t t t|0 1 1|d d d d d| Rdd=dfmpyfix(Rss,Rtt)                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 0 0 0|0 1 1|s s s s s| P P |0 t t t t t|0 0 0|d d d d d| Rdd=vabsdiffh(Rtt,Rss)                 - XTYPE ALU/slot 2,3
-test|1 1 1 0|1 0 0 0|0 1 1|s s s s s| P P |0 t t t t t|0 1 0|d d d d d| Rdd=cmpyiw(Rss,Rtt)                 - XTYPE COMPLEX/slot 2,3
-test|1 1 1 0|1 0 0 0|1 0 0|s s s s s| P P |0 t t t t t|0 0 1|d d d d d| Rdd=vrmpyu(Rss,Rtt)                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 0 0 0|1 0 0|s s s s s| P P |0 t t t t t|0 1 0|d d d d d| Rdd=cmpyrw(Rss,Rtt)                 - XTYPE COMPLEX/slot 2,3
-test|1 1 1 0|1 0 0 0|1 0 0|s s s s s| P P |0 t t t t t|0 1 1|d d d d d| Rdd=dfsub(Rss,Rtt)                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 0 0 0|1 0 1|s s s s s| P P |0 t t t t t|0 0 0|d d d d d| Rdd=vabsdiffub(Rtt,Rss)                 - XTYPE ALU/slot 2,3
-test|1 1 1 0|1 0 0 0|1 0 1|s s s s s| P P |0 t t t t t|0 0 1|d d d d d| Rdd=vdmpybsu(Rss,Rtt):sat                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 0 0 0|1 0 1|s s s s s| P P |0 t t t t t|0 1 1|d d d d d| Rdd=dfmpyll(Rss,Rtt)                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 0 0 0|1 1 0|s s s s s| P P |0 t t t t t|0 0 1|d d d d d| Rdd=vrmpysu(Rss,Rtt)                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 0 0 0|1 1 0|s s s s s| P P |0 t t t t t|0 1 0|d d d d d| Rdd=cmpyrw(Rss,Rtt*)                 - XTYPE COMPLEX/slot 2,3
-test|1 1 1 0|1 0 0 0|1 1 0|s s s s s| P P |0 t t t t t|0 1 1|d d d d d| Rdd=dfmin(Rss,Rtt)                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 0 0 0|1 1 1|s s s s s| P P |0 t t t t t|0 0 0|d d d d d| Rdd=vabsdiffb(Rtt,Rss)                 - XTYPE ALU/slot 2,3
-test|1 1 1 0|1 0 0 0|1 1 1|s s s s s| P P |0 t t t t t|0 1 0|d d d d d| Rdd=cmpyiw(Rss,Rtt*)                 - XTYPE COMPLEX/slot 2,3
-test|1 1 1 0|1 0 0 0|N 0 1|s s s s s| P P |0 t t t t t|0 1 0|d d d d d| Rdd=vrmpywoh(Rss,Rtt)[:<<N]                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 0 0 0|N 0 0|s s s s s| P P |0 t t t t t|1 0 0|d d d d d| Rdd=vdmpy(Rss,Rtt)[:<<N]:sat                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 0 0 0|N 0 0|s s s s s| P P |0 t t t t t|1 0 1|d d d d d| Rdd=vmpyweh(Rss,Rtt)[:<<N]:sat                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 0 0 0|N 0 0|s s s s s| P P |0 t t t t t|1 1 0|d d d d d| Rdd=vmpyeh(Rss,Rtt)[:<<N]:sat                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 0 0 0|N 0 0|s s s s s| P P |0 t t t t t|1 1 1|d d d d d| Rdd=vmpywoh(Rss,Rtt)[:<<N]:sat                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 0 0 0|1 0 1|s s s s s| P P |0 t t t t t|1 0 0|d d d d d| Rdd=vrcmpys(Rss,Rtt):<<1:sat:raw:hi                 - XTYPE COMPLEX/slot 2,3
-test|1 1 1 0|1 0 0 0|N 0 1|s s s s s| P P |0 t t t t t|1 0 1|d d d d d| Rdd=vmpyweh(Rss,Rtt)[:<<N]:rnd:sat                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 0 0 0|N 0 1|s s s s s| P P |0 t t t t t|1 1 0|d d d d d| Rdd=vcmpyr(Rss,Rtt)[:<<N]:sat                 - XTYPE COMPLEX/slot 2,3
-test|1 1 1 0|1 0 0 0|N 0 1|s s s s s| P P |0 t t t t t|1 1 1|d d d d d| Rdd=vmpywoh(Rss,Rtt)[:<<N]:rnd:sat                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 0 0 0|N 1 0|s s s s s| P P |0 t t t t t|1 0 0|d d d d d| Rdd=vrmpywoh(Rss,Rtt)[:<<N]                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 0 0 0|N 1 0|s s s s s| P P |0 t t t t t|1 0 1|d d d d d| Rdd=vmpyweuh(Rss,Rtt)[:<<N]:sat                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 0 0 0|N 1 0|s s s s s| P P |0 t t t t t|1 1 0|d d d d d| Rdd=vcmpyi(Rss,Rtt)[:<<N]:sat                 - XTYPE COMPLEX/slot 2,3
-test|1 1 1 0|1 0 0 0|N 1 0|s s s s s| P P |0 t t t t t|1 1 1|d d d d d| Rdd=vmpywouh(Rss,Rtt)[:<<N]:sat                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 0 0 0|1 1 1|s s s s s| P P |0 t t t t t|1 0 0|d d d d d| Rdd=vrcmpys(Rss,Rtt):<<1:sat:raw:lo                 - XTYPE COMPLEX/slot 2,3
-test|1 1 1 0|1 0 0 0|N 1 1|s s s s s| P P |0 t t t t t|1 0 1|d d d d d| Rdd=vmpyweuh(Rss,Rtt)[:<<N]:rnd:sat                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 0 0 0|N 1 1|s s s s s| P P |0 t t t t t|1 1 1|d d d d d| Rdd=vmpywouh(Rss,Rtt)[:<<N]:rnd:sat                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 0 0 1|0 - -|s s s s s| P P |0 t t t t t|- 0 1|d d d d d| Rd=vradduh(Rss,Rtt)                 - XTYPE ALU/slot 2,3
-test|1 1 1 0|1 0 0 1|0 - 1|s s s s s| P P |0 t t t t t|1 1 1|d d d d d| Rd=vraddh(Rss,Rtt)                 - XTYPE ALU/slot 2,3
-test|1 1 1 0|1 0 0 1|0 0 0|s s s s s| P P |0 t t t t t|1 0 0|d d d d d| Rd=cmpyiw(Rss,Rtt*):<<1:sat                 - XTYPE COMPLEX/slot 3
-test|1 1 1 0|1 0 0 1|0 0 1|s s s s s| P P |0 t t t t t|0 0 0|d d d d d| Rd=cmpyiw(Rss,Rtt):<<1:sat                 - XTYPE COMPLEX/slot 3
-test|1 1 1 0|1 0 0 1|0 1 0|s s s s s| P P |0 t t t t t|0 0 0|d d d d d| Rd=cmpyrw(Rss,Rtt):<<1:sat                 - XTYPE COMPLEX/slot 3
-test|1 1 1 0|1 0 0 1|0 1 1|s s s s s| P P |0 t t t t t|0 0 0|d d d d d| Rd=cmpyrw(Rss,Rtt*):<<1:sat                 - XTYPE COMPLEX/slot 3
-test|1 1 1 0|1 0 0 1|1 - 1|s s s s s| P P |0 t t t t t|1 1 0|d d d d d| Rd=vrcmpys(Rss,Rtt):<<1:rnd:sat:raw:hi                 - XTYPE COMPLEX/slot 2,3
-test|1 1 1 0|1 0 0 1|1 - 1|s s s s s| P P |0 t t t t t|1 1 1|d d d d d| Rd=vrcmpys(Rss,Rtt):<<1:rnd:sat:raw:lo                 - XTYPE COMPLEX/slot 2,3
-test|1 1 1 0|1 0 0 1|1 0 0|s s s s s| P P |0 t t t t t|1 0 0|d d d d d| Rd=cmpyiw(Rss,Rtt*):<<1:rnd:sat                 - XTYPE COMPLEX/slot 3
-test|1 1 1 0|1 0 0 1|1 0 1|s s s s s| P P |0 t t t t t|0 0 0|d d d d d| Rd=cmpyiw(Rss,Rtt):<<1:rnd:sat                 - XTYPE COMPLEX/slot 3
-test|1 1 1 0|1 0 0 1|1 1 0|s s s s s| P P |0 t t t t t|0 0 0|d d d d d| Rd=cmpyrw(Rss,Rtt):<<1:rnd:sat                 - XTYPE COMPLEX/slot 3
-test|1 1 1 0|1 0 0 1|1 1 1|s s s s s| P P |0 t t t t t|0 0 0|d d d d d| Rd=cmpyrw(Rss,Rtt*):<<1:rnd:sat                 - XTYPE COMPLEX/slot 3
-test|1 1 1 0|1 0 0 1|N 0 0|s s s s s| P P |0 t t t t t|0 0 0|d d d d d| Rd=vdmpy(Rss,Rtt)[:<<N]:rnd:sat                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 0 1 0|0 0 0|s s s s s| P P |0 t t t t t|0 1 0|x x x x x| Rxx+=vrmpyh(Rss,Rtt)                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 0 1 0|0 0 0|s s s s s| P P |0 t t t t t|0 1 1|x x x x x| Rxx+=dfmpylh(Rss,Rtt)                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 0 1 0|0 0 1|s s s s s| P P |0 t t t t t|0 0 1|x x x x x| Rxx+=vdmpybsu(Rss,Rtt):sat                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 0 1 0|0 0 1|s s s s s| P P |0 t t t t t|0 1 0|x x x x x| Rxx+=vmpyeh(Rss,Rtt)                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 0 1 0|0 0 1|s s s s s| P P |0 t t t t t|1 0 0|x x x x x| Rxx+=vcmpyr(Rss,Rtt):sat                 - XTYPE COMPLEX/slot 2,3
-test|1 1 1 0|1 0 1 0|0 0 1|s s s s s| P P |0 t t t t t|1 0 0|x x x x x| Rxx+=vcmpyr(Rss,Rtt):sat                 - XTYPE COMPLEX/slot 2,3
-test|1 1 1 0|1 0 1 0|0 1 0|s s s s s| P P |0 t t t t t|0 0 1|x x x x x| Rxx+=vraddub(Rss,Rtt)                 - XTYPE ALU/slot 2,3
-test|1 1 1 0|1 0 1 0|0 1 0|s s s s s| P P |- t t t t t|0 1 0|x x x x x| Rxx+=vrsadub(Rss,rtt)                 - XTYPE ALU/slot 2,3
-test|1 1 1 0|1 0 1 0|0 1 0|s s s s s| P P |0 t t t t t|1 0 0|x x x x x| Rxx+=vcmpyi(Rss,Rtt):sat                 - XTYPE COMPLEX/slot 2,3
-test|1 1 1 0|1 0 1 0|0 1 0|s s s s s| P P |0 t t t t t|1 1 0|x x x x x| Rxx+cmpyiw(Rss,Rtt*)                 - XTYPE COMPLEX/slot 3
-test|1 1 1 0|1 0 1 0|0 1 1|s s s s s| P P |0 t t t t t|0 1 0|x x x x x| Rxx+cmpyiw(Rss,Rtt)                 - XTYPE COMPLEX/slot 3
-test|1 1 1 0|1 0 1 0|1 0 0|s s s s s| P P |0 t t t t t|0 0 1|x x x x x| Rxx+=vrmpybu(Rss,Rtt)                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 0 1 0|1 0 0|s s s s s| P P |0 t t t t t|0 1 0|x x x x x| Rxx+=cmpyrw(Rss,Rtt)                 - XTYPE COMPLEX/slot 3
-test|1 1 1 0|1 0 1 0|1 0 0|s s s s s| P P |0 t t t t t|0 1 1|x x x x x| Rxx+=dfmpyhh(Rss,Rtt)                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 0 1 0|1 0 1|s s s s s| P P |0 t t t t t|0 e e|x x x x x| Rxx,Pe=vacsh(Rss,Rtt)                 - XTYPE ALU/slot 2,3
-test|1 1 1 0|1 0 1 0|1 0 1|s s s s s| P P |0 t t t t t|1 0 0|x x x x x| Rxx+=vrcmpys(Rss,Rtt):<<1:sat:raw:hi                 - XTYPE COMPLEX/slot 2,3
-test|1 1 1 0|1 0 1 0|1 1 0|s s s s s| P P |0 t t t t t|0 0 1|x x x x x| Rxx+=vrmpybsu(Rss,Rtt)                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 0 1 0|1 1 0|s s s s s| P P |0 t t t t t|0 1 0|x x x x x| Rxx+=cmpyrw(Rss,Rtt*)                 - XTYPE COMPLEX/slot 3
-test|1 1 1 0|1 0 1 0|1 1 1|s s s s s| P P |0 t t t t t|0 e e|d d d d d| Rdd,Pe=vminub(Rtt,Rss)                 - XTYPE ALU/slot 2,3
-test|1 1 1 0|1 0 1 0|1 1 1|s s s s s| P P |0 t t t t t|1 0 0|x x x x x| Rxx+=vrcmpys(Rss,Rtt):<<1:sat:raw:lo                 - XTYPE COMPLEX/slot 2,3
-test|1 1 1 0|1 0 1 0|N 0 0|s s s s s| P P |0 t t t t t|1 0 0|x x x x x| Rxx+=vdmpy(Rss,Rtt)[:<<N]:sat                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 0 1 0|N 0 0|s s s s s| P P |0 t t t t t|1 0 1|x x x x x| Rxx+=vmpyweh(Rss,Rtt)[:<<N]:sat                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 0 1 0|N 0 0|s s s s s| P P |0 t t t t t|1 1 0|x x x x x| Rxx+=vmpyeh(Rss,Rtt)[:<<N]:sat                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 0 1 0|N 0 0|s s s s s| P P |0 t t t t t|1 1 1|x x x x x| Rxx+=vmpywoh(Rss,Rtt)[:<<N]:sat                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 0 1 0|N 0 1|s s s s s| P P |0 t t t t t|1 0 1|x x x x x| Rxx+=vmpyweh(Rss,Rtt)[:<<N]:rnd:sat                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 0 1 0|N 0 1|s s s s s| P P |0 t t t t t|1 1 0|x x x x x| Rxx+=vrmpywoh(Rss,Rtt)[:<<N]                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 0 1 0|N 0 1|s s s s s| P P |0 t t t t t|1 1 1|x x x x x| Rxx+=vmpywoh(Rss,Rtt)[:<<N]:rnd:sat                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 0 1 0|N 1 0|s s s s s| P P |0 t t t t t|1 0 1|x x x x x| Rxx+=vmpyweuh(Rss,Rtt)[:<<N]:sat                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 0 1 0|N 1 0|s s s s s| P P |0 t t t t t|1 1 1|x x x x x| Rxx+=vmpywouh(Rss,Rtt)[:<<N]:sat                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 0 1 0|N 1 1|s s s s s| P P |0 t t t t t|1 0 1|x x x x x| Rxx+=vmpyweuh(Rss,Rtt)[:<<N]:rnd:sat                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 0 1 0|N 1 1|s s s s s| P P |0 t t t t t|1 1 0|x x x x x| Rxx+=vrmpywoh(Rss,Rtt)[:<<N]                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 0 1 0|N 1 1|s s s s s| P P |0 t t t t t|1 1 1|x x x x x| Rxx+=vmpywouh(Rss,Rtt)[:<<N]:rnd:sat                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 0 1 1|0 0 0|s s s s s| P P |0 t t t t t|0 0 1|d d d d d| Rd=sfsub(Rs,Rt)                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 0 1 1|0 0 0|s s s s s| P P |0 t t t t t|0 1 1|d d d d d| Rd=sfadd(Rs,Rt)                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 0 1 1|0 1 0|s s s s s| P P |0 t t t t t|0 0 0|d d d d d| Rd=sfmpy(Rs,Rt)                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 0 1 1|1 0 0|s s s s s| P P |0 t t t t t|0 0 0|d d d d d| Rd=sfmax(Rs,Rt)                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 0 1 1|1 0 0|s s s s s| P P |0 t t t t t|0 0 1|d d d d d| Rd=sfmin(Rs,Rt)                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 0 1 1|1 1 0|s s s s s| P P |0 t t t t t|0 0 0|d d d d d| Rd=sffixupn(Rs,Rt)                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 0 1 1|1 1 0|s s s s s| P P |0 t t t t t|0 0 1|d d d d d| Rd=sffixupd(Rs,Rt)                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 0 1 1|1 1 1|s s s s s| P P |0 t t t t t|1 e e|d d d d d| Rd,Pe=sfrecipa(Rs,Rt)                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 1 0 0|N 0 0|s s s s s| P P |- t t t t t|0 0 0|d d d d d| Rd=mpy(Rs.L,Rt.L)[:<<N]                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 1 0 0|N 0 0|s s s s s| P P |- t t t t t|0 0 1|d d d d d| Rd=mpy(Rs.L,Rt.H)[:<<N]                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 1 0 0|N 0 0|s s s s s| P P |- t t t t t|0 1 0|d d d d d| Rd=mpy(Rs.H,Rt.L)[:<<N]                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 1 0 0|N 0 0|s s s s s| P P |- t t t t t|0 1 1|d d d d d| Rd=mpy(Rs.H,Rt.H)[:<<N]                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 1 0 0|N 0 0|s s s s s| P P |- t t t t t|1 0 0|d d d d d| Rd=mpy(Rs.L,Rt.L)[:<<N]:sat                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 1 0 0|N 0 0|s s s s s| P P |- t t t t t|1 0 1|d d d d d| Rd=mpy(Rs.L,Rt.H)[:<<N]:sat                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 1 0 0|N 0 0|s s s s s| P P |- t t t t t|1 1 0|d d d d d| Rd=mpy(Rs.H,Rt.L)[:<<N]:sat                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 1 0 0|N 0 0|s s s s s| P P |- t t t t t|1 1 1|d d d d d| Rd=mpy(Rs.H,Rt.H)[:<<N]:sat                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 1 0 0|N 0 1|s s s s s| P P |- t t t t t|0 0 0|d d d d d| Rd=mpy(Rs.L,Rt.L)[:<<N]:rnd                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 1 0 0|N 0 1|s s s s s| P P |- t t t t t|0 0 1|d d d d d| Rd=mpy(Rs.L,Rt.H)[:<<N]:rnd                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 1 0 0|N 0 1|s s s s s| P P |- t t t t t|0 1 0|d d d d d| Rd=mpy(Rs.H,Rt.L)[:<<N]:rnd                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 1 0 0|N 0 1|s s s s s| P P |- t t t t t|0 1 1|d d d d d| Rd=mpy(Rs.H,Rt.H)[:<<N]:rnd                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 1 0 0|N 0 1|s s s s s| P P |- t t t t t|1 0 0|d d d d d| Rd=mpy(Rs.L,Rt.L)[:<<N]:rnd:sat                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 1 0 0|N 0 1|s s s s s| P P |- t t t t t|1 0 1|d d d d d| Rd=mpy(Rs.L,Rt.H)[:<<N]:rnd:sat                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 1 0 0|N 0 1|s s s s s| P P |- t t t t t|1 1 0|d d d d d| Rd=mpy(Rs.H,Rt.L)[:<<N]:rnd:sat                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 1 0 0|N 0 1|s s s s s| P P |- t t t t t|1 1 1|d d d d d| Rd=mpy(Rs.H,Rt.H)[:<<N]:rnd:sat                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 1 0 1|0 0 0|s s s s s| P P |0 t t t t t|0 0 0|d d d d d| Rd=mpyi(Rs,Rt)                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 1 0 1|1 0 1|s s s s s| P P |0 t t t t t|0 0 0|d d d d d| Rd=mpy(Rs,Rt.H):<<1:sat                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 1 0 1|1 1 1|s s s s s| P P |0 t t t t t|0 0 0|d d d d d| Rd=mpy(Rs,Rt):<<1:sat                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 1 0 1|0 0 0|s s s s s| P P |0 t t t t t|0 0 1|d d d d d| Rd=mpy(Rs,Rt)                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 1 0 1|0 0 1|s s s s s| P P |0 t t t t t|0 0 1|d d d d d| Rd=mpy(Rs,Rt):rnd                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 1 0 1|0 1 0|s s s s s| P P |0 t t t t t|0 0 1|d d d d d| Rd=mpyu(Rs,Rt)                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 1 0 1|0 1 1|s s s s s| P P |0 t t t t t|0 0 1|d d d d d| Rd=mpysu(Rs,Rt)                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 1 0 1|1 0 1|s s s s s| P P |0 t t t t t|0 0 1|d d d d d| Rd=mpy(Rs,Rt.L):<<1:sat                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 1 0 1|1 0 1|s s s s s| P P |0 t t t t t|0 1 0|d d d d d| Rd=mpy(Rs,Rt):<<1                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 1 0 1|1 0 1|s s s s s| P P |0 t t t t t|1 0 0|d d d d d| Rd=mpy(Rs,Rt.H):<<1:rnd:sat                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 1 0 1|1 1 1|s s s s s| P P |0 t t t t t|1 0 0|d d d d d| Rd=mpy(Rs,Rt.L):<<1:rnd:sat                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 1 0 1|N 0 1|s s s s s| P P |0 t t t t t|1 1 0|d d d d d| Rd=cmpy(Rs,Rt)[:<<N]:rnd:sat                 - XTYPE COMPLEX/slot 2,3
-test|1 1 1 0|1 1 0 1|N 1 1|s s s s s| P P |0 t t t t t|1 1 0|d d d d d| Rd=cmpy(Rs,Rt*)[:<<N]:rnd:sat                 - XTYPE COMPLEX/slot 2,3
-test|1 1 1 0|1 1 0 1|N 0 1|s s s s s| P P |0 t t t t t|1 1 1|d d d d d| Rd=vmpyh(Rs,Rt)[:<<N]:rnd:sat                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 1 1 0|N 0 0|s s s s s| P P |- t t t t t|0 0 0|d d d d d| Rx+=mpy(Rs.L,Rt.L)[:<<N]                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 1 1 0|N 0 0|s s s s s| P P |- t t t t t|0 0 1|d d d d d| Rx+=mpy(Rs.L,Rt.H)[:<<N]                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 1 1 0|N 0 0|s s s s s| P P |- t t t t t|0 1 0|d d d d d| Rx+=mpy(Rs.H,Rt.L)[:<<N]                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 1 1 0|N 0 0|s s s s s| P P |- t t t t t|0 1 1|d d d d d| Rx+=mpy(Rs.H,Rt.H)[:<<N]                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 1 1 0|N 0 0|s s s s s| P P |- t t t t t|1 0 0|d d d d d| Rx+=mpy(Rs.L,Rt.L)[:<<N]:sat                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 1 1 0|N 0 0|s s s s s| P P |- t t t t t|1 0 1|d d d d d| Rx+=mpy(Rs.L,Rt.H)[:<<N]:sat                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 1 1 0|N 0 0|s s s s s| P P |- t t t t t|1 1 0|d d d d d| Rx+=mpy(Rs.H,Rt.L)[:<<N]:sat                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 1 1 0|N 0 0|s s s s s| P P |- t t t t t|1 1 1|d d d d d| Rx+=mpy(Rs.H,Rt.H)[:<<N]:sat                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 1 1 0|N 0 1|s s s s s| P P |- t t t t t|0 0 0|d d d d d| Rx-=mpy(Rs.L,Rt.L)[:<<N]                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 1 1 0|N 0 1|s s s s s| P P |- t t t t t|0 0 1|d d d d d| Rx-=mpy(Rs.L,Rt.H)[:<<N]                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 1 1 0|N 0 1|s s s s s| P P |- t t t t t|0 1 0|d d d d d| Rx-=mpy(Rs.H,Rt.L)[:<<N]                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 1 1 0|N 0 1|s s s s s| P P |- t t t t t|0 1 1|d d d d d| Rx-=mpy(Rs.H,Rt.H)[:<<N]                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 1 1 0|N 0 1|s s s s s| P P |- t t t t t|1 0 0|d d d d d| Rx-=mpy(Rs.L,Rt.L)[:<<N]:sat                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 1 1 0|N 0 1|s s s s s| P P |- t t t t t|1 0 1|d d d d d| Rx-=mpy(Rs.L,Rt.H)[:<<N]:sat                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 1 1 0|N 0 1|s s s s s| P P |- t t t t t|1 1 0|d d d d d| Rx-=mpy(Rs.H,Rt.L)[:<<N]:sat                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 1 1 0|N 0 1|s s s s s| P P |- t t t t t|1 1 1|d d d d d| Rx-=mpy(Rs.H,Rt.H)[:<<N]:sat                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 1 1 1|0 0 0|s s s s s| P P |0 t t t t t|0 0 0|x x x x x| Rx+=mpyi(Rs,Rt)                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 1 1 1|0 0 0|s s s s s| P P |0 t t t t t|0 0 1|x x x x x| Rx+=add(Rs,Rt)                 - XTYPE ALU/slot 2,3
-test|1 1 1 0|1 1 1 1|0 0 0|s s s s s| P P |0 t t t t t|0 1 1|x x x x x| Rx+=sub(Rt,Rs)                 - XTYPE ALU/slot 2,3
-test|1 1 1 0|1 1 1 1|0 0 0|s s s s s| P P |0 t t t t t|1 0 0|x x x x x| Rx+=sfmpy(Rss,Rtt)                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 1 1 1|0 0 0|s s s s s| P P |0 t t t t t|1 0 1|x x x x x| Rx-=sfmpy(Rss,Rtt)                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 1 1 1|0 0 0|s s s s s| P P |0 t t t t t|1 1 0|x x x x x| Rx+=sfmpy(Rs,Rt):lib                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 1 1 1|0 0 0|s s s s s| P P |0 t t t t t|1 1 1|x x x x x| Rx-=sfmpy(Rs,Rt):lib                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 1 1 1|0 0 1|s s s s s| P P |0 t t t t t|0 0 0|x x x x x| Rx|=and(Rs,~Rt)                 - XTYPE ALU/slot 2,3
-test|1 1 1 0|1 1 1 1|0 0 1|s s s s s| P P |0 t t t t t|0 0 1|x x x x x| Rx&=and(Rs,~Rt)                 - XTYPE ALU/slot 2,3
-test|1 1 1 0|1 1 1 1|0 0 1|s s s s s| P P |0 t t t t t|0 1 0|x x x x x| Rx^=and(Rs,~Rt)                 - XTYPE ALU/slot 2,3
-test|1 1 1 0|1 1 1 1|0 1 0|s s s s s| P P |0 t t t t t|0 0 0|x x x x x| Rx&=and(Rs,Rt)                 - XTYPE ALU/slot 2,3
-test|1 1 1 0|1 1 1 1|0 1 0|s s s s s| P P |0 t t t t t|0 0 1|x x x x x| Rx&=or(Rs,Rt)                 - XTYPE ALU/slot 2,3
-test|1 1 1 0|1 1 1 1|0 1 0|s s s s s| P P |0 t t t t t|0 1 0|x x x x x| Rx&=xor(Rs,Rt)                 - XTYPE ALU/slot 2,3
-test|1 1 1 0|1 1 1 1|0 1 0|s s s s s| P P |0 t t t t t|0 1 1|x x x x x| Rx|=and(Rs,Rt)                 - XTYPE ALU/slot 2,3
-test|1 1 1 0|1 1 1 1|0 1 1|s s s s s| P P |0 t t t t t|0 0 0|x x x x x| Rx+=mpy(Rs,Rt):<<1:sat                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 1 1 1|0 1 1|s s s s s| P P |0 t t t t t|0 0 1|x x x x x| Rx-=mpy(Rs,Rt):<<1:sat                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 1 1 1|0 1 1|s s s s s| P P |0 t t t t t|1 u u|x x x x x| Rx+=sfmpy(Rs,Rt,Pu):scale                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 1 1 1|1 0 0|s s s s s| P P |0 t t t t t|0 0 0|x x x x x| Rx-=mpyi(Rs,Rt)                 - XTYPE FP/slot 2,3
-test|1 1 1 0|1 1 1 1|1 0 0|s s s s s| P P |0 t t t t t|0 0 1|x x x x x| Rx-=add(Rs,Rt)                 - XTYPE ALU/slot 2,3
-test|1 1 1 0|1 1 1 1|1 0 0|s s s s s| P P |0 t t t t t|0 1 1|x x x x x| Rx^=xor(Rs,Rt)                 - XTYPE ALU/slot 2,3
-test|1 1 1 0|1 1 1 1|1 1 0|s s s s s| P P |0 t t t t t|0 0 0|x x x x x| Rx|=or(Rs,Rt)                 - XTYPE ALU/slot 2,3
-test|1 1 1 0|1 1 1 1|1 1 0|s s s s s| P P |0 t t t t t|0 0 1|x x x x x| Rx|=xor(Rs,Rt)                 - XTYPE ALU/slot 2,3
-test|1 1 1 0|1 1 1 1|1 1 0|s s s s s| P P |0 t t t t t|0 1 0|x x x x x| Rx^=and(Rs,Rt)                 - XTYPE ALU/slot 2,3
-test|1 1 1 0|1 1 1 1|1 1 0|s s s s s| P P |0 t t t t t|0 1 1|x x x x x| Rx^=or(Rs,Rt)                 - XTYPE ALU/slot 2,3
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
