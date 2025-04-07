@@ -611,6 +611,7 @@ pub enum Opcode {
     Vrmpyh,
 
     Pmpyw,
+    Vpmpyh,
     Lfs,
 
     Vxaddsubh,
@@ -1464,6 +1465,11 @@ impl<T: yaxpeax_arch::Reader<<Hexagon as Arch>::Address, <Hexagon as Arch>::Word
         let flags = &mut self.instructions[self.instruction_count as usize].flags;
         assert!(flags.shift_left.is_none());
         assert!(flags.shift_right.is_none());
+        // if the result would be shifted by zero, ignore it so as to not print
+        // <<0 when rendering the instruction.
+        if shiftamt == 0 {
+            return Ok(());
+        }
         flags.shift_left = Some(shiftamt);
         Ok(())
     }
@@ -1471,6 +1477,11 @@ impl<T: yaxpeax_arch::Reader<<Hexagon as Arch>::Address, <Hexagon as Arch>::Word
         let flags = &mut self.instructions[self.instruction_count as usize].flags;
         assert!(flags.shift_left.is_none());
         assert!(flags.shift_right.is_none());
+        // if the result would be shifted by zero, ignore it so as to not print
+        // >>0 when rendering the instruction.
+        if shiftamt == 0 {
+            return Ok(());
+        }
         flags.shift_right = Some(shiftamt);
         Ok(())
     }
@@ -5682,6 +5693,11 @@ fn decode_instruction<
                     handler.on_dest_decoded(Operand::gpr(reg_b0(inst)))?;
                     handler.on_source_decoded(Operand::gpr(sssss))?;
                     handler.on_source_decoded(Operand::imm_i8(i as i8))?;
+                    if op_hi < 0b100 {
+                        handler.assign_mode(AssignMode::AddAssign)?;
+                    } else {
+                        handler.assign_mode(AssignMode::SubAssign)?;
+                    }
                 }
                 0b0011 => {
                     let uuuuu = reg_b0(inst);
@@ -5722,7 +5738,10 @@ fn decode_instruction<
                         handler.on_source_decoded(Operand::gpr_high(ttttt))?;
                     }
 
-                    handler.shift_left((op_hi >> 2) & 1)?;
+                    let shift = (op_hi >> 2) & 1;
+                    if shift != 0 {
+                        handler.shift_left(shift)?;
+                    }
                 }
                 0b0101 => {
                     // some more mpy
@@ -5736,7 +5755,10 @@ fn decode_instruction<
                         handler.on_opcode_decoded(Opcode::Vmpyh)?;
                         handler.on_source_decoded(Operand::gprpair(sssss)?)?;
                         handler.on_source_decoded(Operand::gprpair(ttttt)?)?;
-                        handler.shift_left((opc >> 5) as u8)?;
+                        let shift = opc >> 5;
+                        if shift != 0 {
+                            handler.shift_left((opc >> 5) as u8)?;
+                        }
                         handler.saturate()?;
                         return Ok(());
                     }
@@ -5765,14 +5787,16 @@ fn decode_instruction<
 
                     handler.on_source_decoded(Operand::gpr(ttttt))?;
 
+                    eprintln!("opc: {:05b}", opc);
+
                     static OPCODES: [Option<Opcode>; 64] = [
                         Some(Mpy), Some(Cmpyi), Some(Cmpyr), None, None, None, None, None,
-                        Some(Mpyu), Some(Vmpybsu), None, Some(Pmpyw), None, None, None, None,
+                        None, None, None, None, None, None, None, None,
+                        Some(Mpyu), Some(Vmpybsu), None, None, None, None, None, Some(Pmpyw),
                         None, None, None, None, None, None, None, None,
                         None, Some(Vmpybu), None, None, None, None, None, None,
                         None, None, None, None, None, None, None, None,
-                        None, None, None, None, None, None, None, Some(Vmpyh),
-                        None, None, None, None, None, None, None, None,
+                        None, None, None, None, None, None, None, Some(Vpmpyh),
                         None, None, None, None, None, None, None, None,
                     ];
 

@@ -119,6 +119,14 @@ impl fmt::Display for Instruction {
                     return write!(f, "{} = add({}, mpyi({}, {}))", self.dest.as_ref().unwrap(),
                         self.sources[0], self.sources[1], self.sources[2]);
                 },
+                Opcode::MpyiPos => {
+                    return write!(f, "{} = +mpyi({}, {})", self.dest.as_ref().unwrap(),
+                        self.sources[0], self.sources[1]);
+                },
+                Opcode::MpyiNeg => {
+                    return write!(f, "{} = -mpyi({}, {})", self.dest.as_ref().unwrap(),
+                        self.sources[0], self.sources[1]);
+                },
                 Opcode::AddClb => {
                     return write!(f, "{} = add(clb({}), {})", self.dest.as_ref().unwrap(),
                         self.sources[0], self.sources[1]);
@@ -636,7 +644,8 @@ impl fmt::Display for Opcode {
             Opcode::Vnegh => { f.write_str("vnegh") },
             Opcode::Vcnegh => { f.write_str("vcnegh") },
 
-            Opcode:: Pmpyw => { f.write_str("pmpyw") },
+            Opcode::Pmpyw => { f.write_str("pmpyw") },
+            Opcode::Vpmpyh => { f.write_str("vpmpyh") },
             Opcode::Lfs => { f.write_str("lfs") },
 
             Opcode:: Vxaddsubh => { f.write_str("vxaddsubh") },
