@@ -5811,8 +5811,6 @@ fn decode_instruction<
 
                     handler.on_source_decoded(Operand::gpr(ttttt))?;
 
-                    eprintln!("opc: {:05b}", opc);
-
                     static OPCODES: [Option<Opcode>; 64] = [
                         Some(Mpy), Some(Cmpyi), Some(Cmpyr), None, None, None, None, None,
                         None, None, None, None, None, None, None, None,
@@ -6081,7 +6079,6 @@ fn decode_instruction<
                             handler.saturate()?;
                         }
 
-                        eprintln!("ok op_lo: {:02b}, opc: {:05b}", op_lo, opc);
                         if (op_lo & 0b11) == 0b00 {
                             handler.on_source_decoded(Operand::gprpair(ttttt)?)?;
                             handler.on_source_decoded(Operand::gprpair(sssss)?)?;
@@ -6444,6 +6441,8 @@ fn decode_instruction<
                                 0b101 => {
                                     handler.on_opcode_decoded(Opcode::Mpy)?;
                                     handler.on_source_decoded(Operand::gpr_low(reg_b8(inst)))?;
+                                    handler.shift_left(1)?;
+                                    handler.saturate()?;
                                 }
                                 _ => {
                                     opcode_check!(false);
@@ -6471,9 +6470,10 @@ fn decode_instruction<
                         }
                         0b110 => {
                             opcode_check!(op_hi & 0b001 == 0b001);
+                            handler.on_opcode_decoded(Opcode::Cmpy)?;
                             handler.shift_left(op_hi >> 2)?;
                             if op_hi & 0b010 == 0 {
-                                handler.on_dest_decoded(Operand::gpr(reg_b8(inst)))?;
+                                handler.on_source_decoded(Operand::gpr(reg_b8(inst)))?;
                             } else {
                                 handler.on_source_decoded(Operand::gpr_conjugate(reg_b8(inst)))?;
                             }
@@ -6482,8 +6482,10 @@ fn decode_instruction<
                         }
                         0b111 => {
                             opcode_check!(op_hi & 0b011 == 0b001);
-                            handler.on_opcode_decoded(Opcode::Vcmpyh)?;
-                            handler.on_dest_decoded(Operand::gpr(reg_b8(inst)))?;
+                            handler.on_opcode_decoded(Opcode::Vmpyh)?;
+                            handler.shift_left(op_hi >> 2)?;
+                            handler.on_dest_decoded(Operand::gpr(reg_b0(inst)))?;
+                            handler.on_source_decoded(Operand::gpr(reg_b8(inst)))?;
                             handler.rounded(RoundingMode::Round)?;
                             handler.saturate()?;
                         }
