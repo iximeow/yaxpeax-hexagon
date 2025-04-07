@@ -27,6 +27,19 @@ impl fmt::Display for InstructionPacket {
     }
 }
 
+fn assign_mode_label(mode: Option<AssignMode>) -> &'static str {
+    match mode {
+        None => "=",
+        Some(AssignMode::AddAssign) => "+=",
+        Some(AssignMode::SubAssign) => "-=",
+        Some(AssignMode::AndAssign) => "&=",
+        Some(AssignMode::OrAssign) => "|=",
+        Some(AssignMode::XorAssign) => "^=",
+        Some(AssignMode::ClrBit) => "BUG",
+        Some(AssignMode::SetBit) => "BUG",
+    }
+}
+
 impl fmt::Display for Instruction {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if special_display_rules(&self.opcode) {
@@ -44,7 +57,8 @@ impl fmt::Display for Instruction {
                         self.sources[0], self.sources[1], self.sources[2]);
                 }
                 Opcode::AndNot => {
-                    return write!(f, "{} = and({}, !{})", self.dest.as_ref().unwrap(),
+                    return write!(f, "{} {} and({}, ~{})", self.dest.as_ref().unwrap(),
+                        assign_mode_label(self.flags.assign_mode),
                         self.sources[0], self.sources[1]);
                 }
                 Opcode::OrOr => {
@@ -64,7 +78,8 @@ impl fmt::Display for Instruction {
                         self.sources[0], self.sources[1], self.sources[2]);
                 }
                 Opcode::OrNot => {
-                    return write!(f, "{} = or({}, !{})", self.dest.as_ref().unwrap(),
+                    return write!(f, "{} {} or({}, !{})", self.dest.as_ref().unwrap(),
+                        assign_mode_label(self.flags.assign_mode),
                         self.sources[0], self.sources[1]);
                 }
                 Opcode::OrOrNot => {
@@ -397,6 +412,12 @@ impl fmt::Display for Instruction {
             if self.flags.saturate {
                 f.write_str(":sat")?;
             }
+        }
+        if self.flags.scale {
+            f.write_str(":scale")?;
+        }
+        if self.flags.library {
+            f.write_str(":lib")?;
         }
         if self.flags.deprecated {
             f.write_str(":deprecated")?;
@@ -893,6 +914,9 @@ impl fmt::Display for Operand {
             }
             Operand::Gpr64b { reg_low } => {
                 write!(f, "R{}:{}", reg_low + 1, reg_low)
+            }
+            Operand::Gpr64bConjugate { reg_low } => {
+                write!(f, "R{}:{}*", reg_low + 1, reg_low)
             }
             Operand::Cr64b { reg_low } => {
                 write!(f, "C{}:{}", reg_low + 1, reg_low)

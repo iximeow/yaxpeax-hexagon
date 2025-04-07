@@ -324,6 +324,8 @@ struct InstFlags {
     branch_hint: Option<BranchHint>,
     negated: bool,
     saturate: bool,
+    scale: bool,
+    library: bool,
     chop: bool,
     rounded: Option<RoundingMode>,
     threads: Option<DomainHint>,
@@ -348,6 +350,8 @@ impl Default for InstFlags {
             branch_hint: None,
             negated: false,
             saturate: false,
+            scale: false,
+            library: false,
             chop: false,
             rounded: None,
             threads: None,
@@ -1134,7 +1138,7 @@ pub enum Operand {
     /// the complex conjugate of `R<reg>`. this is only used in a few instructions performing
     /// complex multiplies, and is displayed as `Rn*`.
     GprConjugate { reg: u8 },
-    /// `Rn:m`, register pair forming a 64-bit location
+    /// `Rn:m`, register pair forming a 64-bit value
     ///
     /// V73 Section 2.1:
     /// > the general registers can be specified as a pair that represent a single 64-bit register.
@@ -1144,6 +1148,10 @@ pub enum Operand {
     ///
     /// from Table 2-2, note there is an entry of `R31:R30 (LR:FP)`
     Gpr64b { reg_low: u8 },
+    /// `Rn:m*`, a register pair interpreted as a complex number, conjugated
+    ///
+    /// this is only used for forms of `cmpy*w`
+    Gpr64bConjugate { reg_low: u8 },
     /// `Cn:m`, control register pair forming a 64-bit location
     Cr64b { reg_low: u8 },
     /// `Sn:m`, control register pair forming a 64-bit location
@@ -1229,6 +1237,11 @@ impl Operand {
     fn gprpair(num: u8) -> Result<Self, yaxpeax_arch::StandardDecodeError> {
         operand_check!(num & 1 == 0);
         Ok(Self::Gpr64b { reg_low: num })
+    }
+
+    fn gprpair_conjugate(num: u8) -> Result<Self, yaxpeax_arch::StandardDecodeError> {
+        operand_check!(num & 1 == 0);
+        Ok(Self::Gpr64bConjugate { reg_low: num })
     }
 
     fn crpair(num: u8) -> Result<Self, yaxpeax_arch::StandardDecodeError> {
@@ -1360,6 +1373,8 @@ trait DecodeHandler<T: Reader<<Hexagon as Arch>::Address, <Hexagon as Arch>::Wor
     fn inst_predicated(&mut self, _num: u8, _negated: bool, _pred_new: bool) -> Result<(), <Hexagon as Arch>::DecodeError> { Ok(()) }
     fn negate_result(&mut self) -> Result<(), <Hexagon as Arch>::DecodeError> { Ok(()) }
     fn saturate(&mut self) -> Result<(), <Hexagon as Arch>::DecodeError> { Ok(()) }
+    fn scale(&mut self) -> Result<(), <Hexagon as Arch>::DecodeError> { Ok(()) }
+    fn library(&mut self) -> Result<(), <Hexagon as Arch>::DecodeError> { Ok(()) }
     fn branch_hint(&mut self, _hint_taken: bool) -> Result<(), <Hexagon as Arch>::DecodeError> { Ok(()) }
     fn domain_hint(&mut self, _domain: DomainHint) -> Result<(), <Hexagon as Arch>::DecodeError> { Ok(()) }
     fn rounded(&mut self, _mode: RoundingMode) -> Result<(), <Hexagon as Arch>::DecodeError> { Ok(()) }
@@ -1423,7 +1438,18 @@ impl<T: yaxpeax_arch::Reader<<Hexagon as Arch>::Address, <Hexagon as Arch>::Word
         assert!(!flags.saturate);
         flags.saturate = true;
         Ok(())
-
+    }
+    fn scale(&mut self) -> Result<(), <Hexagon as Arch>::DecodeError> {
+        let flags = &mut self.instructions[self.instruction_count as usize].flags;
+        assert!(!flags.scale);
+        flags.scale = true;
+        Ok(())
+    }
+    fn library(&mut self) -> Result<(), <Hexagon as Arch>::DecodeError> {
+        let flags = &mut self.instructions[self.instruction_count as usize].flags;
+        assert!(!flags.scale);
+        flags.library = true;
+        Ok(())
     }
     fn branch_hint(&mut self, hint_taken: bool) -> Result<(), <Hexagon as Arch>::DecodeError> {
         let flags = &mut self.instructions[self.instruction_count as usize].flags;
@@ -5956,12 +5982,12 @@ fn decode_instruction<
                         // all of these may have `<<N`, though some are only valid with `<<1`.
                         let n = (op_hi >> 2) & 1;
                         handler.shift_left(n)?;
+                        handler.on_source_decoded(Operand::gprpair(sssss)?)?;
+                        handler.on_source_decoded(Operand::gprpair(ttttt)?)?;
+
                         if op_lo == 0b010 && op_hi & 0b011 == 0b001 {
                             handler.on_opcode_decoded(Vrmpywoh)?;
                         } else {
-                            handler.on_source_decoded(Operand::gprpair(sssss)?)?;
-                            handler.on_source_decoded(Operand::gprpair(ttttt)?)?;
-
                             let opc = (op_lo & 0b11) | ((op_hi & 0b11) << 2);
                             match opc {
                                 0b0000 => {
@@ -6051,17 +6077,17 @@ fn decode_instruction<
                         let opc = (op_lo & 0b11) | (op_hi << 2);
                         handler.on_opcode_decoded(decode_opcode!(OPCODES[opc as usize]))?;
 
-                        if opc == 0b0101 {
+                        if opc == 0b0101 || opc == 0b10101 {
                             handler.saturate()?;
                         }
 
+                        eprintln!("ok op_lo: {:02b}, opc: {:05b}", op_lo, opc);
                         if (op_lo & 0b11) == 0b00 {
                             handler.on_source_decoded(Operand::gprpair(ttttt)?)?;
                             handler.on_source_decoded(Operand::gprpair(sssss)?)?;
-                        } else if opc == 0b1010 || opc == 0b1110 {
-                            // cmpyiw(Rss,Rtt*)
+                        } else if opc == 0b11010 || opc == 0b11110 {
                             handler.on_source_decoded(Operand::gprpair(sssss)?)?;
-                            // TODO: Rtt*?
+                            handler.on_source_decoded(Operand::gprpair_conjugate(ttttt)?)?;
                         } else {
                             handler.on_source_decoded(Operand::gprpair(sssss)?)?;
                             handler.on_source_decoded(Operand::gprpair(ttttt)?)?;
@@ -6504,7 +6530,7 @@ fn decode_instruction<
                         Some((AddAssign, Mpyi)), Some((AddAssign, Add)), None, Some((AddAssign, Sub)),
                         Some((AddAssign, SfMpy)), Some((SubAssign, SfMpy)), Some((AddAssign, SfMpy)), Some((SubAssign, SfMpy)),
                         // 001_000
-                        Some((OrAssign, AndNot)), Some((AddAssign, AndNot)), Some((XorAssign, AndNot)), None,
+                        Some((OrAssign, AndNot)), Some((AndAssign, AndNot)), Some((XorAssign, AndNot)), None,
                         None, None, None, None,
                         // 010_000
                         Some((AndAssign, And)), Some((AndAssign, Or)), Some((AndAssign, Xor)), Some((OrAssign, And)),
@@ -6529,13 +6555,18 @@ fn decode_instruction<
                     let (assign_mode, opcode) = decode_operand!(OPCODES[opc as usize]);
                     handler.on_opcode_decoded(opcode)?;
                     handler.assign_mode(assign_mode)?;
+                    handler.on_dest_decoded(Operand::gpr(ddddd))?;
 
-                    if opc == 0b000100 || opc == 0b000101 {
-                        handler.on_source_decoded(Operand::gprpair(sssss)?)?;
-                        handler.on_source_decoded(Operand::gprpair(ttttt)?)?;
+                    if opcode == Opcode::Sub {
+                        handler.on_source_decoded(Operand::gpr(ttttt))?;
+                        handler.on_source_decoded(Operand::gpr(sssss))?;
                     } else {
                         handler.on_source_decoded(Operand::gpr(sssss))?;
                         handler.on_source_decoded(Operand::gpr(ttttt))?;
+                    }
+
+                    if opc == 0b000110 || opc == 0b000111 {
+                        handler.library()?;
                     }
 
                     if opc == 0b011000 || opc == 0b011001 {
@@ -6543,7 +6574,7 @@ fn decode_instruction<
                         handler.saturate()?;
                     } else if opc >= 0b011100 && opc < 0b100000 {
                         handler.on_source_decoded(Operand::pred(op_lo & 0b11))?;
-                        // TODO: :scale?
+                        handler.scale()?;
                     }
                 }
             }

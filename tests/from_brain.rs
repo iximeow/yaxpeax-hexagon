@@ -1539,6 +1539,73 @@ fn inst_1110() {
     test_display(&0b1110_0111_110_10100_11_000110_110_10110u32.to_le_bytes(), "{ R23:22 += cmpy(R20, R6*):<<1:sat }");
     test_display(&0b1110_0111_100_10100_11_000110_111_10110u32.to_le_bytes(), "{ R23:22 -= cmpy(R20, R6):<<1:sat }");
     test_display(&0b1110_0111_110_10100_11_000110_111_10110u32.to_le_bytes(), "{ R23:22 -= cmpy(R20, R6*):<<1:sat }");
+
+    test_display(&0b1110_1000_000_10100_11_000110_010_10110u32.to_le_bytes(), "{ R23:22 = vrmpyh(R21:20, R7:6) }");
+    test_display(&0b1110_1000_000_10100_11_000110_011_10110u32.to_le_bytes(), "{ R23:22 = dfadd(R21:20, R7:6) }");
+    test_display(&0b1110_1000_001_10100_11_000110_000_10110u32.to_le_bytes(), "{ R23:22 = vabsdiffw(R7:6, R21:20) }");
+    test_display(&0b1110_1000_001_10100_11_000110_011_10110u32.to_le_bytes(), "{ R23:22 = dfmax(R21:20, R7:6) }");
+    test_display(&0b1110_1000_010_10100_11_000110_001_10110u32.to_le_bytes(), "{ R23:22 = vraddub(R21:20, R7:6) }");
+    test_display(&0b1110_1000_010_10100_11_000110_010_10110u32.to_le_bytes(), "{ R23:22 = vrsadub(R21:20, R7:6) }");
+    test_display(&0b1110_1000_010_10100_11_000110_011_10110u32.to_le_bytes(), "{ R23:22 = dfmpyfix(R21:20, R7:6) }");
+    test_display(&0b1110_1000_011_10100_11_000110_000_10110u32.to_le_bytes(), "{ R23:22 = vabsdiffh(R7:6, R21:20) }");
+    test_display(&0b1110_1000_011_10100_11_000110_010_10110u32.to_le_bytes(), "{ R23:22 = cmpyiw(R21:20, R7:6) }");
+    test_display(&0b1110_1000_100_10100_11_000110_001_10110u32.to_le_bytes(), "{ R23:22 = vrmpyu(R21:20, R7:6) }");
+    test_display(&0b1110_1000_100_10100_11_000110_010_10110u32.to_le_bytes(), "{ R23:22 = cmpyrw(R21:20, R7:6) }");
+    test_display(&0b1110_1000_100_10100_11_000110_011_10110u32.to_le_bytes(), "{ R23:22 = dfsub(R21:20, R7:6) }");
+    test_display(&0b1110_1000_101_10100_11_000110_000_10110u32.to_le_bytes(), "{ R23:22 = vabsdiffub(R7:6, R21:20) }");
+    test_display(&0b1110_1000_101_10100_11_000110_001_10110u32.to_le_bytes(), "{ R23:22 = vdmpybsu(R21:20, R7:6):sat }");
+    test_display(&0b1110_1000_101_10100_11_000110_011_10110u32.to_le_bytes(), "{ R23:22 = dfmpyll(R21:20, R7:6) }");
+    test_display(&0b1110_1000_110_10100_11_000110_001_10110u32.to_le_bytes(), "{ R23:22 = vrmpysu(R21:20, R7:6) }");
+    test_display(&0b1110_1000_110_10100_11_000110_010_10110u32.to_le_bytes(), "{ R23:22 = cmpyrw(R21:20, R7:6*) }");
+    test_display(&0b1110_1000_110_10100_11_000110_011_10110u32.to_le_bytes(), "{ R23:22 = dfmin(R21:20, R7:6) }");
+    test_display(&0b1110_1000_111_10100_11_000110_000_10110u32.to_le_bytes(), "{ R23:22 = vabsdiffb(R7:6, R21:20) }");
+    test_display(&0b1110_1000_111_10100_11_000110_010_10110u32.to_le_bytes(), "{ R23:22 = cmpyiw(R21:20, R7:6*) }");
+    test_display(&0b1110_1000_101_10100_11_000110_100_10110u32.to_le_bytes(), "{ R23:22 = vrcmpys(R21:20, R7:6):<<1:sat:raw:hi }");
+    test_display(&0b1110_1000_111_10100_11_000110_100_10110u32.to_le_bytes(), "{ R23:22 = vrcmpys(R21:20, R7:6):<<1:sat:raw:lo }");
+
+    /*
+    test_display(&0b1110_1000_000_10100_11_000110_100_10110u32.to_le_bytes(), "{ R23:22 = vdmpy(R21:20, R7:6):sat }");
+    test_display(&0b1110_1000_000_10100_11_000110_101_10110u32.to_le_bytes(), "{ R23:22 = vmpyweh(R21:20, R7:6):sat }");
+    test_display(&0b1110_1000_000_10100_11_000110_110_10110u32.to_le_bytes(), "{ R23:22 = vmpyeh(R21:20, R7:6):sat }");
+    test_display(&0b1110_1000_000_10100_11_000110_111_10110u32.to_le_bytes(), "{ R23:22 = vmpywoh(R21:20, R7:6):sat }");
+    test_display(&0b1110_1000_001_10100_11_000110_010_10110u32.to_le_bytes(), "{ R23:22 = vrmpywoh(R21:20, R7:6) }");
+    test_display(&0b1110_1000_001_10100_11_000110_101_10110u32.to_le_bytes(), "{ R23:22 = vmpyweh(R21:20, R7:6):rnd:sat }");
+    test_display(&0b1110_1000_001_10100_11_000110_110_10110u32.to_le_bytes(), "{ R23:22 = vcmpyr(R21:20, R7:6):sat }");
+    test_display(&0b1110_1000_001_10100_11_000110_111_10110u32.to_le_bytes(), "{ R23:22 = vmpywoh(R21:20, R7:6):rnd:sat }");
+    test_display(&0b1110_1000_010_10100_11_000110_100_10110u32.to_le_bytes(), "{ R23:22 = vrmpywoh(R21:20, R7:6) }");
+    test_display(&0b1110_1000_010_10100_11_000110_101_10110u32.to_le_bytes(), "{ R23:22 = vmpyweuh(R21:20, R7:6):sat }");
+    test_display(&0b1110_1000_010_10100_11_000110_110_10110u32.to_le_bytes(), "{ R23:22 = vcmpyi(R21:20, R7:6):sat }");
+    test_display(&0b1110_1000_010_10100_11_000110_111_10110u32.to_le_bytes(), "{ R23:22 = vmpywouh(R21:20, R7:6):sat }");
+    test_display(&0b1110_1000_011_10100_11_000110_101_10110u32.to_le_bytes(), "{ R23:22 = vmpyweuh(R21:20, R7:6):rnd:sat }");
+    test_display(&0b1110_1000_011_10100_11_000110_111_10110u32.to_le_bytes(), "{ R23:22 = vmpywouh(R21:20, R7:6):rnd:sat }");
+    */
+
+    test_display(&0b1110_1111_000_10100_11_000110_000_10110u32.to_le_bytes(), "{ R22 += mpyi(R20, R6) }");
+    test_display(&0b1110_1111_000_10100_11_000110_001_10110u32.to_le_bytes(), "{ R22 += add(R20, R6) }");
+    test_invalid(&0b1110_1111_000_10100_11_000110_010_10110u32.to_le_bytes(), DecodeError::InvalidOperand);
+    test_display(&0b1110_1111_000_10100_11_000110_011_10110u32.to_le_bytes(), "{ R22 += sub(R6, R20) }");
+    test_display(&0b1110_1111_000_10100_11_000110_100_10110u32.to_le_bytes(), "{ R22 += sfmpy(R20, R6) }");
+    test_display(&0b1110_1111_000_10100_11_000110_101_10110u32.to_le_bytes(), "{ R22 -= sfmpy(R20, R6) }");
+    test_display(&0b1110_1111_000_10100_11_000110_110_10110u32.to_le_bytes(), "{ R22 += sfmpy(R20, R6):lib }");
+    test_display(&0b1110_1111_000_10100_11_000110_111_10110u32.to_le_bytes(), "{ R22 -= sfmpy(R20, R6):lib }");
+    test_display(&0b1110_1111_001_10100_11_000110_000_10110u32.to_le_bytes(), "{ R22 |= and(R20, ~R6) }");
+    test_display(&0b1110_1111_001_10100_11_000110_001_10110u32.to_le_bytes(), "{ R22 &= and(R20, ~R6) }");
+    test_display(&0b1110_1111_001_10100_11_000110_010_10110u32.to_le_bytes(), "{ R22 ^= and(R20, ~R6) }");
+    test_display(&0b1110_1111_010_10100_11_000110_000_10110u32.to_le_bytes(), "{ R22 &= and(R20, R6) }");
+    test_display(&0b1110_1111_010_10100_11_000110_001_10110u32.to_le_bytes(), "{ R22 &= or(R20, R6) }");
+    test_display(&0b1110_1111_010_10100_11_000110_010_10110u32.to_le_bytes(), "{ R22 &= xor(R20, R6) }");
+    test_display(&0b1110_1111_010_10100_11_000110_011_10110u32.to_le_bytes(), "{ R22 |= and(R20, R6) }");
+    test_display(&0b1110_1111_011_10100_11_000110_000_10110u32.to_le_bytes(), "{ R22 += mpy(R20, R6):<<1:sat }");
+    test_display(&0b1110_1111_011_10100_11_000110_001_10110u32.to_le_bytes(), "{ R22 -= mpy(R20, R6):<<1:sat }");
+    test_display(&0b1110_1111_011_10100_11_000110_101_10110u32.to_le_bytes(), "{ R22 += sfmpy(R20, R6, P1):scale }");
+    test_display(&0b1110_1111_100_10100_11_000110_000_10110u32.to_le_bytes(), "{ R22 -= mpyi(R20, R6) }");
+    test_display(&0b1110_1111_100_10100_11_000110_001_10110u32.to_le_bytes(), "{ R22 -= add(R20, R6) }");
+    test_invalid(&0b1110_1111_100_10100_11_000110_010_10110u32.to_le_bytes(), DecodeError::InvalidOperand);
+    test_display(&0b1110_1111_100_10100_11_000110_011_10110u32.to_le_bytes(), "{ R22 ^= xor(R20, R6) }");
+    test_display(&0b1110_1111_110_10100_11_000110_000_10110u32.to_le_bytes(), "{ R22 |= or(R20, R6) }");
+    test_display(&0b1110_1111_110_10100_11_000110_001_10110u32.to_le_bytes(), "{ R22 |= xor(R20, R6) }");
+    test_display(&0b1110_1111_110_10100_11_000110_010_10110u32.to_le_bytes(), "{ R22 ^= and(R20, R6) }");
+    test_display(&0b1110_1111_110_10100_11_000110_011_10110u32.to_le_bytes(), "{ R22 ^= or(R20, R6) }");
 }
 
 #[test]
