@@ -146,6 +146,11 @@ impl fmt::Display for Instruction {
                     return write!(f, "{} = add(clb({}), {})", self.dest.as_ref().unwrap(),
                         self.sources[0], self.sources[1]);
                 }
+                Opcode::SfRecipa => {
+                    return write!(f, "{}, {} = {}({}, {})",
+                        self.dest.as_ref().unwrap(), self.alt_dest.as_ref().unwrap(),
+                        self.opcode, self.sources[0], self.sources[1]);
+                }
                 Opcode::SfInvsqrta => {
                     return write!(f, "{}, {} = {}({})",
                         self.dest.as_ref().unwrap(), self.alt_dest.as_ref().unwrap(),

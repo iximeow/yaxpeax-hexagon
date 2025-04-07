@@ -787,7 +787,6 @@ pub enum Opcode {
     SfFixupr,
     SfFixupn,
     SfFixupd,
-    SfRecipa,
     Swiz,
     Shuffeb,
     Shuffob,
@@ -851,6 +850,7 @@ pub enum Opcode {
     AddClb,
     AddAdd,
     AddSub,
+    SfRecipa,
     SfInvsqrta,
     Any8VcmpbEq,
 
@@ -6025,12 +6025,11 @@ fn decode_instruction<
                                     handler.rounded(RoundingMode::Round)?;
                                 }
                                 0b1000 => {
-                                    handler.on_opcode_decoded(Vmpywoh)?;
-                                    handler.saturate()?;
-                                    handler.rounded(RoundingMode::Round)?;
+                                    handler.on_opcode_decoded(Vrmpywoh)?;
                                 }
                                 0b1001 => {
-                                    handler.on_opcode_decoded(Vrmpywoh)?;
+                                    handler.on_opcode_decoded(Vmpyweuh)?;
+                                    handler.saturate()?;
                                 }
                                 0b1010 => {
                                     handler.on_opcode_decoded(Vcmpyi)?;

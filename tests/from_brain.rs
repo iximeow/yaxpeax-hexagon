@@ -1563,7 +1563,6 @@ fn inst_1110() {
     test_display(&0b1110_1000_101_10100_11_000110_100_10110u32.to_le_bytes(), "{ R23:22 = vrcmpys(R21:20, R7:6):<<1:sat:raw:hi }");
     test_display(&0b1110_1000_111_10100_11_000110_100_10110u32.to_le_bytes(), "{ R23:22 = vrcmpys(R21:20, R7:6):<<1:sat:raw:lo }");
 
-    /*
     test_display(&0b1110_1000_000_10100_11_000110_100_10110u32.to_le_bytes(), "{ R23:22 = vdmpy(R21:20, R7:6):sat }");
     test_display(&0b1110_1000_000_10100_11_000110_101_10110u32.to_le_bytes(), "{ R23:22 = vmpyweh(R21:20, R7:6):sat }");
     test_display(&0b1110_1000_000_10100_11_000110_110_10110u32.to_le_bytes(), "{ R23:22 = vmpyeh(R21:20, R7:6):sat }");
@@ -1578,7 +1577,6 @@ fn inst_1110() {
     test_display(&0b1110_1000_010_10100_11_000110_111_10110u32.to_le_bytes(), "{ R23:22 = vmpywouh(R21:20, R7:6):sat }");
     test_display(&0b1110_1000_011_10100_11_000110_101_10110u32.to_le_bytes(), "{ R23:22 = vmpyweuh(R21:20, R7:6):rnd:sat }");
     test_display(&0b1110_1000_011_10100_11_000110_111_10110u32.to_le_bytes(), "{ R23:22 = vmpywouh(R21:20, R7:6):rnd:sat }");
-    */
 
     test_invalid(&0b1110_1011_000_10100_11_000110_000_10110u32.to_le_bytes(), DecodeError::InvalidOpcode);
     test_display(&0b1110_1011_000_10100_11_000110_001_10110u32.to_le_bytes(), "{ R22 = sfsub(R20, R6) }");
@@ -1588,7 +1586,7 @@ fn inst_1110() {
     test_display(&0b1110_1011_100_10100_11_000110_001_10110u32.to_le_bytes(), "{ R22 = sfmin(R20, R6) }");
     test_display(&0b1110_1011_110_10100_11_000110_000_10110u32.to_le_bytes(), "{ R22 = sffixupn(R20, R6) }");
     test_display(&0b1110_1011_110_10100_11_000110_001_10110u32.to_le_bytes(), "{ R22 = sffixupd(R20, R6) }");
-    test_display(&0b1110_1011_111_10100_11_000110_101_10110u32.to_le_bytes(), "{ R22,P1 = sfrecipa(R20, R6) }");
+    test_display(&0b1110_1011_111_10100_11_000110_101_10110u32.to_le_bytes(), "{ R22, P1 = sfrecipa(R20, R6) }");
 
     test_display(&0b1110_1100_000_10100_11_000110_000_10110u32.to_le_bytes(), "{ R22 = mpy(R20.L, R6.L) }");
     test_display(&0b1110_1100_000_10100_11_000110_001_10110u32.to_le_bytes(), "{ R22 = mpy(R20.L, R6.H) }");
