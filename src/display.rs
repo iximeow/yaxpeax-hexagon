@@ -107,6 +107,14 @@ impl fmt::Display for Instruction {
                     return write!(f, "{} = or({}, asl({}, {}))", self.dest.as_ref().unwrap(),
                         self.sources[0], self.sources[1], self.sources[2]);
                 },
+                Opcode::AddAdd => {
+                    return write!(f, "{} = add({}, add({}, {}))", self.dest.as_ref().unwrap(),
+                        self.sources[0], self.sources[1], self.sources[2]);
+                },
+                Opcode::AddSub => {
+                    return write!(f, "{} = add({}, sub({}, {}))", self.dest.as_ref().unwrap(),
+                        self.sources[0], self.sources[1], self.sources[2]);
+                },
                 Opcode::AddMpyi => {
                     return write!(f, "{} = add({}, mpyi({}, {}))", self.dest.as_ref().unwrap(),
                         self.sources[0], self.sources[1], self.sources[2]);
@@ -341,24 +349,46 @@ impl fmt::Display for Instruction {
         if needs_parens { f.write_str(")")?; }
 
         // ... vxaddsubh has the right shift after round, but cmpyiwh and friends have the left
-        // shift before round.
-        if let Some(shift) = self.flags.shift_left {
-            write!(f, ":<<{}", shift)?;
-        }
-        if let Some(mode) = self.flags.rounded {
-            write!(f, "{}", mode.as_label())?;
-        }
-        if self.flags.chop {
-            f.write_str(":chop")?;
-        }
-        if let Some(shift) = self.flags.shift_right {
-            write!(f, ":>>{}", shift)?;
-        }
-        if self.flags.carry {
-            f.write_str(":carry")?;
-        }
-        if self.flags.saturate {
-            f.write_str(":sat")?;
+        // shift before round. cmpyiwh and add/sub `:sat:<<16` forms have the shift in different
+        // positions. awful awful awful.
+        if self.opcode == Opcode::Add || self.opcode == Opcode::Sub {
+            if let Some(mode) = self.flags.rounded {
+                write!(f, "{}", mode.as_label())?;
+            }
+            if self.flags.chop {
+                f.write_str(":chop")?;
+            }
+            if self.flags.carry {
+                f.write_str(":carry")?;
+            }
+            if self.flags.saturate {
+                f.write_str(":sat")?;
+            }
+            if let Some(shift) = self.flags.shift_right {
+                write!(f, ":>>{}", shift)?;
+            }
+            if let Some(shift) = self.flags.shift_left {
+                write!(f, ":<<{}", shift)?;
+            }
+        } else {
+            if let Some(shift) = self.flags.shift_left {
+                write!(f, ":<<{}", shift)?;
+            }
+            if let Some(mode) = self.flags.rounded {
+                write!(f, "{}", mode.as_label())?;
+            }
+            if self.flags.chop {
+                f.write_str(":chop")?;
+            }
+            if let Some(shift) = self.flags.shift_right {
+                write!(f, ":>>{}", shift)?;
+            }
+            if self.flags.carry {
+                f.write_str(":carry")?;
+            }
+            if self.flags.saturate {
+                f.write_str(":sat")?;
+            }
         }
         if self.flags.deprecated {
             f.write_str(":deprecated")?;
@@ -683,6 +713,10 @@ impl fmt::Display for Opcode {
             Opcode::SubLsr => { f.write_str("sublsr") },
             Opcode::AddLsl => { f.write_str("addlsl") },
             Opcode::AddAsl => { f.write_str("addasl") },
+            // this is the form shown literally as `addasl`, in contrast to the form above which
+            // shouldn't ever really be printed as `addasl` (instruction display has more complex
+            // rules here.
+            Opcode::AddAslRegReg => { f.write_str("addasl") },
             Opcode::SubAsl => { f.write_str("subasl") },
             Opcode::AndAsl => { f.write_str("andasl") },
             Opcode::AddClb => { f.write_str("addclb") },

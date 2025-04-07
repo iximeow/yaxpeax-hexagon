@@ -822,9 +822,9 @@ pub enum Opcode {
     Vrmpyu,
     Vrmpysu,
 
-    // `Rd=addasl(Rt,Rs,#u3)` sure makes this look like it should not have special
-    // display rules. but wth?
-    AddAsl,
+    // `Rd=addasl(Rt,Rs,#u3)` wants the "typical" operand rending rules, rather than
+    // `add(x, asl(y, z))` that would be used below. terrible.
+    AddAslRegReg,
 
     AndAnd = 0x8000,
     AndOr,
@@ -841,6 +841,7 @@ pub enum Opcode {
     AddLsr,
     SubLsr,
     AddLsl,
+    AddAsl,
     SubAsl,
     AndAsl,
     OrAsl,
@@ -4634,7 +4635,7 @@ fn decode_instruction<
                     opcode_check!(minbits == 0b000);
                     operand_check!(inst & 0b0010_0000_0000_0000 == 0);
 
-                    handler.on_opcode_decoded(Opcode::AddAsl)?;
+                    handler.on_opcode_decoded(Opcode::AddAslRegReg)?;
                     handler.on_dest_decoded(Operand::gpr(ddddd))?;
                     handler.on_source_decoded(Operand::gpr(ttttt))?;
                     handler.on_source_decoded(Operand::gpr(sssss))?;
@@ -5439,15 +5440,15 @@ fn decode_instruction<
                     let i9 = (inst >> 5) & 0b1_1111_1111;
                     let i_hi = (inst >> 21) & 1;
                     let i10 = i9 | (i_hi << 9);
-                    let i = (i10 as i16) << 6 >> 6;
+                    let i = (i10 as u16) << 6 >> 6;
 
-                    let op = (inst >> 23) & 1;
+                    let op = (inst >> 22) & 0b11;
 
                     opcode_check!(op & 0b10 == 0);
 
                     handler.on_dest_decoded(Operand::gpr(ddddd))?;
                     handler.on_opcode_decoded(Opcode::DfMake)?;
-                    handler.on_source_decoded(Operand::imm_i16(i))?;
+                    handler.on_source_decoded(Operand::imm_u16(i))?;
                     if op == 0 {
                         handler.rounded(RoundingMode::Pos)?;
                     } else {
@@ -5479,9 +5480,9 @@ fn decode_instruction<
                             let i10 = i9 | (i_hi << 9);
                             let i = (i10 as i16) << 6 >> 6;
                             handler.on_opcode_decoded(Opcode::OrAnd)?;
-                            handler.on_dest_decoded(Operand::gpr(sssss))?;
-                            handler.on_source_decoded(Operand::gpr(uuuuu))?;
-                            handler.on_source_decoded(Operand::gpr(sssss))?;
+                            handler.on_dest_decoded(Operand::gpr(reg_b16(inst)))?;
+                            handler.on_source_decoded(Operand::gpr(reg_b0(inst)))?;
+                            handler.on_source_decoded(Operand::gpr(reg_b16(inst)))?;
                             handler.on_source_decoded(Operand::imm_i16(i))?;
                         }
                         0b10 => {
@@ -5544,18 +5545,17 @@ fn decode_instruction<
                     }
                     handler.on_source_decoded(Operand::imm_u8(imm as u8))?;
 
-                    const OPCODES: [Option<Opcode>; 64] = [
-                        Some(Opcode::VcmpbEq), Some(Opcode::VcmpbEq), Some(Opcode::VcmpbEq), None,
+                    const OPCODES: [Option<Opcode>; 32] = [
+                        Some(Opcode::VcmpbEq), Some(Opcode::VcmphEq), Some(Opcode::VcmpwEq), None,
+                        Some(Opcode::VcmpbGt), Some(Opcode::VcmphGt), Some(Opcode::VcmpwGt), None,
+                        // 0b01000
+                        Some(Opcode::VcmpbGtu), Some(Opcode::VcmphGtu), Some(Opcode::VcmpwGtu), None,
                         None, None, None, None,
-                        Some(Opcode::VcmpbGt), Some(Opcode::VcmpbGt), Some(Opcode::VcmpbGt), None,
+                        // 0b10000
+                        None, None, Some(DfClass), None,
                         None, None, None, None,
-                        Some(Opcode::VcmpbGtu), Some(Opcode::VcmpbGtu), Some(Opcode::VcmpbGtu), None,
                         None, None, None, None,
-                        None, None, None, None, Some(DfClass), None, None, None,
-                        None, None, None, None, None, None, None, None,
-                        None, None, None, None, None, None, None, None,
-                        None, None, None, None, None, None, None, None,
-                        None, None, None, None, None, None, None, None,
+                        None, None, None, None,
                     ];
 
                     handler.on_opcode_decoded(decode_opcode!(OPCODES[opc as usize]))?;
@@ -5598,7 +5598,7 @@ fn decode_instruction<
 
                     handler.on_dest_decoded(Operand::gpr(xxxxx))?;
                     handler.on_source_decoded(Operand::imm_u8(i as u8))?;
-                    handler.on_dest_decoded(Operand::gpr(xxxxx))?;
+                    handler.on_source_decoded(Operand::gpr(xxxxx))?;
                     handler.on_source_decoded(Operand::imm_u8(u5))?;
 
                     const OPCODES: [Opcode; 8] = [
@@ -5611,10 +5611,10 @@ fn decode_instruction<
                     handler.on_opcode_decoded(OPCODES[opc as usize])?;
                 }
                 0b1111 => {
-                    let order = (inst >> 24) & 1;
+                    let order = (inst >> 23) & 1;
                     let uuuuu = reg_b0(inst);
-                    let ddddd = reg_b0(inst);
-                    let sssss = reg_b0(inst);
+                    let ddddd = reg_b8(inst);
+                    let sssss = reg_b16(inst);
                     let i_lo = (inst >> 5) & 0b111;
                     let i_mid = (inst >> 13) & 0b1;
                     let i_hi = (inst >> 21) & 0b11;

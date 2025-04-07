@@ -1358,6 +1358,62 @@ fn inst_1101() {
     test_invalid(&0b1101_0111_110_10100_11_100110_100_10110u32.to_le_bytes(), DecodeError::InvalidOpcode);
 
     test_display(&0b1101_1000_110_10100_11_100110_100_10110u32.to_le_bytes(), "{ R6 = add(#0x2c, mpyi(R20, #0x36)) }");
+
+    test_display(&0b1101_1001_001_10100_11_100110_100_10110u32.to_le_bytes(), "{ R22 = dfmake(#0x334):pos }");
+    test_display(&0b1101_1001_011_10100_11_100110_100_10110u32.to_le_bytes(), "{ R22 = dfmake(#0x334):neg }");
+    test_invalid(&0b1101_1001_101_10100_11_100110_100_10110u32.to_le_bytes(), DecodeError::InvalidOpcode);
+    test_invalid(&0b1101_1001_111_10100_11_100110_100_10110u32.to_le_bytes(), DecodeError::InvalidOpcode);
+
+    test_display(&0b1101_1010_001_10100_11_100110_100_10110u32.to_le_bytes(), "{ R22 |= and(R20, #-204) }");
+    test_display(&0b1101_1010_011_10100_11_100110_100_10110u32.to_le_bytes(), "{ R20 = or(R22, and(R20, #-204)) }");
+    test_display(&0b1101_1010_101_10100_11_100110_100_10110u32.to_le_bytes(), "{ R22 |= or(R20, #-204) }");
+    test_invalid(&0b1101_1010_111_10100_11_100110_100_10110u32.to_le_bytes(), DecodeError::InvalidOpcode);
+
+    test_display(&0b1101_1011_001_10100_11_100110_100_10110u32.to_le_bytes(), "{ R6 = add(R20, add(R22, #28)) }");
+    test_display(&0b1101_1011_101_10100_11_100110_100_10110u32.to_le_bytes(), "{ R6 = add(R20, sub(#28, R22)) }");
+
+    test_display(&0b1101_1100_000_10100_11_100110_100_00110u32.to_le_bytes(), "{ P2 = vcmpb.eq(R21:20, #0x34) }");
+    test_display(&0b1101_1100_000_10100_11_100110_100_01110u32.to_le_bytes(), "{ P2 = vcmph.eq(R21:20, #0x34) }");
+    test_display(&0b1101_1100_000_10100_11_100110_100_10110u32.to_le_bytes(), "{ P2 = vcmpw.eq(R21:20, #0x34) }");
+    test_invalid(&0b1101_1100_000_10100_11_100110_100_11110u32.to_le_bytes(), DecodeError::InvalidOpcode);
+    test_display(&0b1101_1100_001_10100_11_100110_100_00110u32.to_le_bytes(), "{ P2 = vcmpb.gt(R21:20, #0x34) }");
+    test_display(&0b1101_1100_001_10100_11_100110_100_01110u32.to_le_bytes(), "{ P2 = vcmph.gt(R21:20, #0x34) }");
+    test_display(&0b1101_1100_001_10100_11_100110_100_10110u32.to_le_bytes(), "{ P2 = vcmpw.gt(R21:20, #0x34) }");
+    test_invalid(&0b1101_1100_001_10100_11_100110_100_11110u32.to_le_bytes(), DecodeError::InvalidOpcode);
+    test_display(&0b1101_1100_010_10100_11_100110_100_00110u32.to_le_bytes(), "{ P2 = vcmpb.gtu(R21:20, #0x34) }");
+    test_display(&0b1101_1100_010_10100_11_100110_100_01110u32.to_le_bytes(), "{ P2 = vcmph.gtu(R21:20, #0x34) }");
+    test_display(&0b1101_1100_010_10100_11_100110_100_10110u32.to_le_bytes(), "{ P2 = vcmpw.gtu(R21:20, #0x34) }");
+    test_invalid(&0b1101_1100_010_10100_11_100110_100_11110u32.to_le_bytes(), DecodeError::InvalidOpcode);
+    // top bit of the immediate must be 0
+    test_invalid(&0b1101_1100_010_10100_11_110110_100_00110u32.to_le_bytes(), DecodeError::InvalidOperand);
+    test_invalid(&0b1101_1100_010_10100_11_110110_100_01110u32.to_le_bytes(), DecodeError::InvalidOperand);
+    test_invalid(&0b1101_1100_010_10100_11_110110_100_10110u32.to_le_bytes(), DecodeError::InvalidOperand);
+    test_invalid(&0b1101_1100_010_10100_11_110110_100_11110u32.to_le_bytes(), DecodeError::InvalidOperand);
+
+    test_display(&0b1101_1100_100_10100_11_100010_100_10110u32.to_le_bytes(), "{ P2 = dfclass(R21:20, #0x14) }");
+
+    test_display(&0b1101_1101_000_10100_11_100110_100_00110u32.to_le_bytes(), "{ P2 = cmpb.gt(R20, #0x34) }");
+    test_display(&0b1101_1101_000_10100_11_100110_100_01110u32.to_le_bytes(), "{ P2 = cmph.gt(R20, #0x34) }");
+    test_display(&0b1101_1101_001_10100_11_100110_100_00110u32.to_le_bytes(), "{ P2 = cmpb.eq(R20, #0x34) }");
+    test_display(&0b1101_1101_001_10100_11_100110_100_01110u32.to_le_bytes(), "{ P2 = cmph.eq(R20, #0x34) }");
+    test_display(&0b1101_1101_010_10100_11_100110_100_00110u32.to_le_bytes(), "{ P2 = cmpb.gtu(R20, #0x34) }");
+    test_display(&0b1101_1101_010_10100_11_100110_100_01110u32.to_le_bytes(), "{ P2 = cmph.gtu(R20, #0x34) }");
+    test_invalid(&0b1101_1101_010_10100_11_110110_100_00110u32.to_le_bytes(), DecodeError::InvalidOperand);
+    test_invalid(&0b1101_1101_010_10100_11_110110_100_01110u32.to_le_bytes(), DecodeError::InvalidOperand);
+    test_invalid(&0b1101_1101_011_10100_11_110110_100_00110u32.to_le_bytes(), DecodeError::InvalidOpcode);
+    test_invalid(&0b1101_1101_011_10100_11_110110_100_01110u32.to_le_bytes(), DecodeError::InvalidOpcode);
+
+    test_display(&0b1101_1110_010_10100_11_100110_100_00000u32.to_le_bytes(), "{ R20 = and(#0x98, asl(R20, #0x6)) }");
+    test_display(&0b1101_1110_010_10100_11_100110_100_00010u32.to_le_bytes(), "{ R20 = or(#0x98, asl(R20, #0x6)) }");
+    test_display(&0b1101_1110_010_10100_11_100110_100_00100u32.to_le_bytes(), "{ R20 = add(#0x98, asl(R20, #0x6)) }");
+    test_display(&0b1101_1110_010_10100_11_100110_100_00110u32.to_le_bytes(), "{ R20 = sub(#0x98, asl(R20, #0x6)) }");
+    test_display(&0b1101_1110_010_10100_11_100110_100_10000u32.to_le_bytes(), "{ R20 = and(#0x98, lsr(R20, #0x6)) }");
+    test_display(&0b1101_1110_010_10100_11_100110_100_10010u32.to_le_bytes(), "{ R20 = or(#0x98, lsr(R20, #0x6)) }");
+    test_display(&0b1101_1110_010_10100_11_100110_100_10100u32.to_le_bytes(), "{ R20 = add(#0x98, lsr(R20, #0x6)) }");
+    test_display(&0b1101_1110_010_10100_11_100110_100_10110u32.to_le_bytes(), "{ R20 = sub(#0x98, lsr(R20, #0x6)) }");
+
+    test_display(&0b1101_1111_010_10100_11_100110_100_10110u32.to_le_bytes(), "{ R6 = add(R22, mpyi(#0xb0, R20)) }");
+    test_display(&0b1101_1111_110_10100_11_100110_100_10110u32.to_le_bytes(), "{ R6 = add(R22, mpyi(R20, #0xb0)) }");
 }
 
 #[test]
