@@ -346,7 +346,7 @@ fn inst_0111() {
 
     test_display(&0b0111_0000000_00011_11_1_0_1101_000_00100u32.to_le_bytes(), "{ if (!P1.new) R4 = aslh(R3) }");
     test_display(&0b0111_0000011_00001_11_0_0_0000_000_00100u32.to_le_bytes(), "{ R4 = R1 }");
-    test_invalid(&0b0111_0000011_00001_11_0_0_0000_000_00100u32.to_le_bytes(), DecodeError::InvalidOpcode);
+    test_invalid(&0b0111_0000011_00001_11_1_0_0000_000_00100u32.to_le_bytes(), DecodeError::InvalidOpcode);
 
     test_display(&0b0111_0001011_00010_11_0_0_0000_001_00000u32.to_le_bytes(), "{ R2.L = #0x4020 }");
     test_display(&0b0111_0001101_00010_11_0_0_0000_001_00000u32.to_le_bytes(), "{ R2.L = #0x8020 }");

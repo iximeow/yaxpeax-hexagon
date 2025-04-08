@@ -223,7 +223,7 @@ pub struct InstructionPacket {
 ///
 /// `elst` describes access of the bit fields in register `Rds`. V5x Figure 1-4:
 ///
-/// ```
+/// ```text
 /// |  .b[7] |  .b[6] |  .b[5] |  .b[4] |  .b[3] |  .b[2] |  .b[1] |  .b[0] |     signed bytes
 /// | .ub[7] | .ub[6] | .ub[5] | .ub[4] | .ub[3] | .ub[2] | .ub[1] | .ub[0] |   unsigned bytes
 /// |       .h[3]     |       .h[2]     |       .h[1]     |       .h[0]     |     signed halfwords
@@ -235,12 +235,14 @@ pub struct InstructionPacket {
 /// meanwhile a register can be accessed as a single element with some trailing specifiers. V5x
 /// Table 1-2:
 ///
+/// ```text
 /// | Symbol | Meaning |
 /// |--------|---------|
 /// | .sN    | Bits `[N-1:0]` are treated as an N-bit signed number. For example, R0.s16 means the least significant 16 bits of R0 are treated as a 16-bit signed number. |
 /// | .uN    | Bits `[N-1:0]` are treated as an N-bit unsigned number. |
 /// | .H     | The most significant 16 bits of a 32-bit register. |
 /// | .L     | The least significant 16 bits of a 32-bit register. |
+/// ```
 ///
 /// and finally, "Duplex instructions" (V73 Section 3.6):
 /// > Unlike Compound instructions, duplex instructions do not have distinctive syntax – in
@@ -367,7 +369,7 @@ impl Default for InstFlags {
 ///
 /// additionally, V73 Section 3.2 outlines instruction classes which relate to the available
 /// execution units:
-/// ```
+/// ```text
 /// XTYPE
 ///     XTYPE ALU           64-bit ALU operations
 ///     XTYPE BIT           Bit operations
@@ -2931,7 +2933,7 @@ fn decode_instruction<
                     handler.on_source_decoded(Operand::gprpair(ttttt)?)?;
                 }
                 _ => {
-                    eprintln!("!!! TODO: {:07b} !!!", opbits);
+                    opcode_check!(false);
                 }
             }
         }
@@ -6769,8 +6771,7 @@ fn decode_instruction<
             }
         }
         _ => {
-            eprintln!("iclass: {:04b}", iclass);
-            // TODO: exhaustive
+            panic!("TODO: remainder");
         }
     }
 

@@ -57,9 +57,18 @@ impl fmt::Display for Instruction {
                         self.sources[0], self.sources[1], self.sources[2]);
                 }
                 Opcode::AndNot => {
-                    return write!(f, "{} {} and({}, ~{})", self.dest.as_ref().unwrap(),
-                        assign_mode_label(self.flags.assign_mode),
-                        self.sources[0], self.sources[1]);
+                    // not entirely sure if these should be the same opcode, but "not" as in
+                    // "bitswise negation" as in "! for boolean predicates and ~ for integer
+                    // registers" seems... ok?
+                    if let Some(dest @ Operand::PredicateReg { .. }) = self.dest.as_ref() {
+                        return write!(f, "{} {} and({}, !{})", dest,
+                            assign_mode_label(self.flags.assign_mode),
+                            self.sources[0], self.sources[1]);
+                    } else {
+                        return write!(f, "{} {} and({}, ~{})", self.dest.as_ref().unwrap(),
+                            assign_mode_label(self.flags.assign_mode),
+                            self.sources[0], self.sources[1]);
+                    }
                 }
                 Opcode::OrOr => {
                     return write!(f, "{} = or({}, or({}, {}))", self.dest.as_ref().unwrap(),
@@ -152,9 +161,15 @@ impl fmt::Display for Instruction {
                         self.opcode, self.sources[0], self.sources[1]);
                 }
                 Opcode::Vminub => {
-                    return write!(f, "{}, {} = {}({}, {})",
-                        self.dest.as_ref().unwrap(), self.alt_dest.as_ref().unwrap(),
-                        self.opcode, self.sources[0], self.sources[1]);
+                    if let Some(alt_dest) = self.alt_dest.as_ref() {
+                        return write!(f, "{}, {} = {}({}, {})",
+                            self.dest.as_ref().unwrap(), alt_dest,
+                            self.opcode, self.sources[0], self.sources[1]);
+                    } else {
+                        return write!(f, "{} = {}({}, {})",
+                            self.dest.as_ref().unwrap(),
+                            self.opcode, self.sources[0], self.sources[1]);
+                    }
                 }
                 Opcode::SfRecipa => {
                     return write!(f, "{}, {} = {}({}, {})",
