@@ -825,6 +825,26 @@ pub enum Opcode {
     // `add(x, asl(y, z))` that would be used below. terrible.
     AddAslRegReg,
 
+    Swi,
+    Cswi,
+    Ciad,
+    Wait,
+    Resume,
+    Stop,
+    Start,
+    Nmi,
+    Setimask,
+    Siad,
+    Brkpt,
+    TlbLock,
+    K0Lock,
+    Crswap,
+    Getimask,
+    Iassignr,
+    Icdatar,
+    Ictagr,
+    Icinvidx,
+
     AndAnd = 0x8000,
     AndOr,
     OrAnd,
@@ -2366,6 +2386,14 @@ fn decode_instruction<
                         let xxxxx = reg_b16(inst);
                         handler.on_source_decoded(Operand::gpr(xxxxx))?;
                         handler.on_source_decoded(Operand::imm_u8(u_8 as u8))?;
+                    } else if minbits == 0b110 {
+                        handler.on_opcode_decoded(Opcode::Icdatar)?;
+                        handler.on_dest_decoded(Operand::gpr(reg_b0(inst)))?;
+                        handler.on_source_decoded(Operand::gpr(reg_b16(inst)))?;
+                    } else if minbits == 0b111 {
+                        handler.on_opcode_decoded(Opcode::Ictagr)?;
+                        handler.on_dest_decoded(Operand::gpr(reg_b0(inst)))?;
+                        handler.on_source_decoded(Operand::gpr(reg_b16(inst)))?;
                     } else {
                         opcode_check!(false);
                     }
@@ -2378,6 +2406,9 @@ fn decode_instruction<
                         handler.on_opcode_decoded(Opcode::Icinva)?;
                         handler.on_source_decoded(Operand::gpr(reg_b16(inst)))?;
                         opcode_check!(inst & 0x3800 == 0x0000);
+                    } else if minbits == 0b0111 {
+                        handler.on_opcode_decoded(Opcode::Icinvidx)?;
+                        handler.on_source_decoded(Operand::gpr(reg_b16(inst)))?;
                     } else if minbits == 0b1110 {
                         handler.on_opcode_decoded(Opcode::Isync)?;
                         opcode_check!(inst & 0x1f23ff == 0x000002);
@@ -2597,6 +2628,71 @@ fn decode_instruction<
                         _ => { return Err(DecodeError::InvalidOpcode); }
                     };
                 }
+                0b0100000 => {
+                    // 000 -> swi
+                    // 001 -> cswi
+                    // 011 -> ciad
+                    // TODO:
+                    static OPS: [Option<Opcode>; 8] = [
+                        Some(Opcode::Swi), Some(Opcode::Cswi), None, Some(Opcode::Ciad),
+                        None, None, None, None,
+                    ];
+                    handler.on_opcode_decoded(decode_opcode!(OPS[((inst >> 5) & 0b111) as usize]))?;
+                    handler.on_source_decoded(Operand::gpr(reg_b16(inst)))?;
+                }
+                0b0100010 => {
+                    // 000 -> wait
+                    // 010 -> resume
+                    // TODO:
+                    static OPS: [Option<Opcode>; 8] = [
+                        Some(Opcode::Wait), None, Some(Opcode::Resume), None,
+                        None, None, None, None,
+                    ];
+                    handler.on_opcode_decoded(decode_opcode!(OPS[((inst >> 5) & 0b111) as usize]))?;
+                    handler.on_source_decoded(Operand::gpr(reg_b16(inst)))?;
+                }
+                0b0100011 => {
+                    // 000 -> stop
+                    // 001 -> start
+                    // 010 -> nmi
+                    // TODO:
+                    static OPS: [Option<Opcode>; 8] = [
+                        Some(Opcode::Stop), Some(Opcode::Start), Some(Opcode::Nmi), None,
+                        None, None, None, None,
+                    ];
+                    handler.on_opcode_decoded(decode_opcode!(OPS[((inst >> 5) & 0b111) as usize]))?;
+                    handler.on_source_decoded(Operand::gpr(reg_b16(inst)))?;
+                }
+                0b0100100 => {
+                    // TODO: double check encoding and manual
+                    // 000 -> setimask
+                    // 011 -> siad
+                    static OPS: [Option<Opcode>; 8] = [
+                        Some(Opcode::Setimask), None, None, Some(Opcode::Siad),
+                        None, None, None, None,
+                    ];
+                    let opc = (inst >> 5) & 0b111;
+                    handler.on_opcode_decoded(decode_opcode!(OPS[opc as usize]))?;
+                    if opc == 0b000 {
+                        handler.on_source_decoded(Operand::pred(reg_b0(inst) & 0b11))?;
+                    }
+                    handler.on_source_decoded(Operand::gpr(reg_b16(inst)))?;
+                }
+                0b0101000 => {
+                    handler.on_opcode_decoded(Opcode::Crswap)?;
+                    handler.on_source_decoded(Operand::gpr(reg_b16(inst)))?;
+                    handler.on_source_decoded(Operand::sr(0))?;
+                }
+                0b0101001 => {
+                    handler.on_opcode_decoded(Opcode::Crswap)?;
+                    handler.on_source_decoded(Operand::gpr(reg_b16(inst)))?;
+                    handler.on_source_decoded(Operand::sr(1))?;
+                }
+                0b0110000 => {
+                    handler.on_opcode_decoded(Opcode::Getimask)?;
+                    handler.on_dest_decoded(Operand::gpr(reg_b0(inst)))?;
+                    handler.on_source_decoded(Operand::gpr(reg_b16(inst)))?;
+                }
                 0b0111000 => {
                     // not in V73! store to supervisor register?
                     let sssss = reg_b16(inst);
@@ -2607,8 +2703,14 @@ fn decode_instruction<
                 }
                 // TODO: 1001000 loop0 goes here
                 0b1100001 => {
-                    opcode_check!((inst >> 5) & 0b111 == 0);
-                    handler.on_opcode_decoded(Opcode::Barrier)?;
+                    // 000 -> brkpt
+                    // 001 -> tlblock
+                    // 011 -> k0lock
+                    static OPS: [Option<Opcode>; 8] = [
+                        Some(Opcode::Brkpt), Some(Opcode::TlbLock), None, Some(Opcode::K0Lock),
+                        None, None, None, None,
+                    ];
+                    handler.on_opcode_decoded(decode_opcode!(OPS[((inst >> 5) & 0b111) as usize]))?;
                 }
                 0b1101000 => {
                     // not in V73! store to supervisor register?
@@ -2617,6 +2719,18 @@ fn decode_instruction<
                     handler.on_opcode_decoded(Opcode::TransferRegister)?;
                     handler.on_dest_decoded(Operand::srpair(ddddddd as u8)?)?;
                     handler.on_source_decoded(Operand::gprpair(sssss)?)?;
+                }
+                0b1101100 => {
+                    operand_check!(reg_b0(inst) == 0);
+                    // TODO:
+                    handler.on_opcode_decoded(Opcode::Crswap)?;
+                    handler.on_source_decoded(Operand::gprpair(reg_b16(inst))?)?;
+                    handler.on_source_decoded(Operand::srpair(0)?)?;
+                }
+                0b1110011 => {
+                    handler.on_opcode_decoded(Opcode::Iassignr)?;
+                    handler.on_dest_decoded(Operand::gpr(reg_b0(inst)))?;
+                    handler.on_source_decoded(Operand::gpr(reg_b16(inst)))?;
                 }
                 0b1110100 | 0b1110101 |
                 0b1110110 | 0b1110111 => {

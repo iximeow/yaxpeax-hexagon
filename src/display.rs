@@ -775,6 +775,26 @@ impl fmt::Display for Opcode {
             // shouldn't ever really be printed as `addasl` (instruction display has more complex
             // rules here.
             Opcode::AddAslRegReg => { f.write_str("addasl") },
+            Opcode::Swi => { f.write_str("swi") },
+            Opcode::Cswi => { f.write_str("cswi") },
+            Opcode::Ciad => { f.write_str("ciad") },
+            Opcode::Wait => { f.write_str("wait") },
+            Opcode::Resume => { f.write_str("resume") },
+            Opcode::Stop => { f.write_str("stop") },
+            Opcode::Start => { f.write_str("start") },
+            Opcode::Nmi => { f.write_str("nmi") },
+            Opcode::Setimask => { f.write_str("setimask") },
+            Opcode::Siad => { f.write_str("siad") },
+            Opcode::Brkpt => { f.write_str("brkpt") },
+            Opcode::TlbLock => { f.write_str("tlblock") },
+            Opcode::K0Lock => { f.write_str("k0lock") },
+            Opcode::Crswap => { f.write_str("crswap") },
+            Opcode::Getimask => { f.write_str("getimask") },
+            Opcode::Iassignr => { f.write_str("iassignr") },
+            Opcode::Icdatar => { f.write_str("icdatar") },
+            Opcode::Ictagr => { f.write_str("ictagr") },
+            Opcode::Icinvidx => { f.write_str("icinvidx") },
+
             Opcode::SubAsl => { f.write_str("subasl") },
             Opcode::AndAsl => { f.write_str("andasl") },
             Opcode::AddClb => { f.write_str("addclb") },
@@ -919,17 +939,33 @@ impl fmt::Display for Operand {
                 write!(f, "R{}", reg)
             }
             Operand::Cr { reg } => {
-                match reg {
-                    9 => {
-                        f.write_str("pc")
-                    }
-                    reg => {
-                        write!(f, "C{}", reg)
-                    }
-                }
+                // V69 Table 2-2 Aliased control registers
+                static CR_NAMES: [&'static str; 32] = [
+                    "sa0", "lc0", "sa1", "lc1",
+                    "P3:0", "C5", "M0", "M1",
+                    "usr", "pc", "ugp", "gp",
+                    "cs0", "cs1", "upcyclelo", "upcyclehi",
+                    "framelimit", "framekey", "pktcountlo", "pktcounthi",
+                    "C20", "C21", "C22", "C23",
+                    "C24", "C25", "C26", "C27",
+                    "C28", "C29", "utimerlo", "utimerhi",
+                ];
+                f.write_str(CR_NAMES[*reg as usize])
             }
             Operand::Sr { reg } => {
-                write!(f, "S{}", reg)
+                // TODO: System control register transfer
+                // from v62
+                match reg {
+                    0 => {
+                        f.write_str("sgp0")
+                    }
+                    1 => {
+                        f.write_str("sgp1")
+                    }
+                    reg => {
+                        write!(f, "S{}", reg)
+                    }
+                }
             }
             Operand::GprNew { reg } => {
                 write!(f, "R{}.new", reg)
@@ -950,10 +986,22 @@ impl fmt::Display for Operand {
                 write!(f, "R{}:{}*", reg_low + 1, reg_low)
             }
             Operand::Cr64b { reg_low } => {
-                write!(f, "C{}:{}", reg_low + 1, reg_low)
+                if *reg_low == 14 {
+                    f.write_str("upcycle")
+                } else if *reg_low == 18 {
+                    f.write_str("pktcount")
+                } else if *reg_low == 30 {
+                    f.write_str("utimer")
+                } else {
+                    write!(f, "C{}:{}", reg_low + 1, reg_low)
+                }
             }
             Operand::Sr64b { reg_low } => {
-                write!(f, "S{}:{}", reg_low + 1, reg_low)
+                if *reg_low == 0 {
+                    f.write_str("sgp1:0")
+                } else {
+                    write!(f, "S{}:{}", reg_low + 1, reg_low)
+                }
             }
             Operand::PredicateReg { reg } => {
                 write!(f, "P{}", reg)

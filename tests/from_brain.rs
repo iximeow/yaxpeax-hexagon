@@ -18,8 +18,36 @@ fn test_invalid(bytes: &[u8], expected: DecodeError) {
     assert_eq!(err, expected);
 }
 
+// mentioned in the V62 manual, not later?
+// not sure if these are still what they seem in later versions, but until demonstrated
+// otherwise...
 #[test]
 fn supervisor() {
+    test_display(&0b0101_010_1101_00010_11_0_01000_000_00110u32.to_le_bytes(), "{ R6 = icdatar(R2) }");
+    test_display(&0b0101_010_1111_00010_11_0_01000_000_00110u32.to_le_bytes(), "{ R6 = ictagr(R2) }");
+    test_display(&0b0101_011_0111_00010_11_0_01000_000_00110u32.to_le_bytes(), "{ icinvidx(R2) }");
+
+    test_display(&0b0110_01_00000_00110_11_0_00010_000_10110u32.to_le_bytes(), "{ swi(R6) }");
+    test_display(&0b0110_01_00000_00110_11_0_00010_001_10110u32.to_le_bytes(), "{ cswi(R6) }");
+    test_display(&0b0110_01_00000_00110_11_0_00010_011_10110u32.to_le_bytes(), "{ ciad(R6) }");
+    test_display(&0b0110_01_00010_00110_11_0_00010_000_10110u32.to_le_bytes(), "{ wait(R6) }");
+    test_display(&0b0110_01_00010_00110_11_0_00010_010_10110u32.to_le_bytes(), "{ resume(R6) }");
+    test_display(&0b0110_01_00011_00110_11_0_00010_000_10110u32.to_le_bytes(), "{ stop(R6) }");
+    test_display(&0b0110_01_00011_00110_11_0_00010_001_10110u32.to_le_bytes(), "{ start(R6) }");
+    test_display(&0b0110_01_00011_00110_11_0_00010_010_10110u32.to_le_bytes(), "{ nmi(R6) }");
+    test_display(&0b0110_01_00100_00110_11_0_00010_000_10110u32.to_le_bytes(), "{ setimask(P2, R6) }");
+    test_display(&0b0110_01_00100_00110_11_0_00010_011_10110u32.to_le_bytes(), "{ siad(R6) }");
+    test_display(&0b0110_01_01000_00110_11_0_00010_000_10110u32.to_le_bytes(), "{ crswap(R6, sgp0) }");
+    test_display(&0b0110_01_01001_00110_11_0_00010_000_10110u32.to_le_bytes(), "{ crswap(R6, sgp1) }");
+    test_display(&0b0110_01_10000_00110_11_0_00010_000_10110u32.to_le_bytes(), "{ R22 = getimask(R6) }");
+    test_display(&0b0110_11_00001_00110_11_0_00010_000_10110u32.to_le_bytes(), "{ brkpt }");
+    test_display(&0b0110_11_00001_00110_11_0_00010_001_00000u32.to_le_bytes(), "{ tlblock }");
+    test_display(&0b0110_11_00001_00110_11_0_00010_011_00000u32.to_le_bytes(), "{ k0lock }");
+    test_display(&0b0110_11_01100_00110_11_0_00010_000_00000u32.to_le_bytes(), "{ crswap(R7:6, sgp1:0) }");
+    test_invalid(&0b0110_11_01100_00110_11_0_00010_000_00001u32.to_le_bytes(), DecodeError::InvalidOperand);
+    test_display(&0b0110_11_10011_00110_11_0_00010_011_10110u32.to_le_bytes(), "{ R22 = iassignr(R6) }");
+
+    // ok
     test_display(&0b0110_0111000_00010_11_0011010_0000110u32.to_le_bytes(), "{ S6 = R2 }");
     test_display(&0b0110_1101000_00010_11_0011010_0000110u32.to_le_bytes(), "{ S7:6 = R3:2 }");
 
@@ -264,6 +292,7 @@ fn inst_0101() {
     test_display(&0b0101_010_0010_00010_11_0_01000_000_00010u32.to_le_bytes(), "{ pause(#0x240) }");
     test_display(&0b0101_010_0100_00010_11_0_01000_000_00010u32.to_le_bytes(), "{ trap1(R2, #0x40) }");
     test_invalid(&0b0101_010_0110_00010_11_0_01000_000_00010u32.to_le_bytes(), DecodeError::InvalidOpcode);
+
     test_invalid(&0b0101_011_0101_00010_11_0_01000_000_00010u32.to_le_bytes(), DecodeError::InvalidOpcode);
     test_display(&0b0101_011_0110_00010_11_0_00000_000_00000u32.to_le_bytes(), "{ icinva(R2) }");
     test_display(&0b0101_011_1110_00000_11_0_00000_000_00010u32.to_le_bytes(), "{ isync }");
@@ -305,6 +334,7 @@ fn inst_0110() {
     test_display(&0b0110_0010010_00110_11_0_00100_011_01000u32.to_le_bytes(), "{ diag1(R7:6, R5:4) }");
 
     test_display(&0b0110_0011001_00110_11_0_000101_00_10110u32.to_le_bytes(), "{ C23:22 = R7:6 }");
+
     test_display(&0b0110_1000000_00110_11_0_000101_00_10110u32.to_le_bytes(), "{ R23:22 = C7:6 }");
 
     test_display(&0b0110_1001000_00110_11_0_000101_00_01010u32.to_le_bytes(), "{ loop0($+#36, #0xd2) }");
@@ -313,7 +343,7 @@ fn inst_0110() {
     test_display(&0b0110_1001110_00110_11_0_000101_00_01010u32.to_le_bytes(), "{ P3 = sp2loop0($+#36, #0xd2) }");
     test_display(&0b0110_1001111_00110_11_0_000101_00_01010u32.to_le_bytes(), "{ P3 = sp3loop0($+#36, #0xd2) }");
 
-    test_display(&0b0110_1010000_00110_11_0_000101_00_10110u32.to_le_bytes(), "{ R22 = C6 }");
+    test_display(&0b0110_1010000_00110_11_0_000101_00_10110u32.to_le_bytes(), "{ R22 = M0 }");
     test_display(&0b0110_1010010_01001_11_0_000101_00_10110u32.to_le_bytes(), "{ R22 = add(pc, #0x5) }");
 
     test_display(&0b0110_1011000_00011_11_0_000100_00_00001u32.to_le_bytes(), "{ P1 = and(P2, P3) }");
@@ -334,8 +364,6 @@ fn inst_0110() {
     test_display(&0b0110_1011110_10011_11_0_000100_00_10001u32.to_le_bytes(), "{ P1 = or(P3, and(P2, !P0)) }");
     test_display(&0b0110_1011111_00011_11_0_000100_00_10001u32.to_le_bytes(), "{ P1 = or(P2, !P3) }");
     test_display(&0b0110_1011111_10011_11_0_000100_00_10001u32.to_le_bytes(), "{ P1 = or(P3, or(P2, !P0)) }");
-
-    test_display(&0b0110_1100001_01001_11_0_000000_00_00000u32.to_le_bytes(), "{ barrier }");
 
     test_display(&0b0110_1111111_01010_11_0_001100_10_00011u32.to_le_bytes(), "{ R3 = movlen(R6, R11:10) }");
 }
