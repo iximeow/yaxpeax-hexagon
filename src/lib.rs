@@ -6518,9 +6518,6 @@ fn decode_instruction<
                 0b1101 => {
                     // 1110|1101
                     opcode_check!(inst & 0b0010_0000_0000_0000 == 0);
-                    // TODO: can remove probably?
-                    let op_lo = ((inst >> 5) & 0b111) as u8;
-                    let op_hi = ((inst >> 21) & 0b111) as u8;
 
                     handler.on_dest_decoded(Operand::gpr(reg_b0(inst)))?;
                     handler.on_source_decoded(Operand::gpr(reg_b16(inst)))?;

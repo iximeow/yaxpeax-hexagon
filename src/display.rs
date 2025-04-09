@@ -279,7 +279,7 @@ impl fmt::Display for Instruction {
                 Some(AssignMode::SetBit) => ("= setbit", true),
             };
             write!(f, "{}({}){} {}{}{}{}",
-                self.opcode, self.dest.expect("TODO: unreachable; store has a destination"),
+                self.opcode, self.dest.expect("unreachable; store has a destination"),
                 match self.flags.threads {
                     Some(DomainHint::Same) => { ":st" },
                     Some(DomainHint::All) => { ":at" },
@@ -293,15 +293,14 @@ impl fmt::Display for Instruction {
             return Ok(());
         }
 
-        // TODO: do store conditionals have assign_merge?
         static SC_STORES: &[Opcode] = &[
             Opcode::MemwStoreCond, Opcode::MemdStoreCond,
         ];
         if SC_STORES.contains(&self.opcode) {
             write!(f, "{}({}, {}) = {}",
                 self.opcode,
-                self.dest.expect("TODO: unreachable; store has a destination"),
-                self.alt_dest.expect("TODO: unreachable; store-conditional has a predicate reg"),
+                self.dest.expect("unreachable; store has a destination"),
+                self.alt_dest.expect("unreachable; store-conditional has a predicate reg"),
                 self.sources[0]
             )?;
             return Ok(());
@@ -328,7 +327,7 @@ impl fmt::Display for Instruction {
                 None => { "" },
             };
             write!(f, "if ({}({}, {})) jump{} {}",
-                self.opcode.cmp_str().unwrap(), // TODO: unwrap_unchecked??
+                self.opcode.cmp_str().unwrap(), // (obvious, but) decoder bug if this fails
                 self.sources[0],
                 self.sources[1],
                 hint_label,
@@ -953,19 +952,26 @@ impl fmt::Display for Operand {
                 f.write_str(CR_NAMES[*reg as usize])
             }
             Operand::Sr { reg } => {
-                // TODO: System control register transfer
-                // from v62
-                match reg {
-                    0 => {
-                        f.write_str("sgp0")
-                    }
-                    1 => {
-                        f.write_str("sgp1")
-                    }
-                    reg => {
-                        write!(f, "S{}", reg)
-                    }
-                }
+                // V62 "System control register transfer" includes this table
+                static SR_NAMES: [&'static str; 64] = [
+                    "sgp0", "sgp1", "stid", "elr",
+                    "badva0", "badva1", "ssr", "ccr",
+                    "htid", "badva", "imask", "S11",
+                    "S12", "S13", "S14", "S15",
+                    "evb", "modectl", "syscfg", "S19",
+                    "ipend", "vid", "iad", "S23",
+                    "iel", "S25", "iahl", "cfgbase",
+                    "diag", "rev", "pcyclelo", "pcyclehi",
+                    "isdbst", "isdbcfg0", "isdbcfg1", "S35",
+                    "brkptpc0", "brkptcfg0", "brkptpc1", "brkptcfg1",
+                    "isdbmbxin", "isdbmbxout", "isdben", "isdbgpr",
+                    "S44", "S45", "S46", "S47",
+                    "pmunct0", "pmucnt1", "pmucnt2", "pmucnt3",
+                    "pmuevtcfg", "pmucfg", "S54", "S55",
+                    "S56", "S57", "S58", "S59",
+                    "S60", "S61", "S62", "S63",
+                ];
+                f.write_str(SR_NAMES[*reg as usize])
             }
             Operand::GprNew { reg } => {
                 write!(f, "R{}.new", reg)

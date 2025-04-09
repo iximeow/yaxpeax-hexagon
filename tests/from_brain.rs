@@ -48,10 +48,10 @@ fn supervisor() {
     test_display(&0b0110_11_10011_00110_11_0_00010_011_10110u32.to_le_bytes(), "{ R22 = iassignr(R6) }");
 
     // ok
-    test_display(&0b0110_0111000_00010_11_0011010_0000110u32.to_le_bytes(), "{ S6 = R2 }");
+    test_display(&0b0110_0111000_00010_11_0011010_0000110u32.to_le_bytes(), "{ ssr = R2 }");
     test_display(&0b0110_1101000_00010_11_0011010_0000110u32.to_le_bytes(), "{ S7:6 = R3:2 }");
 
-    test_display(&0b0110_11101_0100010_11_000000000_00110u32.to_le_bytes(), "{ R6 = S34 }");
+    test_display(&0b0110_11101_0100010_11_000000000_00110u32.to_le_bytes(), "{ R6 = isdbcfg1 }");
     test_display(&0b0110_11110_0100010_11_000000000_00110u32.to_le_bytes(), "{ R7:6 = S35:34 }");
 
     test_display(&0b0110_1100000_00010_11_0_01101_00000000u32.to_le_bytes(), "{ tlbw(R3:2, R13) }");
