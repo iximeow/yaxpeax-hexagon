@@ -243,7 +243,7 @@ impl fmt::Display for Instruction {
         }
 
         if let Some(predication) = self.flags.predicate {
-            write!(f, "if ({}P{}{}) ",
+            write!(f, "if ({}p{}{}) ",
                 if predication.negated() { "!" } else { "" },
                 predication.num(),
                 if predication.pred_new() { ".new" } else { "" },
@@ -936,14 +936,14 @@ impl fmt::Display for Operand {
             }
             Operand::Gpr { reg } => {
                 const NAMES: [&'static str; 32] = [
-                    "R0", "R1", "R2", "R3", "R4", "R5", "R6", "R7",
-                    "R8", "R9", "R10", "R11", "R12", "R13", "R14", "R15",
-                    "R16", "R17", "R18", "R19", "R20", "R21", "R22", "R23",
-                    "R24", "R25", "R26", "R27",
-                    // the three R29 through R31 general registers support subroutines and the Software
+                    "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7",
+                    "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15",
+                    "r16", "r17", "r18", "r19", "r20", "r21", "r22", "r23",
+                    "r24", "r25", "r26", "r27",
+                    // the three r29 through r31 general registers support subroutines and the Software
                     // Stack. ... they have symbol aliases that indicate when these registers are accessed
                     // as subroutine and stack registers (V73 Section 2.1)
-                    "R28", "SP", "FP", "LR",
+                    "r28", "sp", "fp", "lr",
                 ];
 
                 f.write_str(NAMES[*reg as usize])
@@ -952,13 +952,13 @@ impl fmt::Display for Operand {
                 // V69 Table 2-2 Aliased control registers
                 static CR_NAMES: [&'static str; 32] = [
                     "sa0", "lc0", "sa1", "lc1",
-                    "P3:0", "C5", "M0", "M1",
+                    "p3:0", "c5", "m0", "m1",
                     "usr", "pc", "ugp", "gp",
                     "cs0", "cs1", "upcyclelo", "upcyclehi",
                     "framelimit", "framekey", "pktcountlo", "pktcounthi",
-                    "C20", "C21", "C22", "C23",
-                    "C24", "C25", "C26", "C27",
-                    "C28", "C29", "utimerlo", "utimerhi",
+                    "c20", "c21", "c22", "c23",
+                    "c24", "c25", "c26", "c27",
+                    "c28", "c29", "utimerlo", "utimerhi",
                 ];
                 f.write_str(CR_NAMES[*reg as usize])
             }
@@ -978,29 +978,29 @@ impl fmt::Display for Operand {
                     "isdbmbxin", "isdbmbxout", "isdben", "isdbgpr",
                     "S44", "S45", "S46", "S47",
                     "pmunct0", "pmucnt1", "pmucnt2", "pmucnt3",
-                    "pmuevtcfg", "pmucfg", "S54", "S55",
-                    "S56", "S57", "S58", "S59",
-                    "S60", "S61", "S62", "S63",
+                    "pmuevtcfg", "pmucfg", "s54", "s55",
+                    "s56", "s57", "s58", "s59",
+                    "s60", "s61", "s62", "s63",
                 ];
                 f.write_str(SR_NAMES[*reg as usize])
             }
             Operand::GprNew { reg } => {
-                write!(f, "R{}.new", reg)
+                write!(f, "r{}.new", reg)
             }
             Operand::GprLow { reg } => {
-                write!(f, "R{}.L", reg)
+                write!(f, "r{}.l", reg)
             }
             Operand::GprHigh { reg } => {
-                write!(f, "R{}.H", reg)
+                write!(f, "r{}.h", reg)
             }
             Operand::GprConjugate { reg } => {
-                write!(f, "R{}*", reg)
+                write!(f, "r{}*", reg)
             }
             Operand::Gpr64b { reg_low } => {
-                write!(f, "R{}:{}", reg_low + 1, reg_low)
+                write!(f, "r{}:{}", reg_low + 1, reg_low)
             }
             Operand::Gpr64bConjugate { reg_low } => {
-                write!(f, "R{}:{}*", reg_low + 1, reg_low)
+                write!(f, "r{}:{}*", reg_low + 1, reg_low)
             }
             Operand::Cr64b { reg_low } => {
                 if *reg_low == 14 {
@@ -1010,24 +1010,24 @@ impl fmt::Display for Operand {
                 } else if *reg_low == 30 {
                     f.write_str("utimer")
                 } else {
-                    write!(f, "C{}:{}", reg_low + 1, reg_low)
+                    write!(f, "c{}:{}", reg_low + 1, reg_low)
                 }
             }
             Operand::Sr64b { reg_low } => {
                 if *reg_low == 0 {
                     f.write_str("sgp1:0")
                 } else {
-                    write!(f, "S{}:{}", reg_low + 1, reg_low)
+                    write!(f, "s{}:{}", reg_low + 1, reg_low)
                 }
             }
             Operand::PredicateReg { reg } => {
-                write!(f, "P{}", reg)
+                write!(f, "p{}", reg)
             }
             Operand::RegOffset { base, offset } => {
-                write!(f, "R{}+#{}", base, offset)
+                write!(f, "r{}+#{}", base, offset)
             }
             Operand::RegShiftedReg { base, index, shift } => {
-                write!(f, "R{} + R{}<<{}", base, index, shift)
+                write!(f, "r{} + r{}<<{}", base, index, shift)
             }
             Operand::ImmU8 { imm } => {
                 write!(f, "#0x{:x}", imm)
@@ -1048,25 +1048,25 @@ impl fmt::Display for Operand {
                 write!(f, "#{:}", imm)
             }
             Operand::RegShiftOffset { base, shift, offset } => {
-                write!(f, "R{}<<{} + {:#x}", base, shift, offset)
+                write!(f, "r{}<<{} + {:#x}", base, shift, offset)
             }
             Operand::RegOffsetInc { base, offset } => {
-                write!(f, "R{}++#{:#x}", base, offset)
+                write!(f, "r{}++#{:#x}", base, offset)
             }
             Operand::RegOffsetCirc { base, offset, mu } => {
-                write!(f, "R{}++#{:#x}:circ(M{})", base, offset, mu)
+                write!(f, "r{}++#{:#x}:circ(m{})", base, offset, mu)
             }
             Operand::RegCirc { base, mu } => {
-                write!(f, "R{}++I:circ(M{})", base, mu)
+                write!(f, "r{}++I:circ(m{})", base, mu)
             }
             Operand::RegMemIndexed { base, mu } => {
-                write!(f, "R{}++M{}", base, mu)
+                write!(f, "r{}++m{}", base, mu)
             }
             Operand::RegMemIndexedBrev { base, mu } => {
-                write!(f, "R{}++M{}:brev", base, mu)
+                write!(f, "r{}++m{}:brev", base, mu)
             }
             Operand::RegStoreAssign { base, addr } => {
-                write!(f, "R{}=#{:#x}", base, addr)
+                write!(f, "r{}=#{:#x}", base, addr)
             }
             Operand::Absolute { addr } => {
                 write!(f, "#{:#x}", addr)
