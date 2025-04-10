@@ -399,9 +399,10 @@ impl Default for InstFlags {
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[repr(u16)]
 pub enum Opcode {
-    /// TODO: remove. should never be shown. implies an instruction was parially decoded but
-    /// accepted?
+    // this variant should never be seen externally.
+    #[doc(hidden)]
     BUG,
+
     // V73 Section 10.9
     // > NOTE: When a constant extender is explicitly specified with a GP-relative load/store, the
     // > processor ignores the value in GP and creates the effective address directly from the 32-bit
@@ -899,59 +900,6 @@ impl Opcode {
     }
 }
 
-/*
-/// TODO: don't know if this will be useful, but this is how V73 is described.. it also appears to
-/// be the overall structure of the processor at least back to V5x.
-/// TODO: how far back does this organization reflect reality? all the way to V2?
-enum ExecutionUnit {
-    /// Load/store unit
-    /// LD, ST, ALU32, MEMOP, NV, SYSTEM
-    S0,
-    /// Load/store unit
-    /// LD, ST, ALU32
-    S1,
-    /// X unit
-    /// XTYPE, ALU32, J, JR
-    S2,
-    /// X unit
-    /// XTYPE, ALU32, J, CR
-    S3
-}
-*/
-
-/// V73 Section 2.1:
-/// > thirty-two 32-bit general-purpose registers (named R0 through R31)
-///
-// TODO: figure out what of this needs to stick around
-#[allow(dead_code)]
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
-struct GPR(u8);
-
-// TODO: figure out what of this needs to stick around
-#[allow(dead_code)]
-impl GPR {
-    const SP: GPR = GPR(29);
-    const FP: GPR = GPR(30);
-    const LR: GPR = GPR(31);
-}
-
-impl fmt::Display for GPR {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        const NAMES: [&'static str; 32] = [
-            "R0", "R1", "R2", "R3", "R4", "R5", "R6", "R7",
-            "R8", "R9", "R10", "R11", "R12", "R13", "R14", "R15",
-            "R16", "R17", "R18", "R19", "R20", "R21", "R22", "R23",
-            "R24", "R25", "R26", "R27",
-            // the three R29 through R31 general registers support subroutines and the Software
-            // Stack. ... they have symbol aliases that indicate when these registers are accessed
-            // as subroutine and stack registers (V73 Section 2.1)
-            "R28", "SP", "FP", "LR",
-        ];
-
-        f.write_str(NAMES[self.0 as usize])
-    }
-}
-
 /// V73 Section 2.2:
 /// > the Hexagon processor includes a set of 32-bit control registers that provide access to
 /// > processor features such as the program counter, hardware loops, and vector predicates.
@@ -1141,6 +1089,14 @@ pub enum Operand {
     PCRel32 { rel: i32 },
 
     /// `Rn`, a 32-bit register `R<reg>`
+    ///
+    /// V73 Section 2.1:
+    /// > thirty-two 32-bit general-purpose registers (named R0 through R31)
+    ///
+    /// the last three, `R29, R30, R31` are, when possible, shown as `SP, FR, LR`. they are not
+    /// necessarily required to serve the purposes of stack pointer, frame register, or link
+    /// register. they are, however, described as such by the manual and almost certainly used that
+    /// way by actual code.
     Gpr { reg: u8 },
     /// `Cn`, a 32-bit control register `C<reg>`
     Cr { reg: u8 },
@@ -1705,8 +1661,7 @@ fn decode_packet<
 
     while !end {
         if current_word >= 4 {
-            panic!("TODO: instruction too large");
-            // Err(DecodeError::InstructionTooLarge)
+            return Err(DecodeError::InvalidOpcode);
         }
 
         let inst: u32 = handler.read_inst_word(words)?;
@@ -1731,7 +1686,7 @@ fn decode_packet<
                 /* duplex instruction */
                 // see table 10-2
                 // exactly how subinstructions are encoded is unclear...
-                println!("duplex,");
+                return Err(DecodeError::InvalidOpcode);
             }
             0b01 | 0b10 => { /* nothing to do here */ }
             0b11 => {
