@@ -171,11 +171,11 @@ pub struct InstructionPacket {
 /// between parentheses is recorded as a "source", and operands not in parentheses are recorded as
 /// "destination". for the simplest instructions, `opcode(operand)` or `opcode(op0, op1, ...)`,
 /// there will be no destination, and all operands are in `sources`. for an instruction like
-/// `R4 = add(R3, R5)`, `R4` is recorded as a destination, with `R3` and `R5` recorded as sources.
+/// `r4 = add(r3, r5)`, `r4` is recorded as a destination, with `r3` and `r5` recorded as sources.
 ///
 /// an exception to the above are stores, which look something like
 /// ```text
-/// memh(R4 + R2<<3) = R30
+/// memh(r4 + r2<<3) = r30
 /// ```
 /// in these cases the the operands are an `Operand::RegShiftedReg` describing the operand in
 /// parentheses, and an `Operand::Gpr` describing the source of the store on the right-hand side.
@@ -184,11 +184,11 @@ pub struct InstructionPacket {
 /// branches set a predicate, while others only compare with a new register value and leave
 /// predicate registers unaffected. the former look like
 /// ```text
-/// p0 = cmp.gtu(R15, #40); if (!p0.new) jump:t #354
+/// p0 = cmp.gtu(r15, #40); if (!p0.new) jump:t #354
 /// ```
 /// while the latter look like
 /// ```text
-/// if (cmp.eq(R4.new, R2)) jump:t #812
+/// if (cmp.eq(r4.new, r2)) jump:t #812
 /// ```
 ///
 /// in the former case, there are two "destinations", `p0` and `PCRel32` for the jump target. `p0`
@@ -238,7 +238,7 @@ pub struct InstructionPacket {
 /// ```text
 /// | Symbol | Meaning |
 /// |--------|---------|
-/// | .sN    | Bits `[N-1:0]` are treated as an N-bit signed number. For example, R0.s16 means the least significant 16 bits of R0 are treated as a 16-bit signed number. |
+/// | .sN    | Bits `[N-1:0]` are treated as an N-bit signed number. For example, r0.s16 means the least significant 16 bits of r0 are treated as a 16-bit signed number. |
 /// | .uN    | Bits `[N-1:0]` are treated as an N-bit unsigned number. |
 /// | .H     | The most significant 16 bits of a 32-bit register. |
 /// | .L     | The least significant 16 bits of a 32-bit register. |
@@ -1078,22 +1078,15 @@ impl yaxpeax_arch::Instruction for InstructionPacket {
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum Operand {
     Nothing,
-    /*
-    /// one of the 16 32-bit general purpose registers: `R0 (sp)` through `R15`.
-    Register { num: u8 },
-    /// one of the 16 32-bit general purpose registers, but a smaller part of it. typically
-    /// sign-extended to 32b for processing.
-    Subreg { num: u8, width: SizeCode },
-    */
 
     PCRel32 { rel: i32 },
 
-    /// `Rn`, a 32-bit register `R<reg>`
+    /// `rR`, a 32-bit register `r<reg>`
     ///
     /// V73 Section 2.1:
-    /// > thirty-two 32-bit general-purpose registers (named R0 through R31)
+    /// > thirty-two 32-bit general-purpose registers (named r0 through r31)
     ///
-    /// the last three, `R29, R30, R31` are, when possible, shown as `SP, FR, LR`. they are not
+    /// the last three, `r29, r30, r31` are, when possible, shown as `sp, fr, lr`. they are not
     /// necessarily required to serve the purposes of stack pointer, frame register, or link
     /// register. they are, however, described as such by the manual and almost certainly used that
     /// way by actual code.
@@ -1102,18 +1095,18 @@ pub enum Operand {
     Cr { reg: u8 },
     /// `Sn`, a 32-bit supervisor register `S<reg>`
     Sr { reg: u8 },
-    /// `Rn.new`, the version of a 32-bit register `R<reg>` after being written in this instruction
+    /// `rN.new`, the version of a 32-bit register `R<reg>` after being written in this instruction
     /// packet.
     GprNew { reg: u8 },
-    /// `Rn.L`, low 16 bits of `R<reg>`
+    /// `rN.l`, low 16 bits of `r<reg>`
     GprLow { reg: u8 },
-    /// `Rn.H`, high 16 bits of `R<reg>`
+    /// `rN.h`, high 16 bits of `r<reg>`
     GprHigh { reg: u8 },
 
-    /// the complex conjugate of `R<reg>`. this is only used in a few instructions performing
-    /// complex multiplies, and is displayed as `Rn*`.
+    /// the complex conjugate of `r<reg>`. this is only used in a few instructions performing
+    /// complex multiplies, and is displayed as `rN*`.
     GprConjugate { reg: u8 },
-    /// `Rn:m`, register pair forming a 64-bit value
+    /// `rN:M`, register pair forming a 64-bit value
     ///
     /// V73 Section 2.1:
     /// > the general registers can be specified as a pair that represent a single 64-bit register.
@@ -1121,18 +1114,18 @@ pub enum Operand {
     /// > NOTE: the first register in a register pair must always be odd-numbered, and the second must be
     /// > the next lower register.
     ///
-    /// from Table 2-2, note there is an entry of `R31:R30 (LR:FP)`
+    /// from Table 2-2, note there is an entry of `r31:r30 (lr:fp)`
     Gpr64b { reg_low: u8 },
-    /// `Rn:m*`, a register pair interpreted as a complex number, conjugated
+    /// `rN:M*`, a register pair interpreted as a complex number, conjugated
     ///
     /// this is only used for forms of `cmpy*w`
     Gpr64bConjugate { reg_low: u8 },
-    /// `Cn:m`, control register pair forming a 64-bit location
+    /// `cN:M`, control register pair forming a 64-bit location
     Cr64b { reg_low: u8 },
-    /// `Sn:m`, control register pair forming a 64-bit location
+    /// `sN:M`, control register pair forming a 64-bit location
     Sr64b { reg_low: u8 },
 
-    /// `Pn`, a predicate register
+    /// `pN`, a predicate register
     PredicateReg { reg: u8 },
 
     RegOffset { base: u8, offset: u32 },

@@ -932,7 +932,11 @@ impl fmt::Display for Operand {
                 f.write_str("BUG (operand)")
             }
             Operand::PCRel32 { rel } => {
-                write!(f, "$+#{}", rel)
+                if *rel >= 0 {
+                    write!(f, "$+{:#x}", *rel)
+                } else {
+                    write!(f, "$-{:#x}", -*rel)
+                }
             }
             Operand::Gpr { reg } => {
                 const NAMES: [&'static str; 32] = [
