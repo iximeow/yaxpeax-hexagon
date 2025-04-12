@@ -646,6 +646,8 @@ pub enum Opcode {
     DcInvA,
     DcCleanInvA,
     DcZeroA,
+    DcKill,
+    IcKill,
     L2Fetch,
     DmSyncHt,
     SyncHt,
@@ -844,6 +846,7 @@ pub enum Opcode {
     Iassignr,
     Icdatar,
     Ictagr,
+    Ictagw,
     Icinvidx,
 
     AndAnd = 0x8000,
@@ -1148,6 +1151,8 @@ pub enum Operand {
 
     ImmU32 { imm: u32 },
 
+    Immext { imm: u32 },
+
     // TODO: offset should be signed, check if test cases exercise this..
     RegOffsetCirc { base: u8, offset: u32, mu: u8 },
 
@@ -1248,6 +1253,17 @@ impl Operand {
 
     fn imm_u32(num: u32) -> Self {
         Self::ImmU32 { imm: num }
+    }
+
+    fn immext(
+        i: u32, extender: &mut Option<u32>, unextended: impl FnOnce(u32) -> Self
+    ) -> Result<Self, yaxpeax_arch::StandardDecodeError> {
+        if let Some(extender) = extender.take() {
+            operand_check!(i & !0x3f == 0);
+            Ok(Self::Immext { imm: i | (extender << 6) })
+        } else {
+            Ok(unextended(i))
+        }
     }
 }
 
@@ -1705,7 +1721,17 @@ fn decode_packet<
             extender = Some((inst & 0x3fff) | ((inst >> 2) & 0xfff));
         } else {
             handler.start_instruction();
-            decode_instruction(decoder, handler, inst, extender)?;
+            decode_instruction(decoder, handler, inst, &mut extender)?;
+            // V73 section 10.9:
+            // > The constant extender serves as a prefix for an instruction: it does not execute
+            // > in a slot, nor does it consume slot resources.
+            // > ...
+            // > If a constant extender is encoded in a packet for an instruction that does not
+            // > accept a constant extender, the execution result is undefined. The assembler
+            // > normally ensures that only valid constant extenders are generated.
+            //
+            // the extender must extend the instruction word that follows it.
+            opcode_check!(extender.is_none());
             handler.end_instruction();
         }
 
@@ -1724,21 +1750,10 @@ fn can_be_extended(iclass: u8, regclass: u8) -> bool {
 fn decode_instruction<
     T: Reader<<Hexagon as Arch>::Address, <Hexagon as Arch>::Word>,
     H: DecodeHandler<T>,
->(_decoder: &<Hexagon as Arch>::Decoder, handler: &mut H, inst: u32, extender: Option<u32>) -> Result<(), <Hexagon as Arch>::DecodeError> {
+>(_decoder: &<Hexagon as Arch>::Decoder, handler: &mut H, inst: u32, extender: &mut Option<u32>) -> Result<(), <Hexagon as Arch>::DecodeError> {
     let iclass = (inst >> 28) & 0b1111;
 
     use Opcode::*;
-
-    // V73 Section 10.9
-    // > A constant extender must be positioned in a packet immediately before the
-    // > instruction that it extends
-    // > ...
-    // > If a constant extender is encoded in a packet for an instruction that does not
-    // > accept a constant extender, the execution result is undefined. The assembler
-    // > normally ensures that only valid constant extenders are generated.
-    if extender.is_some() {
-        eprintln!("TODO: error; unconsumed extender");
-    }
 
     // this is *called* "RegType" in the manual but it seem to more often describe
     // opcodes?
@@ -2335,13 +2350,20 @@ fn decode_instruction<
                         handler.on_source_decoded(Operand::gpr(xxxxx))?;
                         handler.on_source_decoded(Operand::imm_u8(u_8 as u8))?;
                     } else if minbits == 0b110 {
+                        opcode_check!(inst & (1 << 21) != 0);
                         handler.on_opcode_decoded(Opcode::Icdatar)?;
                         handler.on_dest_decoded(Operand::gpr(reg_b0(inst)))?;
                         handler.on_source_decoded(Operand::gpr(reg_b16(inst)))?;
                     } else if minbits == 0b111 {
-                        handler.on_opcode_decoded(Opcode::Ictagr)?;
-                        handler.on_dest_decoded(Operand::gpr(reg_b0(inst)))?;
-                        handler.on_source_decoded(Operand::gpr(reg_b16(inst)))?;
+                        if inst & (1 << 21) == 0 {
+                            handler.on_opcode_decoded(Opcode::Ictagw)?;
+                            handler.on_source_decoded(Operand::gpr(reg_b16(inst)))?;
+                            handler.on_source_decoded(Operand::gpr(reg_b8(inst)))?;
+                        } else {
+                            handler.on_opcode_decoded(Opcode::Ictagr)?;
+                            handler.on_dest_decoded(Operand::gpr(reg_b0(inst)))?;
+                            handler.on_source_decoded(Operand::gpr(reg_b16(inst)))?;
+                        }
                     } else {
                         opcode_check!(false);
                     }
@@ -2351,9 +2373,15 @@ fn decode_instruction<
                     let minbits = (inst >> 21) & 0b1111;
 
                     if minbits == 0b0110 {
-                        handler.on_opcode_decoded(Opcode::Icinva)?;
-                        handler.on_source_decoded(Operand::gpr(reg_b16(inst)))?;
-                        opcode_check!(inst & 0x3800 == 0x0000);
+                        let op = (inst >> 11) & 0b111;
+                        if op == 0b000 {
+                            handler.on_opcode_decoded(Opcode::Icinva)?;
+                            handler.on_source_decoded(Operand::gpr(reg_b16(inst)))?;
+                        } else if op == 0b010 {
+                            handler.on_opcode_decoded(Opcode::IcKill)?;
+                        } else {
+                            opcode_check!(false);
+                        }
                     } else if minbits == 0b0111 {
                         handler.on_opcode_decoded(Opcode::Icinvidx)?;
                         handler.on_source_decoded(Operand::gpr(reg_b16(inst)))?;
@@ -2373,6 +2401,7 @@ fn decode_instruction<
                     handler.on_opcode_decoded(Opcode::Jump)?;
                     let imm = ((inst >> 1) & 0x1fff) | ((inst >> 3) & 0xffe000);
                     let imm = ((imm as i32) << 10) >> 10;
+                    // TODO: extend
                     handler.on_dest_decoded(Operand::PCRel32 { rel: imm << 2 })?;
                 },
                 0b101 => {
@@ -2404,10 +2433,12 @@ fn decode_instruction<
                     let is_call = (inst >> 24) & 1 == 1;
 
                     if is_call {
+                        // TODO: extend
                         handler.on_opcode_decoded(Opcode::Call)?;
                         handler.inst_predicated(uu as u8, negated, false)?;
                         opcode_check!(!dotnew);
                     } else {
+                        // ... not shown as extended in the manual?
                         handler.on_opcode_decoded(Opcode::Jump)?;
                         handler.inst_predicated(uu as u8, negated, dotnew)?;
                         handler.branch_hint(hint_taken)?;
@@ -3084,11 +3115,21 @@ fn decode_instruction<
                     }
 
                     if min_low == 0b01 {
-                        handler.on_source_decoded(Operand::imm_i8(i))?;
+                        handler.on_source_decoded(
+                            Operand::immext(
+                                i as u32, extender,
+                                |i: u32| Operand::imm_i8(i as i8)
+                            )?
+                        )?;
                         handler.on_source_decoded(Operand::gpr(sssss))?;
                     } else {
                         handler.on_source_decoded(Operand::gpr(sssss))?;
-                        handler.on_source_decoded(Operand::imm_i8(i))?;
+                        handler.on_source_decoded(
+                            Operand::immext(
+                                i as u32, extender,
+                                |i: u32| Operand::imm_i8(i as i8)
+                            )?
+                        )?;
                     }
                 } else {
                     let sssss = reg_b16(inst);
@@ -4391,9 +4432,13 @@ fn decode_instruction<
                                 }
                             },
                         }
+                    } else if opc_upper == 0b01 {
+                        // 1010|0010
+                        // in V65, not in V73, in LLVM definitions: dckill
+                        handler.on_opcode_decoded(Opcode::DcKill)?;
                     } else {
-                        // if there are any encodings like 1010|001 or 1010|010, they are not in
-                        // the V73 manual...
+                        // if there are any encodings like 1010|010, they are not in the V73
+                        // manual...
                         opcode_check!(opc_upper == 0b11);
                         let opc_lower = (inst >> 21) & 0b111;
                         // similar..

@@ -787,6 +787,7 @@ A L I A S     A L I A S     A L I A S    A L I A S     A L I A S   | Rd=zxtb(Rs)
 |1 0 1 0|0 0 0 0 1 1 0|s s s s s| P P |0 - - - - - - - -|- - - - -| dczeroa(Rs)      - SYSTEM/slot 0
 |1 0 1 0|0 0 0 0 1 1 1|s s s s s| P P |0 t t t t t - - 0|0 1 0 d d| memd_rl(Rs):at=Rtt                  - ST/slot 0
 |1 0 1 0|0 0 0 0 1 1 1|s s s s s| P P |0 t t t t t - - 1|0 1 0 d d| memd_rl(Rs):st=Rtt                  - ST/slot 0
+|1 0 1 0|0 0 1 0 0 0 0|- - - - -| P P |- - - - - - - - -|- - - - -| dckill      - SYSTEM/slot 0
 |1 0 1 0|0 1 1 0 0 0 0|s s s s s| P P |- t t t t t 0 0 0|- - - - -| l2fetch(Rs,Rt)          - SYSTEM/slot 0
 |1 0 1 0|0 1 1 0 1 0 0|s s s s s| P P |- t t t t t - - -|- - - - -| l2fetch(Rs,Rtt)          - SYSTEM/slot 0
 |1 0 1 0|0 i i 1 0 1 0|s s s s s| P P |i t t t t t i i i|i i i i i| memh(Rs+#s11:1)=Rt                  - ST/slot 0,1

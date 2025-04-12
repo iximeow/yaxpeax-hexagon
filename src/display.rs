@@ -714,6 +714,8 @@ impl fmt::Display for Opcode {
             Opcode::DcInvA => { f.write_str("dcinva") },
             Opcode::DcCleanInvA => { f.write_str("dccleaninva") },
             Opcode::DcZeroA => { f.write_str("dczeroa") },
+            Opcode::DcKill => { f.write_str("dckill") },
+            Opcode::IcKill => { f.write_str("ickill") },
             Opcode::L2Fetch => { f.write_str("l2fetch") },
             Opcode::DmSyncHt => { f.write_str("dmsyncht") },
             Opcode::SyncHt => { f.write_str("syncht") },
@@ -792,6 +794,7 @@ impl fmt::Display for Opcode {
             Opcode::Iassignr => { f.write_str("iassignr") },
             Opcode::Icdatar => { f.write_str("icdatar") },
             Opcode::Ictagr => { f.write_str("ictagr") },
+            Opcode::Ictagw => { f.write_str("ictagw") },
             Opcode::Icinvidx => { f.write_str("icinvidx") },
 
             Opcode::SubAsl => { f.write_str("subasl") },
@@ -1050,6 +1053,9 @@ impl fmt::Display for Operand {
             }
             Operand::ImmU32 { imm } => {
                 write!(f, "#{:}", imm)
+            }
+            Operand::Immext { imm } => {
+                write!(f, "##{:#x}", imm)
             }
             Operand::RegShiftOffset { base, shift, offset } => {
                 write!(f, "r{}<<{} + {:#x}", base, shift, offset)

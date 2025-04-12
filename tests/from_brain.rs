@@ -23,8 +23,11 @@ fn test_invalid(bytes: &[u8], expected: DecodeError) {
 // otherwise...
 #[test]
 fn supervisor() {
+    test_invalid(&0b0101_010_1100_00010_11_0_01000_000_00110u32.to_le_bytes(), DecodeError::InvalidOpcode);
     test_display(&0b0101_010_1101_00010_11_0_01000_000_00110u32.to_le_bytes(), "{ r6 = icdatar(r2) }");
+    test_display(&0b0101_010_1110_00010_11_0_01000_000_00110u32.to_le_bytes(), "{ ictagw(r2, r8) }");
     test_display(&0b0101_010_1111_00010_11_0_01000_000_00110u32.to_le_bytes(), "{ r6 = ictagr(r2) }");
+    test_display(&0b0101_011_0110_00010_11_0_10000_000_00110u32.to_le_bytes(), "{ ickill }");
     test_display(&0b0101_011_0111_00010_11_0_01000_000_00110u32.to_le_bytes(), "{ icinvidx(r2) }");
 
     test_display(&0b0110_01_00000_00110_11_0_00010_000_10110u32.to_le_bytes(), "{ swi(r6) }");
@@ -868,6 +871,7 @@ fn inst_1010() {
     test_invalid(&0b1010_0000111_00010_11_0_00100_000_00111u32.to_le_bytes(), DecodeError::InvalidOpcode);
     test_display(&0b1010_0000111_00010_11_0_00100_000_01011u32.to_le_bytes(), "{ memd_rl(r2):at = r5:4 }");
     test_display(&0b1010_0000111_00010_11_0_00100_001_01011u32.to_le_bytes(), "{ memd_rl(r2):st = r5:4 }");
+    test_display(&0b1010_0010000_00010_11_0_00100_001_01011u32.to_le_bytes(), "{ dckill }");
     test_display(&0b1010_0110000_00010_11_0_00100_000_01011u32.to_le_bytes(), "{ l2fetch(r2, r4) }");
     test_invalid(&0b1010_0110000_00010_11_0_00100_001_01011u32.to_le_bytes(), DecodeError::InvalidOpcode);
     test_display(&0b1010_0110100_00010_11_0_00100_000_01011u32.to_le_bytes(), "{ l2fetch(r2, r5:4) }");

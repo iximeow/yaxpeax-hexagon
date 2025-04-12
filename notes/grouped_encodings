@@ -904,6 +904,7 @@ A L I A S     A L I A S     A L I A S    A L I A S     A L I A S   | Rd=zxtb(Rs)
 |1 0 0 1|0 0 0 0 1 1 1|s s s s s| P P |0 t t t t t - - -|- 0 0 d d| memd_locked(Rs,Pd)=Rtt     - SYSTEM/slot 0
 |ICLASS |P MajOp MinOp|s5       |Parse|                 |d5       |
 |1 0 1 0|0 0 0 0 1 1 0|s s s s s| P P |0 - - - - - - - -|- - - - -| dczeroa(Rs)      - SYSTEM/slot 0
+|1 0 1 0|0 0 1 0 0 0 0|- - - - -| P P |- - - - - - - - -|- - - - -| dckill      - SYSTEM/slot 0
 |ICLASS |P MajOp MinOp|s5       |Parse|                 |d5       |
 |1 0 1 0|1 0 0 0 0 0 0|- - - - -| P P |- - - - - - 0 0 0|- - - - -| barrier     - SYSTEM/slot 0
 |ICLASS |P MajOp MinOp|s5       |Parse|                 |d5       |
