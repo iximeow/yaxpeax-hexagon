@@ -1137,7 +1137,7 @@ pub enum Operand {
 
     RegShiftedReg { base: u8, index: u8, shift: u8 },
 
-    RegShiftOffset { base: u8, shift: u8, offset: i16 },
+    RegShiftOffset { base: u8, shift: u8, offset: u32 },
 
     ImmU8 { imm: u8 },
 
@@ -4253,9 +4253,14 @@ fn decode_instruction<
 
                             let u2 = (inst >> 5) & 0b11;
                             let u4 = (inst >> 8) & 0b1111;
-                            let uuuuuu = (u2 | (u4 << 2)) as i16;
+                            let uuuuuu = u2 | (u4 << 2);
 
-                            handler.on_source_decoded(Operand::RegShiftOffset { base: xxxxx, shift: ii, offset: uuuuuu })?;
+                            handler.on_source_decoded(
+                                Operand::with_extension(uuuuuu, extender,
+                                    |offset| Ok(Operand::RegShiftOffset { base: xxxxx, shift: ii, offset }),
+                                    |offset| Ok(Operand::RegShiftOffset { base: xxxxx, shift: ii, offset }),
+                                )?
+                            )?;
                         }
                     }
                     0b101 => {
@@ -4283,9 +4288,14 @@ fn decode_instruction<
 
                             let u2 = (inst >> 5) & 0b11;
                             let u4 = (inst >> 8) & 0b1111;
-                            let uuuuuu = (u2 | (u4 << 2)) as i16;
+                            let uuuuuu = u2 | (u4 << 2);
 
-                            handler.on_source_decoded(Operand::RegShiftOffset { base: xxxxx, shift: ii, offset: uuuuuu })?;
+                            handler.on_source_decoded(
+                                Operand::with_extension(uuuuuu, extender,
+                                    |offset| Ok(Operand::RegShiftOffset { base: xxxxx, shift: ii, offset }),
+                                    |offset| Ok(Operand::RegShiftOffset { base: xxxxx, shift: ii, offset }),
+                                )?
+                            )?;
                         }
                     }
                     0b110 => {
@@ -4329,7 +4339,11 @@ fn decode_instruction<
                             let dotnew = (inst >> 12) & 0b1 != 0;
 
                             handler.inst_predicated(tt as u8, negated, dotnew)?;
-                            handler.on_source_decoded(Operand::imm_u32(iiiiii as u32))?;
+                            handler.on_source_decoded(
+                                Operand::immext(iiiiii as u32, extender, |i6| {
+                                    Ok(Operand::imm_u32(iiiiii as u32))
+                                })?
+                            )?;
                             if !wide {
                                 handler.on_dest_decoded(Operand::gpr(ddddd))?;
                             } else {
@@ -4630,7 +4644,7 @@ fn decode_instruction<
                             let iiii = (inst >> 3) & 0b1111;
                             let dotnew = (inst >> 7) & 1 == 1;
                             decode_store_ops(handler, minbits, ttttt, |shamt| {
-                                Ok(Operand::RegOffset { base: xxxxx, offset: iiii << shamt })
+                                Ok(Operand::RegOffsetInc { base: xxxxx, offset: iiii << shamt })
                             })?;
                             handler.inst_predicated(vv as u8, negated, dotnew)?;
                         }
@@ -4650,9 +4664,12 @@ fn decode_instruction<
                             let i_hi = (inst >> 13) & 1;
                             let i_lo = (inst >> 6) & 1;
                             let i = ((i_hi << 1) | i_lo) as u8;
-                            let uuuuuu = (inst & 0b111111) as i16;
+                            let uuuuuu = inst & 0b111111;
                             decode_store_ops(handler, minbits, ttttt, |_shamt| {
-                                Ok(Operand::RegShiftOffset { base: xxxxx, shift: i, offset: uuuuuu })
+                                Operand::with_extension(uuuuuu, extender,
+                                    |offset| Ok(Operand::RegShiftOffset { base: xxxxx, shift: i, offset }),
+                                    |offset| Ok(Operand::RegShiftOffset { base: xxxxx, shift: i, offset }),
+                                )
                             })?;
                         }
                     },
