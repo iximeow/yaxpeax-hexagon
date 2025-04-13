@@ -24,25 +24,25 @@ fn extenders() {
     /*
      * extendable instructions covered in this test:
      *        // it turns out these are encoded by applying an extender to the `mem{b,ub,...}(gp+#u16)` forms
-     * [ ]:   Rd = mem{b,ub,h,uh,w,d}(##U32)
+     * [x]:   Rd = mem{b,ub,h,uh,w,d}(##U32)
      *        // predicated loads
      * [ ]:   if ([!]Pt[.new]) Rd = mem{b,ub,h,uh,w,d} (Rs + ##U32)
-     * [ ]:   Rd = mem{b,ub,h,uh,w,d} (Rs + ##U32)
-     * [ ]:   Rd = mem{b,ub,h,uh,w,d} (Re=##U32)
+     * [x]:   Rd = mem{b,ub,h,uh,w,d} (Rs + ##U32)
+     * [x]:   Rd = mem{b,ub,h,uh,w,d} (Re=##U32)
      * [ ]:   Rd = mem{b,ub,h,uh,w,d} (Rt<<#u2 + ##U32)
      * [ ]:   if ([!]Pt[.new]) Rd = mem{b,ub,h,uh,w,d} (##U32)
      *        // it turns out these are encoded by applying an extender to the `mem{b,ub,...}(gp+#u16)` forms
-     * [ ]:   mem{b,h,w,d}(##U32) = Rs[.new]
+     * [x]:   mem{b,h,w,d}(##U32) = Rs[.new]
      *        // predicated stores
      * [ ]:   if ([!]Pt[.new]) mem{b,h,w,d}(Rs + ##U32) = Rt[.new]
-     * [ ]:   mem{b,h,w,d}(Rs + ##U32) = Rt[.new]
-     * [ ]:   mem{b,h,w,d}(Rd=##U32) = Rt[.new]
+     * [x]:   mem{b,h,w,d}(Rs + ##U32) = Rt[.new]
+     * [x]:   mem{b,h,w,d}(Rd=##U32) = Rt[.new]
      * [ ]:   mem{b,h,w,d}(Ru<<#u2 + ##U32) = Rt[.new]
      * [ ]:   if ([!]Pt[.new]) mem{b,h,w,d}(##U32) = Rt[.new]
      * [ ]:   [if [!]Ps] memw(Rs + #u6) = ##U32 // constant store
      * [ ]:   memw(Rs + Rt<<#u2) = ##U32 // constant store
      * [ ]:   if (cmp.xx(Rs.new,##U32)) jump:hint target
-     * [ ]:   Rd = ##u32
+     * [x]:   Rd = ##u32
      * [ ]:   Rdd = combine(Rs,##u32)
      * [ ]:   Rdd = combine(##u32,Rs)
      * [ ]:   Rdd = combine(##u32,#s8)
@@ -56,9 +56,9 @@ fn extenders() {
      * [ ]:   Pd = [!]cmp.gt (Rs,##u32)
      * [ ]:   Pd = [!]cmp.gtu (Rs,##u32)
      * [ ]:   Rd = [!]cmp.eq(Rs,##u32)
-     * [ ]:   Rd = and(Rs,##u32)
-     * [ ]:   Rd = or(Rs,##u32)
-     * [ ]:   Rd = sub(##u32,Rs)
+     * [x]:   Rd = and(Rs,##u32)
+     * [x]:   Rd = or(Rs,##u32)
+     * [x]:   Rd = sub(##u32,Rs)
      * [ ]:   Rd = add(Rs,##s32)
      * [ ]:   Rd = mpyi(Rs,##u32)
      * [ ]:   Rd += mpyi(Rs,##u32)
@@ -127,6 +127,7 @@ fn extenders() {
         0x07, 0xc6, 0xc0, 0x48,
     ], "{ memd(##0x238) = r7:6 }");
 
+
     test_display(&[
         0x08, 0x40, 0x00, 0x00,
         0xe6, 0xc1, 0x00, 0x49,
@@ -156,6 +157,7 @@ fn extenders() {
         0x08, 0x40, 0x00, 0x00,
         0xe6, 0xc0, 0xc0, 0x49,
     ], "{ r7:6 = memd(##0x238) }");
+
 
     // HELP! it is somewhat unfortunate that extended offsets don't get the ## treatment like
     // immediates. having different operands for all immediate-extended forms seems like a kind of
@@ -189,6 +191,97 @@ fn extenders() {
         0x08, 0x40, 0x00, 0x00,
         0xe6, 0xc0, 0xc5, 0x91,
     ], "{ r7:6 = memd(r5+#568) }");
+
+
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0xe6, 0xd3, 0x05, 0x9b,
+    ], "{ r6 = memb(r5=#0x20f) }");
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0xe6, 0xd3, 0x25, 0x9b,
+    ], "{ r6 = memub(r5=#0x20f) }");
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0xe6, 0xd3, 0x45, 0x9b,
+    ], "{ r6 = memh(r5=#0x20f) }");
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0xe6, 0xd3, 0x65, 0x9b,
+    ], "{ r6 = memuh(r5=#0x20f) }");
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0xe6, 0xd3, 0x85, 0x9b,
+    ], "{ r6 = memw(r5=#0x20f) }");
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0xe6, 0xd3, 0xc5, 0x9b,
+    ], "{ r7:6 = memd(r5=#0x20f) }");
+
+
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0x0f, 0xc6, 0x04, 0xa1,
+    ], "{ memb(r4+#527) = r6 }");
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0x0f, 0xc6, 0x44, 0xa1,
+    ], "{ memh(r4+#542) = r6 }");
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0x0f, 0xc6, 0x84, 0xa1,
+    ], "{ memw(r4+#572) = r6 }");
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0x0f, 0xc6, 0xa4, 0xa1,
+    ], "{ memb(r4+#527) = r6.new }");
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0x0f, 0xce, 0xa4, 0xa1,
+    ], "{ memh(r4+#542) = r6.new }");
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0x0f, 0xd6, 0xa4, 0xa1,
+    ], "{ memw(r4+#572) = r6.new }");
+    // the immediate of 1111 << 3 shifts a 1 out of the low 6 bits and invalidates the operand.
+    test_invalid(&[
+        0x08, 0x40, 0x00, 0x00,
+        0x0f, 0xc6, 0xc4, 0xa1,
+    ], DecodeError::InvalidOperand);
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0x07, 0xc6, 0xc4, 0xa1,
+    ], "{ memd(r4+#568) = r7:6 }");
+
+
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0x8f, 0xc6, 0x04, 0xab,
+    ], "{ memb(r4=#0x20f) = r6 }");
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0x8f, 0xc6, 0x44, 0xab,
+    ], "{ memh(r4=#0x20f) = r6 }");
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0x8f, 0xc6, 0x84, 0xab,
+    ], "{ memw(r4=#0x20f) = r6 }");
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0x8f, 0xc6, 0xa4, 0xab,
+    ], "{ memb(r4=#0x20f) = r6.new }");
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0x8f, 0xce, 0xa4, 0xab,
+    ], "{ memh(r4=#0x20f) = r6.new }");
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0x8f, 0xd6, 0xa4, 0xab,
+    ], "{ memw(r4=#0x20f) = r6.new }");
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0x87, 0xc6, 0xc4, 0xab,
+    ], "{ memd(r4=#0x207) = r7:6 }");
 
 
     test_display(&[

@@ -1158,7 +1158,7 @@ pub enum Operand {
 
     RegCirc { base: u8, mu: u8 },
 
-    RegStoreAssign { base: u8, addr: u16 },
+    RegStoreAssign { base: u8, addr: u32 },
 
     RegMemIndexed { base: u8, mu: u8 },
 
@@ -4171,8 +4171,13 @@ fn decode_instruction<
                         } else {
                             let u2 = (inst >> 5) & 0b11;
                             let u4 = (inst >> 8) & 0b1111;
-                            let uuuuuu = (u2 | (u4 << 2)) as u16;
-                            handler.on_source_decoded(Operand::RegStoreAssign { base: xxxxx, addr: uuuuuu })?;
+                            let uuuuuu = u2 | (u4 << 2);
+                            handler.on_source_decoded(
+                                Operand::with_extension(uuuuuu, extender,
+                                    |addr| Ok(Operand::RegStoreAssign { base: xxxxx, addr }),
+                                    |addr| Ok(Operand::RegStoreAssign { base: xxxxx, addr }),
+                                )?
+                            )?;
                         }
                         if !wide {
                             handler.on_dest_decoded(Operand::gpr(ddddd))?;
@@ -4193,8 +4198,13 @@ fn decode_instruction<
                             } else {
                                 let u2 = (inst >> 5) & 0b11;
                                 let u4 = (inst >> 8) & 0b1111;
-                                let uuuuuu = (u2 | (u4 << 2)) as u16;
-                                handler.on_source_decoded(Operand::RegStoreAssign { base: xxxxx, addr: uuuuuu })?;
+                                let uuuuuu = (u2 | (u4 << 2)) as u32;
+                                handler.on_source_decoded(
+                                    Operand::with_extension(uuuuuu, extender,
+                                        |addr| Ok(Operand::RegStoreAssign { base: xxxxx, addr }),
+                                        |addr| Ok(Operand::RegStoreAssign { base: xxxxx, addr }),
+                                    )?
+                                )?;
                             }
                             if !wide {
                                 handler.on_dest_decoded(Operand::gpr(ddddd))?;
@@ -4544,7 +4554,11 @@ fn decode_instruction<
                     let i11 = i_low | (i_mid << 8) | (i_high << 9);
 
                     decode_store_ops(handler, opc, ttttt, |shamt| {
-                        Ok(Operand::RegOffset { base: sssss, offset: i11 << shamt })
+                        Operand::with_extension(
+                            i11 << shamt, extender,
+                            |offset| Ok(Operand::RegOffset { base: sssss, offset }),
+                            |offset| Ok(Operand::RegOffset { base: sssss, offset }),
+                        )
                     })?;
 
                 }
@@ -4600,9 +4614,12 @@ fn decode_instruction<
                                     Ok(Operand::RegOffset { base: xxxxx, offset: iiii << shamt })
                                 })?;
                             } else {
-                                let uuuuuu = (inst & 0b111111) as u16;
+                                let uuuuuu = inst & 0b111111;
                                 decode_store_ops(handler, minbits, ttttt, |_shamt| {
-                                    Ok(Operand::RegStoreAssign { base: xxxxx, addr: uuuuuu })
+                                    Operand::with_extension(uuuuuu, extender,
+                                        |addr| Ok(Operand::RegStoreAssign { base: xxxxx, addr }),
+                                        |addr| Ok(Operand::RegStoreAssign { base: xxxxx, addr }),
+                                    )
                                 })?;
                             }
                         } else {
