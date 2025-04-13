@@ -1261,8 +1261,6 @@ impl Operand {
         no_extender: impl FnOnce(u32) -> Result<Self, yaxpeax_arch::StandardDecodeError>,
     ) -> Result<Self, yaxpeax_arch::StandardDecodeError> {
         if let Some(extender) = extender.take() {
-            eprintln!("i       : {:04x}", i);
-            eprintln!("extender: {:04x}", extender);
             operand_check!(i & !0x3f == 0);
             extended(i | (extender << 6))
         } else {
@@ -2265,14 +2263,14 @@ fn decode_instruction<
 
                     decode_store_ops(handler, opbits as u8, srcreg as u8, |shamt| {
                         Operand::with_extension(
-                            iiiiii << shamt, extender,
+                            iiiiii, extender,
                             |offset| Ok(Operand::RegOffset {
                                 base: sssss as u8,
                                 offset,
                             }),
                             |offset| Ok(Operand::RegOffset {
                                 base: sssss as u8,
-                                offset,
+                                offset: offset << shamt,
                             }),
                         )
                     })?;
@@ -2285,14 +2283,14 @@ fn decode_instruction<
 
                     decode_load_ops(handler, opbits as u8, dstreg as u8, |shamt| {
                         Operand::with_extension(
-                            iiiiii << shamt, extender,
+                            iiiiii, extender,
                             |offset| Ok(Operand::RegOffset {
                                 base: sssss as u8,
                                 offset,
                             }),
                             |offset| Ok(Operand::RegOffset {
                                 base: sssss as u8,
-                                offset,
+                                offset: offset << shamt,
                             }),
                         )
                     })?;
@@ -2311,10 +2309,10 @@ fn decode_instruction<
 
                     decode_store_ops(handler, opbits, ttttt, |shamt| {
                         Operand::with_extension(
-                            i << shamt, extender,
+                            i, extender,
                             |imm| Ok(Operand::Immext { imm }),
                             |offset| Ok(Operand::GpOffset {
-                                offset,
+                                offset: offset << shamt,
                             }),
                         )
                     })?;
@@ -2325,10 +2323,10 @@ fn decode_instruction<
 
                     decode_load_ops(handler, opbits, ddddd, |shamt| {
                         Operand::with_extension(
-                            i << shamt, extender,
+                            i, extender,
                             |imm| Ok(Operand::Immext { imm }),
                             |offset| Ok(Operand::GpOffset {
-                                offset,
+                                offset: offset << shamt,
                             }),
                         )
                     })?;
@@ -2468,9 +2466,9 @@ fn decode_instruction<
                     let imm = ((imm as i32) << 10) >> 10;
                     handler.on_dest_decoded(
                         Operand::with_extension(
-                            (imm << 2) as u32, extender,
+                            imm as u32, extender,
                             |rel| Ok(Operand::PCRel32 { rel: rel as i32 }),
-                            |rel| Ok(Operand::PCRel32 { rel: rel as i32 }),
+                            |rel| Ok(Operand::PCRel32 { rel: (rel << 2) as i32 }),
                         )?
                     )?;
                 },
@@ -2486,9 +2484,9 @@ fn decode_instruction<
                     let imm = ((imm as i32) << 10) >> 10;
                     handler.on_dest_decoded(
                         Operand::with_extension(
-                            (imm << 2) as u32, extender,
+                            imm as u32, extender,
                             |rel| Ok(Operand::PCRel32 { rel: rel as i32 }),
-                            |rel| Ok(Operand::PCRel32 { rel: rel as i32 }),
+                            |rel| Ok(Operand::PCRel32 { rel: (rel << 2) as i32 }),
                         )?
                     )?;
                 },
@@ -2522,9 +2520,9 @@ fn decode_instruction<
                     }
                     handler.on_dest_decoded(
                         Operand::with_extension(
-                            (i15 << 2) as u32, extender,
+                            i15 as u32, extender,
                             |rel| Ok(Operand::PCRel32 { rel: rel as i32 }),
-                            |rel| Ok(Operand::PCRel32 { rel: rel as i32 }),
+                            |rel| Ok(Operand::PCRel32 { rel: (rel << 2) as i32 }),
                         )?
                     )?;
                 }
@@ -4499,9 +4497,11 @@ fn decode_instruction<
                     // opcodes.
                     handler.on_source_decoded(
                         Operand::with_extension(
-                            (i as u32) << shamt, extender,
+                            i as u32, extender,
                             |offset| Ok(Operand::RegOffset { base: sssss, offset }),
-                            |offset| Ok(Operand::RegOffset { base: sssss, offset }),
+                            |offset| Ok(Operand::RegOffset {
+                                base: sssss, offset: offset << shamt
+                            }),
                         )?
                     )?;
                     if !wide {
@@ -4632,9 +4632,11 @@ fn decode_instruction<
 
                     decode_store_ops(handler, opc, ttttt, |shamt| {
                         Operand::with_extension(
-                            i11 << shamt, extender,
+                            i11, extender,
                             |offset| Ok(Operand::RegOffset { base: sssss, offset }),
-                            |offset| Ok(Operand::RegOffset { base: sssss, offset }),
+                            |offset| Ok(Operand::RegOffset {
+                                base: sssss, offset: offset << shamt
+                            }),
                         )
                     })?;
 

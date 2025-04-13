@@ -103,11 +103,11 @@ fn extenders() {
     test_display(&[
         0x08, 0x40, 0x00, 0x00,
         0x0f, 0xc6, 0x40, 0x48,
-    ], "{ memh(##0x21e) = r6 }");
+    ], "{ memh(##0x20f) = r6 }");
     test_display(&[
         0x08, 0x40, 0x00, 0x00,
         0x0f, 0xc6, 0x80, 0x48,
-    ], "{ memw(##0x23c) = r6 }");
+    ], "{ memw(##0x20f) = r6 }");
     test_display(&[
         0x08, 0x40, 0x00, 0x00,
         0x0f, 0xc6, 0xa0, 0x48,
@@ -115,20 +115,15 @@ fn extenders() {
     test_display(&[
         0x08, 0x40, 0x00, 0x00,
         0x0f, 0xce, 0xa0, 0x48,
-    ], "{ memh(##0x21e) = r6.new }");
+    ], "{ memh(##0x20f) = r6.new }");
     test_display(&[
         0x08, 0x40, 0x00, 0x00,
         0x0f, 0xd6, 0xa0, 0x48,
-    ], "{ memw(##0x23c) = r6.new }");
-    // the immediate of 1111 << 3 shifts a 1 out of the low 6 bits and invalidates the operand.
-    test_invalid(&[
-        0x08, 0x40, 0x00, 0x00,
-        0x0f, 0xc6, 0xc0, 0x48,
-    ], DecodeError::InvalidOperand);
+    ], "{ memw(##0x20f) = r6.new }");
     test_display(&[
         0x08, 0x40, 0x00, 0x00,
         0x07, 0xc6, 0xc0, 0x48,
-    ], "{ memd(##0x238) = r7:6 }");
+    ], "{ memd(##0x207) = r7:6 }");
 
 
     test_display(&[
@@ -142,24 +137,19 @@ fn extenders() {
     test_display(&[
         0x08, 0x40, 0x00, 0x00,
         0xe6, 0xc1, 0x40, 0x49,
-    ], "{ r6 = memh(##0x21e) }");
+    ], "{ r6 = memh(##0x20f) }");
     test_display(&[
         0x08, 0x40, 0x00, 0x00,
         0xe6, 0xc1, 0x60, 0x49,
-    ], "{ r6 = memuh(##0x21e) }");
+    ], "{ r6 = memuh(##0x20f) }");
     test_display(&[
         0x08, 0x40, 0x00, 0x00,
         0xe6, 0xc1, 0x80, 0x49,
-    ], "{ r6 = memw(##0x23c) }");
-    // the immediate of 1111 << 3 shifts a 1 out of the low 6 bits and invalidates the operand.
-    test_invalid(&[
-        0x08, 0x40, 0x00, 0x00,
-        0xe6, 0xc1, 0xc0, 0x49,
-    ], DecodeError::InvalidOperand);
+    ], "{ r6 = memw(##0x20f) }");
     test_display(&[
         0x08, 0x40, 0x00, 0x00,
         0xe6, 0xc0, 0xc0, 0x49,
-    ], "{ r7:6 = memd(##0x238) }");
+    ], "{ r7:6 = memd(##0x207) }");
 
 
     // HELP! it is somewhat unfortunate that extended offsets don't get the ## treatment like
@@ -176,24 +166,19 @@ fn extenders() {
     test_display(&[
         0x08, 0x40, 0x00, 0x00,
         0xe6, 0xc1, 0x45, 0x91,
-    ], "{ r6 = memh(r5+#542) }");
+    ], "{ r6 = memh(r5+#527) }");
     test_display(&[
         0x08, 0x40, 0x00, 0x00,
         0xe6, 0xc1, 0x65, 0x91,
-    ], "{ r6 = memuh(r5+#542) }");
+    ], "{ r6 = memuh(r5+#527) }");
     test_display(&[
         0x08, 0x40, 0x00, 0x00,
         0xe6, 0xc1, 0x85, 0x91,
-    ], "{ r6 = memw(r5+#572) }");
-    // the immediate of 1111 << 3 shifts a 1 out of the low 6 bits and invalidates the operand.
-    test_invalid(&[
-        0x08, 0x40, 0x00, 0x00,
-        0xe6, 0xc1, 0xc5, 0x91,
-    ], DecodeError::InvalidOperand);
+    ], "{ r6 = memw(r5+#527) }");
     test_display(&[
         0x08, 0x40, 0x00, 0x00,
         0xe6, 0xc0, 0xc5, 0x91,
-    ], "{ r7:6 = memd(r5+#568) }");
+    ], "{ r7:6 = memd(r5+#519) }");
 
 
     test_display(&[
@@ -229,11 +214,11 @@ fn extenders() {
     test_display(&[
         0x08, 0x40, 0x00, 0x00,
         0x0f, 0xc6, 0x44, 0xa1,
-    ], "{ memh(r4+#542) = r6 }");
+    ], "{ memh(r4+#527) = r6 }");
     test_display(&[
         0x08, 0x40, 0x00, 0x00,
         0x0f, 0xc6, 0x84, 0xa1,
-    ], "{ memw(r4+#572) = r6 }");
+    ], "{ memw(r4+#527) = r6 }");
     test_display(&[
         0x08, 0x40, 0x00, 0x00,
         0x0f, 0xc6, 0xa4, 0xa1,
@@ -241,20 +226,15 @@ fn extenders() {
     test_display(&[
         0x08, 0x40, 0x00, 0x00,
         0x0f, 0xce, 0xa4, 0xa1,
-    ], "{ memh(r4+#542) = r6.new }");
+    ], "{ memh(r4+#527) = r6.new }");
     test_display(&[
         0x08, 0x40, 0x00, 0x00,
         0x0f, 0xd6, 0xa4, 0xa1,
-    ], "{ memw(r4+#572) = r6.new }");
-    // the immediate of 1111 << 3 shifts a 1 out of the low 6 bits and invalidates the operand.
-    test_invalid(&[
-        0x08, 0x40, 0x00, 0x00,
-        0x0f, 0xc6, 0xc4, 0xa1,
-    ], DecodeError::InvalidOperand);
+    ], "{ memw(r4+#527) = r6.new }");
     test_display(&[
         0x08, 0x40, 0x00, 0x00,
         0x07, 0xc6, 0xc4, 0xa1,
-    ], "{ memd(r4+#568) = r7:6 }");
+    ], "{ memd(r4+#519) = r7:6 }");
 
 
     test_display(&[
@@ -347,7 +327,7 @@ fn extenders() {
     test_display(&[
         0x08, 0x40, 0x00, 0x00,
         0xa8, 0xf0, 0x6a, 0x47,
-    ], "{ if (!p2.new) r8 = memuh(r10+#522) }");
+    ], "{ if (!p2.new) r8 = memuh(r10+#517) }");
     // if ([!]Pt[.new]) Rd = mem{b,ub,h,uh,w,d} (##U32)
     test_display(&[
         0x08, 0x40, 0x00, 0x00,
@@ -357,7 +337,7 @@ fn extenders() {
     test_display(&[
         0x08, 0x40, 0x00, 0x00,
         0x2a, 0xc7, 0x4a, 0x40,
-    ], "{ if (p2) memh(r10+#522) = r7 }");
+    ], "{ if (p2) memh(r10+#517) = r7 }");
     // if ([!]Pt[.new]) mem{b,h,w,d}(##U32) = Rt[.new]
     test_display(&[
         0x08, 0x40, 0x00, 0x00,
@@ -466,25 +446,25 @@ fn extenders() {
     test_display(&[
         0x08, 0x40, 0x00, 0x00,
         0x02, 0xc0, 0x00, 0x58,
-    ], "{ jump $+0x204 }");
+    ], "{ jump $+0x201 }");
     //    jump (PC + ##s32)
     test_display(&[
         0x08, 0x40, 0x00, 0x00,
         0x02, 0xc0, 0x00, 0x5a,
-    ], "{ call $+0x204 }");
+    ], "{ call $+0x201 }");
     //    call (PC + ##s32)
     test_display(&[
         0x08, 0x40, 0x00, 0x00,
         0x02, 0xc1, 0x00, 0x5c,
-    ], "{ if (p1) jump:nt $+0x204 }");
+    ], "{ if (p1) jump:nt $+0x201 }");
     test_display(&[
         0x08, 0x40, 0x00, 0x00,
         0x02, 0xc9, 0x20, 0x5c,
-    ], "{ if (!p1.new) jump:nt $+0x204 }");
+    ], "{ if (!p1.new) jump:nt $+0x201 }");
     test_display(&[
         0x08, 0x40, 0x00, 0x00,
         0x02, 0xc1, 0x20, 0x5d,
-    ], "{ if (!p1) call $+0x204 }");
+    ], "{ if (!p1) call $+0x201 }");
     //    if ([!]Pu) call (PC + ##s32)
     test_display(&[
         0x08, 0x40, 0x00, 0x00,
@@ -587,6 +567,13 @@ fn extenders() {
         0x04, 0x40, 0x00, 0x00, // extender (4 == 0x100)
         0xf1, 0xc1, 0x11, 0x76, // r17 = and(r17, #whatever)
     ], "{ r17 = and(r17, ##0x10f) }");
+
+    // great, this instruction is from a real program and proves that interpreting the offset as
+    // shifted by 2 before adding the extender is an error. bonkers stuff.
+    test_display(&[
+        0xa8, 0x46, 0xe1, 0x01,
+        0x20, 0xc0, 0x99, 0xa1,
+    ], "{ memw(r25+#504474144) = r0 }");
 }
 
 // mentioned in the V62 manual, not later?
