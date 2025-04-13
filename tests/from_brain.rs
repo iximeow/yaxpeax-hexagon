@@ -26,62 +26,65 @@ fn extenders() {
      *        // it turns out these are encoded by applying an extender to the `mem{b,ub,...}(gp+#u16)` forms
      * [x]:   Rd = mem{b,ub,h,uh,w,d}(##U32)
      *        // predicated loads
-     * [ ]:   if ([!]Pt[.new]) Rd = mem{b,ub,h,uh,w,d} (Rs + ##U32)
+     * [x]:   if ([!]Pt[.new]) Rd = mem{b,ub,h,uh,w,d} (Rs + ##U32)
      * [x]:   Rd = mem{b,ub,h,uh,w,d} (Rs + ##U32)
      * [x]:   Rd = mem{b,ub,h,uh,w,d} (Re=##U32)
      * [x]:   Rd = mem{b,ub,h,uh,w,d} (Rt<<#u2 + ##U32)
-     * [ ]:   if ([!]Pt[.new]) Rd = mem{b,ub,h,uh,w,d} (##U32)
+     * [x]:   if ([!]Pt[.new]) Rd = mem{b,ub,h,uh,w,d} (##U32)
      *        // it turns out these are encoded by applying an extender to the `mem{b,ub,...}(gp+#u16)` forms
      * [x]:   mem{b,h,w,d}(##U32) = Rs[.new]
      *        // predicated stores
-     * [ ]:   if ([!]Pt[.new]) mem{b,h,w,d}(Rs + ##U32) = Rt[.new]
+     * [x]:   if ([!]Pt[.new]) mem{b,h,w,d}(Rs + ##U32) = Rt[.new]
      * [x]:   mem{b,h,w,d}(Rs + ##U32) = Rt[.new]
      * [x]:   mem{b,h,w,d}(Rd=##U32) = Rt[.new]
      * [x]:   mem{b,h,w,d}(Ru<<#u2 + ##U32) = Rt[.new]
-     * [ ]:   if ([!]Pt[.new]) mem{b,h,w,d}(##U32) = Rt[.new]
-     * [ ]:   [if [!]Ps] memw(Rs + #u6) = ##U32 // constant store
-     * [ ]:   memw(Rs + Rt<<#u2) = ##U32 // constant store
-     * [ ]:   if (cmp.xx(Rs.new,##U32)) jump:hint target
+     * [x]:   if ([!]Pt[.new]) mem{b,h,w,d}(##U32) = Rt[.new]
+     * [x]:   [if [!]Ps] memw(Rs + #u6) = ##U32 // constant store
+     * // this just does not exist?!
+     * [!]:   memw(Rs + Rt<<#u2) = ##U32 // constant store
+     * [x]:   if (cmp.xx(Rs.new,##U32)) jump:hint target
      * [x]:   Rd = ##u32
-     * [ ]:   Rdd = combine(Rs,##u32)
-     * [ ]:   Rdd = combine(##u32,Rs)
-     * [ ]:   Rdd = combine(##u32,#s8)
-     * [ ]:   Rdd = combine(#s8,##u32)
-     * [ ]:   Rd = mux(Pu, Rs,##u32)
-     * [ ]:   Rd = mux(Pu, ##u32, Rs)
-     * [ ]:   Rd = mux(Pu,##u32,#s8)
-     * [ ]:   if ([!]Pu[.new]) Rd = add(Rs,##u32)
-     * [ ]:   if ([!]Pu[.new]) Rd = ##u32
-     * [ ]:   Pd = [!]cmp.eq (Rs,##u32)
-     * [ ]:   Pd = [!]cmp.gt (Rs,##u32)
-     * [ ]:   Pd = [!]cmp.gtu (Rs,##u32)
-     * [ ]:   Rd = [!]cmp.eq(Rs,##u32)
+     * [x]:   Rdd = combine(Rs,##u32)
+     * [x]:   Rdd = combine(##u32,Rs)
+     * [x]:   Rdd = combine(##u32,#s8)
+     * [x]:   Rdd = combine(#s8,##u32)
+     * [x]:   Rd = mux(Pu, Rs,##u32)
+     * [x]:   Rd = mux(Pu, ##u32, Rs)
+     * [x]:   Rd = mux(Pu,##u32,#s8)
+     * [x]:   if ([!]Pu[.new]) Rd = add(Rs,##u32)
+     * [x]:   if ([!]Pu[.new]) Rd = ##u32
+     * [x]:   Pd = [!]cmp.eq (Rs,##u32)
+     * [x]:   Pd = [!]cmp.gt (Rs,##u32)
+     * [x]:   Pd = [!]cmp.gtu (Rs,##u32)
      * [x]:   Rd = and(Rs,##u32)
      * [x]:   Rd = or(Rs,##u32)
      * [x]:   Rd = sub(##u32,Rs)
-     * [ ]:   Rd = add(Rs,##s32)
-     * [ ]:   Rd = mpyi(Rs,##u32)
-     * [ ]:   Rd += mpyi(Rs,##u32)
-     * [ ]:   Rd -= mpyi(Rs,##u32)
-     * [ ]:   Rx += add(Rs,##u32)
-     * [ ]:   Rx -= add(Rs,##u32)
+     * [x]:   Rd = add(Rs,##s32)
+     * // this does not exist...
+     * [!]:   Rd = mpyi(Rs,##u32)
+     * [x]:   Rd += mpyi(Rs,##u32)
+     * [x]:   Rd -= mpyi(Rs,##u32)
+     * [x]:   Rx += add(Rs,##u32)
+     * [x]:   Rx -= add(Rs,##u32)
      * [x]:   Rd = ##u32
-     * [ ]:   Rd = add(Rs,##s32)
-     * [ ]:   jump (PC + ##s32)
-     * [ ]:   call (PC + ##s32)
-     * [ ]:   if ([!]Pu) call (PC + ##s32)
-     * [ ]:   Pd = spNloop0(PC+##s32,Rs/#U10)
-     * [ ]:   loop0/1 (PC+##s32,#Rs/#U10)
-     * [ ]:   Rd = add(pc,##s32)
-     * [ ]:   Rd = add(##u32,mpyi(Rs,#u6))
-     * [ ]:   Rd = add(##u32,mpyi(Rs,Rt))
-     * [ ]:   Rd = add(Rs,add(Rt,##u32))
+     * [x]:   Rd = add(Rs,##s32)
+     * [x]:   jump (PC + ##s32)
+     * [x]:   call (PC + ##s32)
+     * [x]:   if ([!]Pu) call (PC + ##s32)
+     * [x]:   Pd = spNloop0(PC+##s32,Rs/#U10)
+     * [x]:   loop0/1 (PC+##s32,#Rs/#U10)
+     * [x]:   Rd = add(pc,##s32)
+     * [x]:   Rd = add(##u32,mpyi(Rs,#u6))
+     * [x]:   Rd = add(##u32,mpyi(Rs,Rt))
+     * [x]:   Rd = add(Rs,add(Rt,##u32))
      * [x]:   Rd = add(Rs,sub(##u32,Rt))
-     * [x]:   Rd = sub(##u32,add(Rs,Rt))
+     * // doesn't exist?
+     * [!]:   Rd = sub(##u32,add(Rs,Rt))
      * [x]:   Rd = or(Rs,and(Rt,##u32))
-     * [ ]:   Rx = add/sub/and/or (##u32,asl/asr/lsr(Rx,#U5))
-     * [ ]:   Rx = add/sub/and/or (##u32,asl/asr/lsr(Rs,Rx))
-     * [ ]:   Rx = add/sub/and/or (##u32,asl/asr/lsr(Rx,Rs))
+     * [x]:   Rx = add/sub/and/or (##u32,asl/asr/lsr(Rx,#U5))
+     * // neither of these exist?
+     * [!]:   Rx = add/sub/and/or (##u32,asl/asr/lsr(Rs,Rx))
+     * [!]:   Rx = add/sub/and/or (##u32,asl/asr/lsr(Rx,Rs))
      * [ ]:   Pd = cmpb/h.{eq,gt,gtu} (Rs,##u32)
      */
 
@@ -339,6 +342,215 @@ fn extenders() {
         0xc7, 0xc6, 0xc4, 0xad,
     ], "{ memd(r4<<1 + 0x207) = r7:6 }");
 
+    // not writing out permutations for all predicated instructions come on now
+    // if ([!]Pt[.new]) Rd = mem{b,ub,h,uh,w,d} (Rs + ##U32)
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0xa8, 0xf0, 0x6a, 0x47,
+    ], "{ if (!p2.new) r8 = memuh(r10+#522) }");
+    // if ([!]Pt[.new]) Rd = mem{b,ub,h,uh,w,d} (##U32)
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0x90, 0xf5, 0x62, 0x9f,
+    ], "{ if (p2.new) r16 = memuh(##0x205) }");
+    // if ([!]Pt[.new]) mem{b,h,w,d}(Rs + ##U32) = Rt[.new]
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0x2a, 0xc7, 0x4a, 0x40,
+    ], "{ if (p2) memh(r10+#522) = r7 }");
+    // if ([!]Pt[.new]) mem{b,h,w,d}(##U32) = Rt[.new]
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0xc9, 0xe6, 0x80, 0xaf,
+    ], "{ if (p1.new) memw(#0x209) = r6 }");
+    // [if [!]Ps] memw(Rs + #u6) = ##U32 // constant store
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0xbf, 0xe2, 0x84, 0x38,
+    ], "{ if (!p1) memb(r4+#5) = #575 }");
+    // if (cmp.xx(Rs.new,##U32)) jump:hint target
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0x96, 0xe3, 0xd4, 0x24,
+    ], "{ if (!cmp.gt(r4.new, ##0x203)) jump:t $+0x32c }");
+
+    test_display(&[
+        0x02, 0x40, 0x00, 0x00,
+        0x01, 0xd6, 0x49, 0x6a,
+    ], "{ r1 = add(pc, ##0xac) }");
+
+    test_display(&[
+        0x0c, 0x42, 0xf8, 0x03,
+        0x17, 0xc2, 0x19, 0xb0,
+    ], "{ r23 = add(r25, ##0x3f808310) }");
+
+    //    Rdd = combine(##u32,#s8)
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0xf0, 0xe0, 0x40, 0x7c,
+    ], "{ r17:16 = combine(##0x207, #-127) }");
+
+    //    Rdd = combine(#s8,##u32)
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0xf0, 0xc0, 0x84, 0x7c,
+    ], "{ r17:16 = combine(#7, ##0x208) }");
+
+    //    Rd = mux(Pu, Rs,##u32)
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0xf0, 0xc0, 0x26, 0x73,
+    ], "{ r16 = mux(p1, r6, ##0x207) }");
+    //    Rd = mux(Pu, ##u32, Rs)
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0xf0, 0xc0, 0xa6, 0x73,
+    ], "{ r16 = mux(p1, ##0x207, r6) }");
+    //    Rd = mux(Pu,##u32,#s8)
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0xf1, 0xe0, 0xa7, 0x7a,
+    ], "{ r17 = mux(p1, ##0x207, #79) }");
+
+    //    if ([!]Pu[.new]) Rd = add(Rs,##u32)
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0xf0, 0xe0, 0xc6, 0x74,
+    ], "{ if (!p2.new) r16 = add(r6, ##0x207) }");
+
+    //    if ([!]Pu[.new]) Rd = ##u32
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0xf0, 0xe0, 0xc0, 0x7e,
+    ], "{ if (!p2.new) r16 = ##0x207 }");
+
+    //    Pd = [!]cmp.eq (Rs,##u32)
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0xf1, 0xc0, 0x06, 0x75,
+    ], "{ p1 = !cmp.eq(r6, ##0x207) }");
+    //    Pd = [!]cmp.gt (Rs,##u32)
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0xf1, 0xc0, 0x46, 0x75,
+    ], "{ p1 = !cmp.gt(r6, ##0x207) }");
+    //    Pd = [!]cmp.gtu (Rs,##u32)
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0xf1, 0xc0, 0x86, 0x75,
+    ], "{ p1 = !cmp.gtu(r6, ##0x207) }");
+
+    //    Rd = mpyi(Rs,##u32)
+
+    //    Rd += mpyi(Rs,##u32)
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0x96, 0xc6, 0x14, 0xe1,
+    ], "{ r22 += mpyi(r20, ##0x234) }");
+    //    Rd -= mpyi(Rs,##u32)
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0x96, 0xc6, 0x94, 0xe1,
+    ], "{ r22 -= mpyi(r20, ##0x234) }");
+    //    Rx += add(Rs,##u32)
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0x96, 0xc6, 0x14, 0xe2,
+    ], "{ r22 += add(r20, ##0x234) }");
+    //    Rx -= add(Rs,##u32)
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0x96, 0xc6, 0x94, 0xe2,
+    ], "{ r22 -= add(r20, ##0x234) }");
+    //    Rd = add(Rs,##s32)
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0x02, 0xc0, 0x00, 0x58,
+    ], "{ jump $+0x204 }");
+    //    jump (PC + ##s32)
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0x02, 0xc0, 0x00, 0x5a,
+    ], "{ call $+0x204 }");
+    //    call (PC + ##s32)
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0x02, 0xc1, 0x00, 0x5c,
+    ], "{ if (p1) jump:nt $+0x204 }");
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0x02, 0xc9, 0x20, 0x5c,
+    ], "{ if (!p1.new) jump:nt $+0x204 }");
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0x02, 0xc1, 0x20, 0x5d,
+    ], "{ if (!p1) call $+0x204 }");
+    //    if ([!]Pu) call (PC + ##s32)
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0x08, 0xc2, 0xa6, 0x60,
+    ], "{ p3 = sp1loop0($+0x224, r6) }");
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0x08, 0xc2, 0xc6, 0x60,
+    ], "{ p3 = sp2loop0($+0x224, r6) }");
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0x08, 0xc2, 0xe6, 0x60,
+    ], "{ p3 = sp3loop0($+0x224, r6) }");
+    //    Pd = spNloop0(PC+##s32,Rs/#U10)
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0x08, 0xc2, 0x06, 0x60,
+    ], "{ loop0($+0x224, r6) }");
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0x08, 0xc2, 0x26, 0x60,
+    ], "{ loop1($+0x224, r6) }");
+    //    loop0/1 (PC+##s32,#Rs/#U10)
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0x96, 0xe6, 0xd4, 0xd8,
+    ], "{ r6 = add(##0x22c, mpyi(r20, #0x36)) }");
+    //    Rd = add(##u32,mpyi(Rs,#u6))
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0x96, 0xe6, 0x54, 0xd7,
+    ], "{ r22 = add(##0x22c, mpyi(r20, r6)) }");
+    //    Rd = add(##u32,mpyi(Rs,Rt))
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0x96, 0xe6, 0x34, 0xdb,
+    ], "{ r6 = add(r20, add(r22, ##0x21c)) }");
+    //    Rd = add(Rs,add(Rt,##u32))
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0x96, 0xe6, 0xb4, 0xdb,
+    ], "{ r6 = add(r20, sub(##0x21c, r22)) }");
+    //    Rd = add(Rs,sub(##u32,Rt))
+
+    //    Rd = sub(##u32,add(Rs,Rt))
+
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0x96, 0xc3, 0x54, 0xda,
+    ], "{ r20 = or(r22, and(r20, ##0x21c)) }");
+    //    Rd = or(Rs,and(Rt,##u32))
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0x84, 0xe6, 0x14, 0xde,
+    ], "{ r20 = add(##0x218, asl(r20, #0x6)) }");
+    //    Rx = add/sub/and/or (##u32,asl/asr/lsr(Rx,#U5))
+
+    // neither of these exist?
+    //    Rx = add/sub/and/or (##u32,asl/asr/lsr(Rs,Rx))
+    //    Rx = add/sub/and/or (##u32,asl/asr/lsr(Rx,Rs))
+
+    //    Pd = cmpb/h.{eq,gt,gtu} (Rs,##u32)
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0x87, 0xe6, 0x14, 0xdd,
+    ], "{ p3 = cmpb.gt(r20, ##0x234) }");
 
     test_display(&[
         0x08, 0x40, 0x00, 0x00,
@@ -769,6 +981,8 @@ fn inst_0111() {
     test_invalid(&0b0111_0111111_00110_11_1_0_0000_111_10001u32.to_le_bytes(), DecodeError::InvalidOpcode);
 
     test_display(&0b0111_1000110_00110_11_1_0_0000_111_10001u32.to_le_bytes(), "{ r17 = #-15929 }");
+
+    test_display(&0b0111_101_01_0100111_11_1_00000111_10001u32.to_le_bytes(),  "{ r17 = mux(p1, #7, #79) }");
 
     test_display(&0b0111_1100010_00000_11_1_0_0000_111_10000u32.to_le_bytes(), "{ r17:16 = combine(#7, #-127) }");
     test_display(&0b0111_1100100_10000_11_1_0_0000_111_10000u32.to_le_bytes(), "{ r17:16 = combine(#7, #0x21) }");
