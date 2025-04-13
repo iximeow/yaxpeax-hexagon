@@ -4329,7 +4329,7 @@ fn decode_instruction<
                             let dotnew = (inst >> 12) & 0b1 != 0;
 
                             handler.inst_predicated(tt as u8, negated, dotnew)?;
-                            handler.on_source_decoded(Operand::RegStoreAssign { base: xxxxx, addr: iiiiii as u16 })?;
+                            handler.on_source_decoded(Operand::imm_u32(iiiiii as u32))?;
                             if !wide {
                                 handler.on_dest_decoded(Operand::gpr(ddddd))?;
                             } else {
