@@ -1255,15 +1255,30 @@ impl Operand {
         Self::ImmU32 { imm: num }
     }
 
-    fn immext(
-        i: u32, extender: &mut Option<u32>, unextended: impl FnOnce(u32) -> Self
+    fn with_extension(
+        i: u32, extender: &mut Option<u32>,
+        extended: impl FnOnce(u32) -> Result<Self, yaxpeax_arch::StandardDecodeError>,
+        no_extender: impl FnOnce(u32) -> Result<Self, yaxpeax_arch::StandardDecodeError>,
     ) -> Result<Self, yaxpeax_arch::StandardDecodeError> {
         if let Some(extender) = extender.take() {
+            eprintln!("i       : {:04x}", i);
+            eprintln!("extender: {:04x}", extender);
             operand_check!(i & !0x3f == 0);
-            Ok(Self::Immext { imm: i | (extender << 6) })
+            extended(i | (extender << 6))
         } else {
-            Ok(unextended(i))
+            no_extender(i)
         }
+    }
+
+    fn immext(
+        i: u32, extender: &mut Option<u32>,
+        unextended: impl FnOnce(u32) -> Result<Self, yaxpeax_arch::StandardDecodeError>,
+    ) -> Result<Self, yaxpeax_arch::StandardDecodeError> {
+        Self::with_extension(
+            i, extender,
+            |imm| Ok(Self::Immext { imm }),
+            unextended
+        )
     }
 }
 
@@ -1544,7 +1559,10 @@ fn reg_b16(inst: u32) -> u8 { ((inst >> 16) & 0b11111) as u8 }
 fn decode_store_ops<
     T: Reader<<Hexagon as Arch>::Address, <Hexagon as Arch>::Word>,
     H: DecodeHandler<T>,
->(handler: &mut H, opbits: u8, srcreg: u8, dest_op: impl Fn(u8) -> Operand) -> Result<(), DecodeError> {
+>(
+    handler: &mut H, opbits: u8, srcreg: u8,
+    dest_op: impl FnOnce(u8) -> Result<Operand, DecodeError>
+) -> Result<(), DecodeError> {
     if opbits == 0b101 {
         handler.on_source_decoded(Operand::gpr_new(srcreg & 0b111))?;
         let opbits = (srcreg >> 3) & 0b11;
@@ -1553,33 +1571,33 @@ fn decode_store_ops<
             Some(Opcode::StoreMemw), None,
         ];
         handler.on_opcode_decoded(decode_opcode!(OPS[opbits as usize]))?;
-        handler.on_dest_decoded(dest_op(opbits))?;
+        handler.on_dest_decoded(dest_op(opbits)?)?;
     } else {
         match opbits {
             0b000 => {
                 handler.on_opcode_decoded(Opcode::StoreMemb)?;
                 handler.on_source_decoded(Operand::gpr(srcreg))?;
-                handler.on_dest_decoded(dest_op(0))?;
+                handler.on_dest_decoded(dest_op(0)?)?;
             }
             0b010 => {
                 handler.on_opcode_decoded(Opcode::StoreMemh)?;
                 handler.on_source_decoded(Operand::gpr(srcreg))?;
-                handler.on_dest_decoded(dest_op(1))?;
+                handler.on_dest_decoded(dest_op(1)?)?;
             }
             0b011 => {
                 handler.on_opcode_decoded(Opcode::StoreMemh)?;
                 handler.on_source_decoded(Operand::gpr_high(srcreg))?;
-                handler.on_dest_decoded(dest_op(1))?;
+                handler.on_dest_decoded(dest_op(1)?)?;
             }
             0b100 => {
                 handler.on_opcode_decoded(Opcode::StoreMemw)?;
                 handler.on_source_decoded(Operand::gpr(srcreg))?;
-                handler.on_dest_decoded(dest_op(2))?;
+                handler.on_dest_decoded(dest_op(2)?)?;
             }
             0b110 => {
                 handler.on_opcode_decoded(Opcode::StoreMemd)?;
                 handler.on_source_decoded(Operand::gprpair(srcreg)?)?;
-                handler.on_dest_decoded(dest_op(3))?;
+                handler.on_dest_decoded(dest_op(3)?)?;
             }
             _ => {
                 return Err(DecodeError::InvalidOpcode);
@@ -1594,39 +1612,42 @@ fn decode_store_ops<
 fn decode_load_ops<
     T: Reader<<Hexagon as Arch>::Address, <Hexagon as Arch>::Word>,
     H: DecodeHandler<T>,
->(handler: &mut H, opbits: u8, dstreg: u8, src_op: impl Fn(u8) -> Operand) -> Result<(), DecodeError> {
+>(
+    handler: &mut H, opbits: u8, dstreg: u8,
+    src_op: impl FnOnce(u8) -> Result<Operand, DecodeError>
+) -> Result<(), DecodeError> {
     // for loads, there's none of the carveout for `R<n>.new` or high register halves.
     // just mem{b,ub,h,uh,w,d}
     match opbits {
         0b000 => {
             handler.on_opcode_decoded(Opcode::LoadMemb)?;
             handler.on_dest_decoded(Operand::gpr(dstreg))?;
-            handler.on_source_decoded(src_op(0))?;
+            handler.on_source_decoded(src_op(0)?)?;
         }
         0b001 => {
             handler.on_opcode_decoded(Opcode::LoadMemub)?;
             handler.on_dest_decoded(Operand::gpr(dstreg))?;
-            handler.on_source_decoded(src_op(0))?;
+            handler.on_source_decoded(src_op(0)?)?;
         }
         0b010 => {
             handler.on_opcode_decoded(Opcode::LoadMemh)?;
             handler.on_dest_decoded(Operand::gpr(dstreg))?;
-            handler.on_source_decoded(src_op(1))?;
+            handler.on_source_decoded(src_op(1)?)?;
         }
         0b011 => {
             handler.on_opcode_decoded(Opcode::LoadMemuh)?;
             handler.on_dest_decoded(Operand::gpr(dstreg))?;
-            handler.on_source_decoded(src_op(1))?;
+            handler.on_source_decoded(src_op(1)?)?;
         }
         0b100 => {
             handler.on_opcode_decoded(Opcode::LoadMemw)?;
             handler.on_dest_decoded(Operand::gpr(dstreg))?;
-            handler.on_source_decoded(src_op(2))?;
+            handler.on_source_decoded(src_op(2)?)?;
         }
         0b110 => {
             handler.on_opcode_decoded(Opcode::LoadMemd)?;
             handler.on_dest_decoded(Operand::gprpair(dstreg)?)?;
-            handler.on_source_decoded(src_op(3))?;
+            handler.on_source_decoded(src_op(3)?)?;
         }
         _ => {
             return Err(DecodeError::InvalidOpcode);
@@ -1715,10 +1736,16 @@ fn decode_packet<
             }
         }
 
+        if extender.is_some() {
+            eprintln!("extended:    {:08x}", inst);
+        }
+
         let iclass = (inst >> 28) & 0b1111;
 
         if iclass == 0b0000 {
-            extender = Some((inst & 0x3fff) | ((inst >> 2) & 0xfff));
+            eprintln!("instruction: {:08x}", inst);
+            extender = Some((inst & 0x3fff) | ((inst >> 2) & 0x3ffc000));
+            eprintln!("extender:    {:08x}", extender.unwrap());
         } else {
             handler.start_instruction();
             decode_instruction(decoder, handler, inst, &mut extender)?;
@@ -1731,7 +1758,9 @@ fn decode_packet<
             // > normally ensures that only valid constant extenders are generated.
             //
             // the extender must extend the instruction word that follows it.
-            opcode_check!(extender.is_none());
+            if extender.is_some() {
+                eprintln!("unconsumed extender: {:x}", extender.unwrap());
+            }
             handler.end_instruction();
         }
 
@@ -2095,7 +2124,7 @@ fn decode_instruction<
 
                             handler.on_opcode_decoded(decode_opcode!(OPCODES[min_op as usize]))?;
                             handler.on_source_decoded(Operand::RegShiftedReg { base: sssss, index: reg_mid, shift: ii })?;
-                            if min_op == 0b001 || min_op == 0b011 || min_op == 0b110 {
+                            if min_op == 0b110 {
                                 handler.on_dest_decoded(Operand::gprpair(reg_low)?)?;
                             } else {
                                 handler.on_dest_decoded(Operand::gpr(reg_low))?;
@@ -2223,10 +2252,17 @@ fn decode_instruction<
                     let iiiiii = i | i5;
 
                     decode_store_ops(handler, opbits as u8, srcreg as u8, |shamt| {
-                        Operand::RegOffset {
-                            base: sssss as u8,
-                            offset: iiiiii << shamt
-                        }
+                        Operand::with_extension(
+                            iiiiii << shamt, extender,
+                            |offset| Ok(Operand::RegOffset {
+                                base: sssss as u8,
+                                offset,
+                            }),
+                            |offset| Ok(Operand::RegOffset {
+                                base: sssss as u8,
+                                offset,
+                            }),
+                        )
                     })?;
                 } else {
                     let pred_reg = (inst >> 11) & 0b11;
@@ -2236,10 +2272,17 @@ fn decode_instruction<
                     let iiiiii = (inst >> 5) & 0b111111;
 
                     decode_load_ops(handler, opbits as u8, dstreg as u8, |shamt| {
-                        Operand::RegOffset {
-                            base: sssss as u8,
-                            offset: iiiiii << shamt
-                        }
+                        Operand::with_extension(
+                            iiiiii << shamt, extender,
+                            |offset| Ok(Operand::RegOffset {
+                                base: sssss as u8,
+                                offset,
+                            }),
+                            |offset| Ok(Operand::RegOffset {
+                                base: sssss as u8,
+                                offset,
+                            }),
+                        )
                     })?;
                 }
             } else {
@@ -2255,9 +2298,13 @@ fn decode_instruction<
                     let ttttt = reg_b8(inst);
 
                     decode_store_ops(handler, opbits, ttttt, |shamt| {
-                        Operand::GpOffset {
-                            offset: i << shamt
-                        }
+                        Operand::with_extension(
+                            i << shamt, extender,
+                            |imm| Ok(Operand::Immext { imm }),
+                            |offset| Ok(Operand::GpOffset {
+                                offset,
+                            }),
+                        )
                     })?;
                 } else {
                     let i_lo = (inst >> 5) & 0b1111_1111;
@@ -2265,7 +2312,13 @@ fn decode_instruction<
                     let ddddd = reg_b0(inst);
 
                     decode_load_ops(handler, opbits, ddddd, |shamt| {
-                        Operand::GpOffset { offset: i << shamt }
+                        Operand::with_extension(
+                            i << shamt, extender,
+                            |imm| Ok(Operand::Immext { imm }),
+                            |offset| Ok(Operand::GpOffset {
+                                offset,
+                            }),
+                        )
                     })?;
                 }
             }
@@ -3118,7 +3171,7 @@ fn decode_instruction<
                         handler.on_source_decoded(
                             Operand::immext(
                                 i as u32, extender,
-                                |i: u32| Operand::imm_i8(i as i8)
+                                |i: u32| Ok(Operand::imm_i8(i as i8))
                             )?
                         )?;
                         handler.on_source_decoded(Operand::gpr(sssss))?;
@@ -3127,7 +3180,7 @@ fn decode_instruction<
                         handler.on_source_decoded(
                             Operand::immext(
                                 i as u32, extender,
-                                |i: u32| Operand::imm_i8(i as i8)
+                                |i: u32| Ok(Operand::imm_i8(i as i8))
                             )?
                         )?;
                     }
@@ -3221,11 +3274,21 @@ fn decode_instruction<
                 handler.on_opcode_decoded(opcode)?;
                 handler.on_dest_decoded(Operand::gpr(ddddd))?;
                 if opcode == Opcode::Sub {
-                    handler.on_source_decoded(Operand::imm_i16(i))?;
+                    handler.on_source_decoded(
+                        Operand::immext(
+                            i as u32, extender,
+                            |i: u32| Ok(Operand::imm_i16(i as i16))
+                        )?
+                    )?;
                     handler.on_source_decoded(Operand::gpr(sssss))?;
                 } else {
                     handler.on_source_decoded(Operand::gpr(sssss))?;
-                    handler.on_source_decoded(Operand::imm_i16(i))?;
+                    handler.on_source_decoded(
+                        Operand::immext(
+                            i as u32, extender,
+                            |i: u32| Ok(Operand::imm_i16(i as i16))
+                        )?
+                    )?;
                 }
             }
             0b0111 => {
@@ -3241,7 +3304,12 @@ fn decode_instruction<
 
                 handler.on_opcode_decoded(Opcode::TransferImmediate)?;
                 handler.on_dest_decoded(Operand::gpr(ddddd))?;
-                handler.on_source_decoded(Operand::imm_i16(i))?;
+                handler.on_source_decoded(
+                    Operand::immext(
+                        i as u32, extender,
+                        |i: u32| Ok(Operand::imm_i16(i as i16))
+                    )?
+                )?;
             }
             0b1010 |
             0b1011 => {
@@ -4333,11 +4401,22 @@ fn decode_instruction<
                     static OPCODES: [Option<(Opcode, bool, u8)>; 16] = [
                         None,      Some((Membh, false, 0x01)), Some((MemhFifo, true, 0x01)), Some((Memubh, false, 0x01)),
                         Some((MembFifo, true, 0x00)), Some((Memubh, true, 0x02)), None, Some((Membh, true, 0x02)),
-                        Some((Memb, false, 0x03)), Some((Memub, true, 0x03)), Some((Memh, false, 0x03)), Some((Memuh, true, 0x03)),
-                        Some((Memw, false, 0x03)), None, Some((Memd, true, 0x03)), None,
+                        Some((Memb, false, 0x00)), Some((Memub, false, 0x00)), Some((Memh, false, 0x01)), Some((Memuh, false, 0x01)),
+                        Some((Memw, false, 0x02)), None, Some((Memd, true, 0x03)), None,
                     ];
-                    let (op, wide, samt) = decode_opcode!(OPCODES[op as usize]);
-                    handler.on_source_decoded(Operand::RegOffset { base: sssss, offset: (i as u32) << samt })?;
+                    let (op, wide, shamt) = decode_opcode!(OPCODES[op as usize]);
+                    // the manuals through V79 do not describe constant extenders being applicable
+                    // to memb_fifo or meubh or ... but it turns out each of these opcodes include
+                    // an `apply_extension()` clause in their behavior, so this seems like a
+                    // deficiency in the manual rather. assume this operand can be extended for all
+                    // opcodes.
+                    handler.on_source_decoded(
+                        Operand::with_extension(
+                            (i as u32) << shamt, extender,
+                            |offset| Ok(Operand::RegOffset { base: sssss, offset }),
+                            |offset| Ok(Operand::RegOffset { base: sssss, offset }),
+                        )?
+                    )?;
                     if !wide {
                         handler.on_dest_decoded(Operand::gpr(ddddd))?;
                     } else {
@@ -4465,7 +4544,7 @@ fn decode_instruction<
                     let i11 = i_low | (i_mid << 8) | (i_high << 9);
 
                     decode_store_ops(handler, opc, ttttt, |shamt| {
-                        Operand::RegOffset { base: sssss, offset: i11 << shamt }
+                        Ok(Operand::RegOffset { base: sssss, offset: i11 << shamt })
                     })?;
 
                 }
@@ -4498,11 +4577,11 @@ fn decode_instruction<
                         if (inst >> 1) & 1 == 0 {
                             let iiii = (inst >> 3) & 0b1111;
                             decode_store_ops(handler, minbits, ttttt, |shamt| {
-                                Operand::RegOffsetCirc { base: xxxxx, offset: iiii << shamt, mu: u }
+                                Ok(Operand::RegOffsetCirc { base: xxxxx, offset: iiii << shamt, mu: u })
                             })?;
                         } else {
                             decode_store_ops(handler, minbits, ttttt, |_shamt| {
-                                Operand::RegCirc { base: xxxxx, mu: u }
+                                Ok(Operand::RegCirc { base: xxxxx, mu: u })
                             })?;
                         }
                     }
@@ -4518,12 +4597,12 @@ fn decode_instruction<
                                 opcode_check!(inst & 2 == 0);
                                 let iiii = ((inst >> 3) & 0b1111) as u32;
                                 decode_store_ops(handler, minbits, ttttt, |shamt| {
-                                    Operand::RegOffset { base: xxxxx, offset: iiii << shamt }
+                                    Ok(Operand::RegOffset { base: xxxxx, offset: iiii << shamt })
                                 })?;
                             } else {
                                 let uuuuuu = (inst & 0b111111) as u16;
                                 decode_store_ops(handler, minbits, ttttt, |_shamt| {
-                                    Operand::RegStoreAssign { base: xxxxx, addr: uuuuuu }
+                                    Ok(Operand::RegStoreAssign { base: xxxxx, addr: uuuuuu })
                                 })?;
                             }
                         } else {
@@ -4534,7 +4613,7 @@ fn decode_instruction<
                             let iiii = (inst >> 3) & 0b1111;
                             let dotnew = (inst >> 7) & 1 == 1;
                             decode_store_ops(handler, minbits, ttttt, |shamt| {
-                                Operand::RegOffset { base: xxxxx, offset: iiii << shamt }
+                                Ok(Operand::RegOffset { base: xxxxx, offset: iiii << shamt })
                             })?;
                             handler.inst_predicated(vv as u8, negated, dotnew)?;
                         }
@@ -4548,7 +4627,7 @@ fn decode_instruction<
                         if (inst >> 7) & 1 == 0 {
                             let u = (inst >> 13) & 1;
                             decode_store_ops(handler, minbits, ttttt, |_shamt| {
-                                Operand::RegMemIndexed { base: xxxxx, mu: u as u8 }
+                                Ok(Operand::RegMemIndexed { base: xxxxx, mu: u as u8 })
                             })?;
                         } else {
                             let i_hi = (inst >> 13) & 1;
@@ -4556,7 +4635,7 @@ fn decode_instruction<
                             let i = ((i_hi << 1) | i_lo) as u8;
                             let uuuuuu = (inst & 0b111111) as i16;
                             decode_store_ops(handler, minbits, ttttt, |_shamt| {
-                                Operand::RegShiftOffset { base: xxxxx, shift: i, offset: uuuuuu }
+                                Ok(Operand::RegShiftOffset { base: xxxxx, shift: i, offset: uuuuuu })
                             })?;
                         }
                     },
@@ -4569,7 +4648,7 @@ fn decode_instruction<
                         if (inst >> 7) & 1 == 0 {
                             let u = (inst >> 13) & 1;
                             decode_store_ops(handler, minbits, ttttt, |_shamt| {
-                                Operand::RegMemIndexedBrev { base: xxxxx, mu: u as u8 }
+                                Ok(Operand::RegMemIndexedBrev { base: xxxxx, mu: u as u8 })
                             })?;
                         } else {
                             // 1010|1111...|.....|PP|1...
@@ -4581,7 +4660,7 @@ fn decode_instruction<
                             let i6 = ((ii_high << 4) | iiii) as i8;
                             let dotnew = (inst >> 13) & 1 == 1;
                             decode_store_ops(handler, minbits, ttttt, |_shamt| {
-                                Operand::Absolute { addr: i6 }
+                                Ok(Operand::Absolute { addr: i6 })
                             })?;
                             handler.inst_predicated(vv as u8, negated, dotnew)?;
                         }

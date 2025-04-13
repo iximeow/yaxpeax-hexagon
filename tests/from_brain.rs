@@ -18,6 +18,216 @@ fn test_invalid(bytes: &[u8], expected: DecodeError) {
     assert_eq!(err, expected);
 }
 
+// mix of seen-in-the-wild extenders and stuff i made up
+#[test]
+fn extenders() {
+    /*
+     * extendable instructions covered in this test:
+     *        // it turns out these are encoded by applying an extender to the `mem{b,ub,...}(gp+#u16)` forms
+     * [ ]:   Rd = mem{b,ub,h,uh,w,d}(##U32)
+     *        // predicated loads
+     * [ ]:   if ([!]Pt[.new]) Rd = mem{b,ub,h,uh,w,d} (Rs + ##U32)
+     * [ ]:   Rd = mem{b,ub,h,uh,w,d} (Rs + ##U32)
+     * [ ]:   Rd = mem{b,ub,h,uh,w,d} (Re=##U32)
+     * [ ]:   Rd = mem{b,ub,h,uh,w,d} (Rt<<#u2 + ##U32)
+     * [ ]:   if ([!]Pt[.new]) Rd = mem{b,ub,h,uh,w,d} (##U32)
+     *        // it turns out these are encoded by applying an extender to the `mem{b,ub,...}(gp+#u16)` forms
+     * [ ]:   mem{b,h,w,d}(##U32) = Rs[.new]
+     *        // predicated stores
+     * [ ]:   if ([!]Pt[.new]) mem{b,h,w,d}(Rs + ##U32) = Rt[.new]
+     * [ ]:   mem{b,h,w,d}(Rs + ##U32) = Rt[.new]
+     * [ ]:   mem{b,h,w,d}(Rd=##U32) = Rt[.new]
+     * [ ]:   mem{b,h,w,d}(Ru<<#u2 + ##U32) = Rt[.new]
+     * [ ]:   if ([!]Pt[.new]) mem{b,h,w,d}(##U32) = Rt[.new]
+     * [ ]:   [if [!]Ps] memw(Rs + #u6) = ##U32 // constant store
+     * [ ]:   memw(Rs + Rt<<#u2) = ##U32 // constant store
+     * [ ]:   if (cmp.xx(Rs.new,##U32)) jump:hint target
+     * [ ]:   Rd = ##u32
+     * [ ]:   Rdd = combine(Rs,##u32)
+     * [ ]:   Rdd = combine(##u32,Rs)
+     * [ ]:   Rdd = combine(##u32,#s8)
+     * [ ]:   Rdd = combine(#s8,##u32)
+     * [ ]:   Rd = mux(Pu, Rs,##u32)
+     * [ ]:   Rd = mux(Pu, ##u32, Rs)
+     * [ ]:   Rd = mux(Pu,##u32,#s8)
+     * [ ]:   if ([!]Pu[.new]) Rd = add(Rs,##u32)
+     * [ ]:   if ([!]Pu[.new]) Rd = ##u32
+     * [ ]:   Pd = [!]cmp.eq (Rs,##u32)
+     * [ ]:   Pd = [!]cmp.gt (Rs,##u32)
+     * [ ]:   Pd = [!]cmp.gtu (Rs,##u32)
+     * [ ]:   Rd = [!]cmp.eq(Rs,##u32)
+     * [ ]:   Rd = and(Rs,##u32)
+     * [ ]:   Rd = or(Rs,##u32)
+     * [ ]:   Rd = sub(##u32,Rs)
+     * [ ]:   Rd = add(Rs,##s32)
+     * [ ]:   Rd = mpyi(Rs,##u32)
+     * [ ]:   Rd += mpyi(Rs,##u32)
+     * [ ]:   Rd -= mpyi(Rs,##u32)
+     * [ ]:   Rx += add(Rs,##u32)
+     * [ ]:   Rx -= add(Rs,##u32)
+     * [x]:   Rd = ##u32
+     * [ ]:   Rd = add(Rs,##s32)
+     * [ ]:   jump (PC + ##s32)
+     * [ ]:   call (PC + ##s32)
+     * [ ]:   if ([!]Pu) call (PC + ##s32)
+     * [ ]:   Pd = spNloop0(PC+##s32,Rs/#U10)
+     * [ ]:   loop0/1 (PC+##s32,#Rs/#U10)
+     * [ ]:   Rd = add(pc,##s32)
+     * [ ]:   Rd = add(##u32,mpyi(Rs,#u6))
+     * [ ]:   Rd = add(##u32,mpyi(Rs,Rt))
+     * [ ]:   Rd = add(Rs,add(Rt,##u32))
+     * [x]:   Rd = add(Rs,sub(##u32,Rt))
+     * [x]:   Rd = sub(##u32,add(Rs,Rt))
+     * [x]:   Rd = or(Rs,and(Rt,##u32))
+     * [ ]:   Rx = add/sub/and/or (##u32,asl/asr/lsr(Rx,#U5))
+     * [ ]:   Rx = add/sub/and/or (##u32,asl/asr/lsr(Rs,Rx))
+     * [ ]:   Rx = add/sub/and/or (##u32,asl/asr/lsr(Rx,Rs))
+     * [ ]:   Pd = cmpb/h.{eq,gt,gtu} (Rs,##u32)
+     */
+
+    // HELP! not sure how extenders combined with shifted constants should work.
+    // for example: `Rdd=memd(gp+#u16:3)` can be extended. if u16 is `0...1111`, where the low
+    // three bits are all set, the address used for gp-relative addressing would be `1111000`. as
+    // an extended constant, would this also be `1111000` and illegal for extension as bits other
+    // than the low six are set? or is this `000111` with an unaligned address but otherwise
+    // extended and legal for execution?
+    //
+    // i am going to assume that the shifted immediate is used.
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0x0f, 0xc6, 0x00, 0x48,
+    ], "{ memb(##0x20f) = r6 }");
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0x0f, 0xc6, 0x40, 0x48,
+    ], "{ memh(##0x21e) = r6 }");
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0x0f, 0xc6, 0x80, 0x48,
+    ], "{ memw(##0x23c) = r6 }");
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0x0f, 0xc6, 0xa0, 0x48,
+    ], "{ memb(##0x20f) = r6.new }");
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0x0f, 0xce, 0xa0, 0x48,
+    ], "{ memh(##0x21e) = r6.new }");
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0x0f, 0xd6, 0xa0, 0x48,
+    ], "{ memw(##0x23c) = r6.new }");
+    // the immediate of 1111 << 3 shifts a 1 out of the low 6 bits and invalidates the operand.
+    test_invalid(&[
+        0x08, 0x40, 0x00, 0x00,
+        0x0f, 0xc6, 0xc0, 0x48,
+    ], DecodeError::InvalidOperand);
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0x07, 0xc6, 0xc0, 0x48,
+    ], "{ memd(##0x238) = r7:6 }");
+
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0xe6, 0xc1, 0x00, 0x49,
+    ], "{ r6 = memb(##0x20f) }");
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0xe6, 0xc1, 0x20, 0x49,
+    ], "{ r6 = memub(##0x20f) }");
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0xe6, 0xc1, 0x40, 0x49,
+    ], "{ r6 = memh(##0x21e) }");
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0xe6, 0xc1, 0x60, 0x49,
+    ], "{ r6 = memuh(##0x21e) }");
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0xe6, 0xc1, 0x80, 0x49,
+    ], "{ r6 = memw(##0x23c) }");
+    // the immediate of 1111 << 3 shifts a 1 out of the low 6 bits and invalidates the operand.
+    test_invalid(&[
+        0x08, 0x40, 0x00, 0x00,
+        0xe6, 0xc1, 0xc0, 0x49,
+    ], DecodeError::InvalidOperand);
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0xe6, 0xc0, 0xc0, 0x49,
+    ], "{ r7:6 = memd(##0x238) }");
+
+    // HELP! it is somewhat unfortunate that extended offsets don't get the ## treatment like
+    // immediates. having different operands for all immediate-extended forms seems like a kind of
+    // bad idea though.
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0xe6, 0xc1, 0x05, 0x91,
+    ], "{ r6 = memb(r5+#527) }");
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0xe6, 0xc1, 0x25, 0x91,
+    ], "{ r6 = memub(r5+#527) }");
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0xe6, 0xc1, 0x45, 0x91,
+    ], "{ r6 = memh(r5+#542) }");
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0xe6, 0xc1, 0x65, 0x91,
+    ], "{ r6 = memuh(r5+#542) }");
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0xe6, 0xc1, 0x85, 0x91,
+    ], "{ r6 = memw(r5+#572) }");
+    // the immediate of 1111 << 3 shifts a 1 out of the low 6 bits and invalidates the operand.
+    test_invalid(&[
+        0x08, 0x40, 0x00, 0x00,
+        0xe6, 0xc1, 0xc5, 0x91,
+    ], DecodeError::InvalidOperand);
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0xe6, 0xc0, 0xc5, 0x91,
+    ], "{ r7:6 = memd(r5+#568) }");
+
+
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0x0f, 0xc6, 0x00, 0x48,
+    ], "{ memb(##0x20f) = r6 }");
+    test_display(&[
+        0x08, 0x40, 0x00, 0x00,
+        0xe6, 0xc1, 0x00, 0x49,
+    ], "{ r6 = memb(##0x20f) }");
+
+    test_display(&[
+        0x0f, 0x40, 0x92, 0x6e, // r15 = syscfg
+        0x04, 0x40, 0xe1, 0x0f, // extender
+        0xf1, 0xc0, 0x00, 0x78, // r17 = #whatever
+    ], "{ r15 = syscfg; r17 = ##0xfe100107 }");
+
+    // the fact that something generated this packet is a little hilarious
+    test_display(&[
+        0x00, 0x40, 0x00, 0x00, // extender (0)
+        0xf1, 0xc1, 0x91, 0x76, // r17 = or(r17, #whatever)
+    ], "{ r17 = or(r17, ##0xf) }");
+
+    test_display(&[
+        0x04, 0x40, 0x00, 0x00, // extender (4 == 0x100)
+        0xf1, 0xc1, 0x91, 0x76, // r17 = or(r17, #whatever)
+    ], "{ r17 = or(r17, ##0x10f) }");
+
+    test_display(&[
+        0x04, 0x40, 0x00, 0x00, // extender (4 == 0x100)
+        0xf1, 0xc1, 0x51, 0x76, // r17 = sub(#whatever, r17)
+    ], "{ r17 = sub(##0x10f, r17) }");
+
+    test_display(&[
+        0x04, 0x40, 0x00, 0x00, // extender (4 == 0x100)
+        0xf1, 0xc1, 0x11, 0x76, // r17 = and(r17, #whatever)
+    ], "{ r17 = and(r17, ##0x10f) }");
+}
+
 // mentioned in the V62 manual, not later?
 // not sure if these are still what they seem in later versions, but until demonstrated
 // otherwise...
@@ -126,7 +336,7 @@ fn inst_0011() {
     test_invalid(&0b0011_1000111_00100_11_1_0_0010_101_11111u32.to_le_bytes(), DecodeError::InvalidOpcode);
 
     test_display(&0b0011_1010000_00100_11_1_0_0010_100_11111u32.to_le_bytes(), "{ lr = memb(r4 + r2<<3) }");
-    test_display(&0b0011_1010001_00100_11_1_0_0010_100_11110u32.to_le_bytes(), "{ r31:30 = memub(r4 + r2<<3) }");
+    test_display(&0b0011_1010001_00100_11_1_0_0010_100_11110u32.to_le_bytes(), "{ fp = memub(r4 + r2<<3) }");
 
     test_display(&0b0011_1011010_00100_11_1_0_0010_100_11110u32.to_le_bytes(), "{ memh(r4 + r2<<3) = fp }");
     test_display(&0b0011_1011011_00100_11_1_0_0010_100_11110u32.to_le_bytes(), "{ memh(r4 + r2<<3) = r30.h }");
@@ -694,11 +904,11 @@ fn inst_1001() {
     test_display(&0b1001_0110101_00010_11_1001_00_000_10000u32.to_le_bytes(), "{ r17:16 = memubh(r2+#7296) }");
     test_invalid(&0b1001_0000110_00010_11_0_00100_000_00011u32.to_le_bytes(), DecodeError::InvalidOpcode);
     test_display(&0b1001_0110111_00010_11_1001_00_000_10000u32.to_le_bytes(), "{ r17:16 = membh(r2+#7296) }");
-    test_display(&0b1001_0111000_00010_11_1001_00_000_10000u32.to_le_bytes(), "{ r16 = memb(r2+#14592) }");
-    test_display(&0b1001_0111001_00010_11_1001_00_000_10000u32.to_le_bytes(), "{ r17:16 = memub(r2+#14592) }");
-    test_display(&0b1001_0111010_00010_11_1001_00_000_10000u32.to_le_bytes(), "{ r16 = memh(r2+#14592) }");
-    test_display(&0b1001_0111011_00010_11_1001_00_000_10000u32.to_le_bytes(), "{ r17:16 = memuh(r2+#14592) }");
-    test_display(&0b1001_0111100_00010_11_1001_00_000_10000u32.to_le_bytes(), "{ r16 = memw(r2+#14592) }");
+    test_display(&0b1001_0111000_00010_11_1001_00_000_10000u32.to_le_bytes(), "{ r16 = memb(r2+#1824) }");
+    test_display(&0b1001_0111001_00010_11_1001_00_000_10000u32.to_le_bytes(), "{ r16 = memub(r2+#1824) }");
+    test_display(&0b1001_0111010_00010_11_1001_00_000_10000u32.to_le_bytes(), "{ r16 = memh(r2+#3648) }");
+    test_display(&0b1001_0111011_00010_11_1001_00_000_10000u32.to_le_bytes(), "{ r16 = memuh(r2+#3648) }");
+    test_display(&0b1001_0111100_00010_11_1001_00_000_10000u32.to_le_bytes(), "{ r16 = memw(r2+#7296) }");
     test_invalid(&0b1001_0001101_00010_11_0_00100_000_00011u32.to_le_bytes(), DecodeError::InvalidOpcode);
     test_display(&0b1001_0111110_00010_11_1001_00_000_10000u32.to_le_bytes(), "{ r17:16 = memd(r2+#14592) }");
     test_invalid(&0b1001_0001111_00010_11_0_00100_000_00011u32.to_le_bytes(), DecodeError::InvalidOpcode);
