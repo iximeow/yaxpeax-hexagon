@@ -17,5 +17,9 @@ fuzz_target!(|data: &[u8]| {
         let mut words = yaxpeax_arch::U8Reader::new(data);
         let fresh_inst = decoder.decode(&mut words).expect("decoded before, can decode again");
         assert_eq!(reused_inst, fresh_inst);
+
+        let s = reused_inst.to_string();
+        assert!(!s.contains("BUG"));
+        assert!(!s.contains("<invalid decode>"));
     }
 });

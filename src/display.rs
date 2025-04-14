@@ -294,7 +294,7 @@ impl fmt::Display for Instruction {
                 Some(AssignMode::SetBit) => ("= setbit", true),
             };
             write!(f, "{}({}){} {}{}{}{}",
-                self.opcode, self.dest.expect("unreachable; store has a destination"),
+                self.opcode, display_or_partial(self.dest.as_ref()),
                 match self.flags.threads {
                     Some(DomainHint::Same) => { ":st" },
                     Some(DomainHint::All) => { ":at" },
@@ -314,8 +314,8 @@ impl fmt::Display for Instruction {
         if SC_STORES.contains(&self.opcode) {
             write!(f, "{}({}, {}) = {}",
                 self.opcode,
-                self.dest.expect("unreachable; store has a destination"),
-                self.alt_dest.expect("unreachable; store-conditional has a predicate reg"),
+                display_or_partial(self.dest.as_ref()),
+                display_or_partial(self.alt_dest.as_ref()),
                 self.sources[0]
             )?;
             return Ok(());

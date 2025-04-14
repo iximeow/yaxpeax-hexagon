@@ -2468,3 +2468,11 @@ fn no_panic() {
         DecodeError::InvalidOpcode
     );
 }
+#[test]
+fn display() {
+    // if there is only an extender and no instruction, return an error.
+    test_invalid(
+        &[252, 205, 99, 0],
+        DecodeError::InvalidOpcode
+    );
+}

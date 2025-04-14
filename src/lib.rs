@@ -2115,6 +2115,8 @@ fn decode_packet<
         current_word += 1;
     }
 
+    opcode_check!(extender.is_none());
+
     handler.on_decode_end();
 
     Ok(())
