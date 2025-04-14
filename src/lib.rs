@@ -1654,6 +1654,395 @@ fn decode_load_ops<
     Ok(())
 }
 
+fn subinstr_gprpair_b0(word: u16) -> u8 {
+    let word = word & 0b111;
+    if word < 0b100 {
+        word as u8
+    } else {
+        (word + 16) as u8
+    }
+}
+
+fn subinstr_gpr_b0(word: u16) -> u8 {
+    let word = word & 0b1111;
+    if word < 0b1000 {
+        word as u8
+    } else {
+        (word + 8) as u8
+    }
+}
+
+fn subinstr_gpr_b4(word: u16) -> u8 {
+    let word = (word >> 4) & 0b1111;
+    if word < 0b1000 {
+        word as u8
+    } else {
+        (word + 8) as u8
+    }
+}
+
+fn subinstr_l1<
+    T: Reader<<Hexagon as Arch>::Address, <Hexagon as Arch>::Word>,
+    H: DecodeHandler<T>,
+>(handler: &mut H, word: u16, _extender: &mut Option<u32>) -> Result<(), <Hexagon as Arch>::DecodeError> {
+    handler.on_dest_decoded(Operand::gpr(subinstr_gpr_b0(word)))?;
+
+    let offset = ((word >> 8) & 0b1111) as i8;
+    let offset = offset << 4 >> 4;
+
+    if word & 0b1_0000_0000_0000 == 0 {
+        handler.on_opcode_decoded(Opcode::Memw)?;
+        let source = Operand::RegOffset {
+            base: subinstr_gpr_b4(word),
+            offset: (offset << 2) as i32 as u32,
+        };
+        handler.on_source_decoded(source)?;
+    } else {
+        handler.on_opcode_decoded(Opcode::Memub)?;
+        let source = Operand::RegOffset {
+            base: subinstr_gpr_b4(word),
+            offset: offset as i32 as u32,
+        };
+        handler.on_source_decoded(source)?;
+    }
+
+    Ok(())
+}
+
+fn subinstr_s1<
+    T: Reader<<Hexagon as Arch>::Address, <Hexagon as Arch>::Word>,
+    H: DecodeHandler<T>,
+>(handler: &mut H, word: u16, _extender: &mut Option<u32>) -> Result<(), <Hexagon as Arch>::DecodeError> {
+    handler.on_source_decoded(Operand::gpr(subinstr_gpr_b0(word)))?;
+
+    let offset = ((word >> 8) & 0b1111) as i8;
+    let offset = offset >> 4 << 4;
+
+    if word & 0b1_0000_0000_0000 == 0 {
+        handler.on_opcode_decoded(Opcode::StoreMemw)?;
+        let dest = Operand::RegOffset {
+            base: subinstr_gpr_b4(word),
+            offset: (offset << 2) as i32 as u32,
+        };
+        handler.on_dest_decoded(dest)?;
+    } else {
+        handler.on_opcode_decoded(Opcode::StoreMemb)?;
+        let dest = Operand::RegOffset {
+            base: subinstr_gpr_b4(word),
+            offset: offset as i32 as u32,
+        };
+        handler.on_dest_decoded(dest)?;
+    }
+
+    Ok(())
+}
+
+fn subinstr_l2<
+    T: Reader<<Hexagon as Arch>::Address, <Hexagon as Arch>::Word>,
+    H: DecodeHandler<T>,
+>(handler: &mut H, word: u16, _extender: &mut Option<u32>) -> Result<(), <Hexagon as Arch>::DecodeError> {
+    // top five bits get us through the major categories..
+    let upper = word >> 8;
+
+    if upper < 0b11000 {
+        let (opc, shamt) = if upper < 0b01000 {
+            (Opcode::Memb, 0)
+        } else if upper < 0b10000 {
+            (Opcode::Memh, 2)
+        } else {
+            (Opcode::Memuh, 2)
+        };
+        let offset = ((upper & 0b111) as i8) << 5 >> 5;
+        let source = Operand::RegOffset {
+            base: subinstr_gpr_b4(word),
+            offset: (offset << shamt) as i32 as u32,
+        };
+        handler.on_opcode_decoded(opc)?;
+        handler.on_source_decoded(source)?;
+        handler.on_dest_decoded(Operand::gpr(subinstr_gpr_b0(word)))?;
+        return Ok(());
+    }
+
+    let upper = upper & 0b111;
+    if upper < 0b11100 {
+        opcode_check!(false);
+    } else if upper < 0b11110 {
+        handler.on_opcode_decoded(Opcode::Memw)?;
+        handler.on_dest_decoded(Operand::gpr(subinstr_gpr_b0(word)))?;
+        let offset = ((word >> 4) & 0b11111) as i8;
+        let offset = offset << 3 >> 3;
+        handler.on_source_decoded(Operand::RegOffset {
+            base: 29,
+            offset: (offset << 2) as i32 as u32,
+        })?;
+
+        return Ok(());
+    } else if upper < 0b11111 {
+        handler.on_opcode_decoded(Opcode::Memd)?;
+        handler.on_dest_decoded(Operand::gprpair(subinstr_gprpair_b0(word))?)?;
+        let offset = ((word >> 3) & 0b11111) as i8;
+        let offset = offset << 3 >> 3;
+        handler.on_source_decoded(Operand::RegOffset {
+            base: 29,
+            offset: (offset << 3) as i32 as u32,
+        })?;
+
+        return Ok(());
+    }
+
+    if word & 0b0100 != 0 {
+        // predicated, low two bits configure it
+        opcode_check!(word & 0b01111100 == 0b01000100);
+
+        let negated = word & 0b01 != 0;
+        let dotnew = word & 0b10 != 0;
+        handler.inst_predicated(0 as u8, negated, dotnew)?;
+
+        // not-taken is really indicated with the same bit as .new ????
+        let hint_taken = word & 0b10 == 0;
+        handler.branch_hint(hint_taken)?;
+
+        if word & 0b10000000 == 0 {
+            handler.on_opcode_decoded(Opcode::DeallocReturn)?;
+            handler.on_dest_decoded(Operand::gprpair(30)?)?;
+            handler.on_source_decoded(Operand::gpr(30))?;
+        } else {
+            handler.on_opcode_decoded(Opcode::Jumpr)?;
+            handler.on_dest_decoded(Operand::gpr(31))?;
+        }
+    } else {
+        opcode_check!(word & 0b00111111 == 0);
+        let op = (word >> 6) & 0b11;
+        match op {
+            0b00 => {
+                // deallocframe
+                handler.on_opcode_decoded(Opcode::DeallocFrame)?;
+                handler.on_dest_decoded(Operand::gprpair(30)?)?;
+                handler.on_source_decoded(Operand::gpr(30))?;
+            }
+            0b01 => {
+                // deallocreturn
+                handler.on_opcode_decoded(Opcode::DeallocReturn)?;
+                handler.on_dest_decoded(Operand::gprpair(30)?)?;
+                handler.on_source_decoded(Operand::gpr(30))?;
+            }
+            0b10 => {
+                // nothing at 1111110000000
+                opcode_check!(false);
+            }
+            _ => {
+                // jumpr r31
+                handler.on_opcode_decoded(Opcode::Jumpr)?;
+                handler.on_dest_decoded(Operand::gpr(31))?;
+            }
+        }
+    }
+
+    Ok(())
+}
+
+fn subinstr_s2<
+    T: Reader<<Hexagon as Arch>::Address, <Hexagon as Arch>::Word>,
+    H: DecodeHandler<T>,
+>(handler: &mut H, word: u16, _extender: &mut Option<u32>) -> Result<(), <Hexagon as Arch>::DecodeError> {
+    // top five bits get us through the major categories..
+    let upper = word >> 8;
+
+    let top = upper >> 3;
+
+    if top < 0b01 {
+        handler.on_opcode_decoded(Opcode::StoreMemh)?;
+        let offset = (((word >> 8) & 0b111) as i8) << 5 >> 5;
+        handler.on_dest_decoded(Operand::RegOffset {
+            base: subinstr_gpr_b4(word),
+            offset: (offset << 1) as i32 as u32,
+        })?;
+        handler.on_source_decoded(Operand::gpr(subinstr_gpr_b0(word)))?;
+    } else if top < 0b10 {
+        opcode_check!(word & 0b00100 == 0);
+        if word & 0b0001 == 0 {
+            handler.on_opcode_decoded(Opcode::StoreMemw)?;
+            let offset = (((word >> 4) & 0b11111) as i8) << 3 >> 3;
+            handler.on_dest_decoded(Operand::RegOffset {
+                base: 29,
+                offset: (offset << 2) as i32 as u32,
+            })?;
+            handler.on_source_decoded(Operand::gpr(subinstr_gpr_b0(word)))?;
+        } else {
+            handler.on_opcode_decoded(Opcode::StoreMemd)?;
+            let offset = (((word >> 3) & 0b111111) as i8) << 2 >> 2;
+            handler.on_dest_decoded(Operand::RegOffset {
+                base: 29,
+                offset: (offset as i32 as u32) << 3,
+            })?;
+            handler.on_source_decoded(Operand::gprpair(subinstr_gprpair_b0(word))?)?;
+        }
+    } else if top < 0b11 {
+        opcode_check!(word & 0b00100 == 0);
+        let offset = ((word & 0b1111) as i8) << 4 >> 4;
+
+        if word & 0b0001 == 0 {
+            handler.on_opcode_decoded(Opcode::StoreMemw)?;
+            handler.on_dest_decoded(Operand::RegOffset {
+                base: subinstr_gpr_b4(word),
+                offset: (offset as i32 as u32) << 2,
+            })?;
+            handler.on_source_decoded(Operand::imm_u32((word as u32 >> 8) & 1))?;
+        } else {
+            handler.on_opcode_decoded(Opcode::StoreMemb)?;
+            handler.on_dest_decoded(Operand::RegOffset {
+                base: subinstr_gpr_b4(word),
+                offset: offset as i32 as u32,
+            })?;
+            handler.on_source_decoded(Operand::imm_u32((word as u32 >> 8) & 1))?;
+        }
+    } else {
+        opcode_check!(word & 0b1111 == 0);
+        handler.on_opcode_decoded(Opcode::AllocFrame)?;
+        let imm = (word >> 4) & 0b11111;
+        handler.on_source_decoded(Operand::imm_u16((imm as u16) << 3))?;
+    }
+
+    Ok(())
+}
+
+fn subinstr_a<
+    T: Reader<<Hexagon as Arch>::Address, <Hexagon as Arch>::Word>,
+    H: DecodeHandler<T>,
+>(handler: &mut H, word: u16, extender: &mut Option<u32>) -> Result<(), <Hexagon as Arch>::DecodeError> {
+    // from the V79 manual, only two instructions are documented as being extendable here:
+    // > Constant extenders expand the range of the immediate operand of an instruction to 32 bits,
+    // > and can expand the following sub-instructions:
+    // >
+    // > Rx = add(Rx,#s7)
+    // > Rd = #u6
+
+    // top five bits get us through the major categories..
+    let upper = word >> 8;
+
+    let top = upper >> 3;
+
+    if top == 0b00 {
+        // Rx = add(Rx, #i)
+        handler.on_opcode_decoded(Opcode::Add)?;
+        handler.on_dest_decoded(Operand::gpr(subinstr_gpr_b0(word)))?;
+        handler.on_source_decoded(Operand::gpr(subinstr_gpr_b0(word)))?;
+        let imm = (word >> 4) & 0b1111111;
+        handler.on_source_decoded(Operand::immext(imm as u32, extender, |imm| {
+            Ok(Operand::imm_i8((imm as i8) << 1 >> 1))
+        })?)?;
+    } else if top == 0b01 {
+        // Rd = #i or Rd = add(r29, #i)
+
+        let imm = (word >> 4) & 0b111111;
+        handler.on_dest_decoded(Operand::gpr(subinstr_gpr_b0(word)))?;
+
+        if upper & 0b00100 == 0 {
+            // Rd = #i
+            handler.on_opcode_decoded(Opcode::TransferImmediate)?;
+            handler.on_source_decoded(Operand::immext(imm as u32, extender, |imm| {
+                Ok(Operand::imm_i8((imm as i8) << 2 >> 2))
+            })?)?;
+        } else {
+            // Rd = add(r29, #i)
+            handler.on_opcode_decoded(Opcode::Add)?;
+            handler.on_source_decoded(Operand::gpr(29))?;
+            handler.on_source_decoded(Operand::imm_i8((imm as i8) << 2 >> 2))?;
+        }
+    } else if top == 0b10 {
+        // Rd = {Rs,add,sxth,...}
+        handler.on_dest_decoded(Operand::gpr(subinstr_gpr_b0(word)))?;
+        handler.on_source_decoded(Operand::gpr(subinstr_gpr_b4(word)))?;
+
+        let op = (word >> 8) & 0b111;
+        match op {
+            0b000 => {
+                handler.on_opcode_decoded(Opcode::TransferRegister)?;
+            }
+            0b001 => {
+                handler.on_opcode_decoded(Opcode::Add)?;
+                handler.on_source_decoded(Operand::imm_i8(1))?;
+            }
+            0b010 => {
+                handler.on_opcode_decoded(Opcode::And)?;
+                handler.on_source_decoded(Operand::imm_i8(1))?;
+            }
+            0b011 => {
+                handler.on_opcode_decoded(Opcode::Add)?;
+                handler.on_source_decoded(Operand::imm_i8(-1))?;
+            }
+            0b100 => {
+                handler.on_opcode_decoded(Opcode::Sxth)?;
+            }
+            0b101 => {
+                handler.on_opcode_decoded(Opcode::Sxtb)?;
+            }
+            0b110 => {
+                handler.on_opcode_decoded(Opcode::Zxth)?;
+            }
+            _ => {
+                handler.on_opcode_decoded(Opcode::Zxtb)?;
+            }
+        }
+    } else {
+        // top == 0b11
+        let rest = upper & 0b111;
+        match rest {
+            0b000 => {
+                handler.on_dest_decoded(Operand::gpr(subinstr_gpr_b0(word)))?;
+                handler.on_opcode_decoded(Opcode::Add)?;
+                handler.on_source_decoded(Operand::gpr(subinstr_gpr_b0(word)))?;
+                handler.on_source_decoded(Operand::gpr(subinstr_gpr_b4(word)))?;
+            }
+            0b001 => {
+                handler.on_dest_decoded(Operand::pred(0))?;
+                handler.on_opcode_decoded(Opcode::CmpEq)?;
+                handler.on_source_decoded(Operand::gpr(subinstr_gpr_b0(word)))?;
+                let imm = ((word & 0b1111) as i8) << 4 >> 4;
+                handler.on_source_decoded(Operand::imm_i8(imm))?;
+            }
+            0b010 => {
+                handler.on_dest_decoded(Operand::gpr(subinstr_gpr_b0(word)))?;
+                handler.on_opcode_decoded(Opcode::TransferImmediate)?;
+                if (word >> 6) & 1 == 0 {
+                    handler.on_source_decoded(Operand::imm_i8(-1))?;
+                } else {
+                    let negated = word & 0b01 != 0;
+                    // HELP: idp_hexagon says this is how the .new suffix is decided, but that's
+                    // inconsistent with other predication...
+                    let dotnew = word & 0b10 == 0;
+                    handler.inst_predicated(0 as u8, negated, dotnew)?;
+                    handler.on_source_decoded(Operand::imm_i8(0))?;
+                }
+            }
+            0b100 => {
+                opcode_check!(word & 0b10000000 == 0);
+                handler.on_dest_decoded(Operand::gprpair(subinstr_gprpair_b0(word))?)?;
+                handler.on_opcode_decoded(Opcode::Combine)?;
+                handler.on_source_decoded(Operand::imm_u8((word >> 3) as u8 & 0b11))?;
+                handler.on_source_decoded(Operand::imm_u8((word >> 5) as u8 & 0b11))?;
+            }
+            0b101 => {
+                handler.on_dest_decoded(Operand::gprpair(subinstr_gprpair_b0(word))?)?;
+                handler.on_opcode_decoded(Opcode::Combine)?;
+                let source_reg = Operand::gpr(subinstr_gpr_b4(word));
+                if word & 0b1000 == 0 {
+                    handler.on_source_decoded(Operand::imm_u8(0))?;
+                    handler.on_source_decoded(source_reg)?;
+                } else {
+                    handler.on_source_decoded(source_reg)?;
+                    handler.on_source_decoded(Operand::imm_u8(0))?;
+                }
+            }
+            _ => {
+                opcode_check!(false);
+            }
+        }
+    }
+
+    Ok(())
+}
+
 fn decode_packet<
     T: Reader<<Hexagon as Arch>::Address, <Hexagon as Arch>::Word>,
     H: DecodeHandler<T>,
@@ -1714,7 +2103,101 @@ fn decode_packet<
                 /* duplex instruction */
                 // see table 10-2
                 // exactly how subinstructions are encoded is unclear...
-                return Err(DecodeError::InvalidOpcode);
+                //
+                // this is best guesses derived from real firmwares, radare, and idp_hexagon..
+                //
+                // HELP! really need tests for duplex instructions, not certain this is transcribed
+                // correctly or that idp_hexagon is correct for all these. especially unsure about
+                // sign extension of immediates...
+
+                let iclass_lo = (inst >> 13) & 0b1;
+                let iclass_hi = (inst >> 29) & 0b111;
+                let iclass = iclass_lo | (iclass_hi << 1);
+
+                let subinstr_low = inst & 0x1fff;
+                let subinstr_high = (inst >> 16) & 0x1fff;
+
+                struct DuplexParse<
+                    'a, T, H,
+                > {
+                    handler: &'a mut H,
+                    _phantom: std::marker::PhantomData<T>,
+                    extender: &'a mut Option<u32>,
+                    subinstr_low: u16,
+                    subinstr_high: u16,
+                }
+
+                impl<
+                    'a,
+                    T: Reader<<Hexagon as Arch>::Address, <Hexagon as Arch>::Word>,
+                    H: DecodeHandler<T>
+                > DuplexParse<'a, T, H> {
+                    fn parse(
+                        self,
+                        parse_lo: fn(&mut H, u16, &mut Option<u32>) -> Result<(), <Hexagon as Arch>::DecodeError>,
+                        parse_hi: fn(&mut H, u16, &mut Option<u32>) -> Result<(), <Hexagon as Arch>::DecodeError>,
+                    ) -> Result<(), yaxpeax_arch::StandardDecodeError> {
+                        self.handler.start_instruction();
+                        parse_lo(self.handler, self.subinstr_low, self.extender)?;
+                        self.handler.end_instruction();
+                        self.handler.start_instruction();
+                        parse_hi(self.handler, self.subinstr_high, self.extender)?;
+                        self.handler.end_instruction();
+                        Ok(())
+                    }
+                }
+
+                let ctx = DuplexParse {
+                    handler,
+                    _phantom: std::marker::PhantomData,
+                    extender: &mut extender,
+                    subinstr_low: subinstr_low as u16,
+                    subinstr_high: subinstr_high as u16,
+                };
+
+                match iclass {
+                    0b0000 => {
+                        ctx.parse(subinstr_l1, subinstr_l1)?;
+                    },
+                    0b0001 => {
+                    },
+                    0b0010 => {
+                    },
+                    0b0011 => {
+                    },
+                    0b0100 => {
+                    },
+                    0b0101 => {
+                    },
+                    0b0110 => {
+                    },
+                    0b0111 => {
+                    },
+                    0b1000 => {
+                    },
+                    0b1001 => {
+                    },
+                    0b1010 => {
+                    },
+                    0b1011 => {
+                    },
+                    0b1100 => {
+                    },
+                    0b1101 => {
+                    },
+                    0b1110 => {
+                    },
+                    _ => {
+                        // 0b1111 is the last possible pattern, but _ makes this exhaustive anyway
+                        opcode_check!(false);
+                    }
+                }
+
+                // from the V79 manual:
+                // > The duplex must always appear as the last word in a packet.
+                handler.on_decode_end();
+
+                return Ok(());
             }
             0b01 | 0b10 => { /* nothing to do here */ }
             0b11 => {
@@ -1757,7 +2240,7 @@ fn decode_packet<
             //
             // the extender must extend the instruction word that follows it.
             if extender.is_some() {
-                eprintln!("unconsumed extender: {:x}", extender.unwrap());
+                panic!("unconsumed extender: {:x}", extender.unwrap());
             }
             handler.end_instruction();
         }
