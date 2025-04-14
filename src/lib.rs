@@ -2164,32 +2164,46 @@ fn decode_packet<
                         ctx.parse(subinstr_l1, subinstr_l1)?;
                     },
                     0b0001 => {
+                        ctx.parse(subinstr_l2, subinstr_l1)?;
                     },
                     0b0010 => {
+                        ctx.parse(subinstr_l2, subinstr_l2)?;
                     },
                     0b0011 => {
+                        ctx.parse(subinstr_a, subinstr_a)?;
                     },
                     0b0100 => {
+                        ctx.parse(subinstr_l1, subinstr_a)?;
                     },
                     0b0101 => {
+                        ctx.parse(subinstr_l2, subinstr_a)?;
                     },
                     0b0110 => {
+                        ctx.parse(subinstr_s1, subinstr_a)?;
                     },
                     0b0111 => {
+                        ctx.parse(subinstr_s2, subinstr_a)?;
                     },
                     0b1000 => {
+                        ctx.parse(subinstr_s1, subinstr_l1)?;
                     },
                     0b1001 => {
+                        ctx.parse(subinstr_s1, subinstr_l2)?;
                     },
                     0b1010 => {
+                        ctx.parse(subinstr_s1, subinstr_s1)?;
                     },
                     0b1011 => {
+                        ctx.parse(subinstr_s2, subinstr_s1)?;
                     },
                     0b1100 => {
+                        ctx.parse(subinstr_s2, subinstr_l1)?;
                     },
                     0b1101 => {
+                        ctx.parse(subinstr_s2, subinstr_l2)?;
                     },
                     0b1110 => {
+                        ctx.parse(subinstr_s2, subinstr_s2)?;
                     },
                     _ => {
                         // 0b1111 is the last possible pattern, but _ makes this exhaustive anyway
