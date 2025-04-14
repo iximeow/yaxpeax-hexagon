@@ -1,0 +1,35 @@
+subinstruction class L2
+
+00___________ memh
+01___________ memuh
+10___________ memb
+1110_________ memw
+11110________ memd
+1111100000000 deallocframe
+1111101000000 return
+1111111000000 jump r31
+11111010001PP if ([!]p0[.new]) dealloc_return:[n]t
+11111110001PP if ([!]p0[.new]) jumpr:[n]t r31
+
+subinstruction class S2
+
+00___________ memh
+0100_________ memw
+0101_________ memd
+1000_________ memw #{0,1}
+1001_________ memb #{0,1}
+1110_________ allocframe
+
+subinstruction class A
+
+00___________ Rx = add(Rx, #i)
+010__________ Rd = #i
+011__________ Rd = add(r29, #i)
+10___________ Rd = {Rs,add,sxth,sxtb,zxth,zxtb}
+11000________ Rx = add(Rx, Rs)
+11001________ p0 = cmp.eq(Rs, #i)
+110100000____ Rd = #-1
+1101001PP____ if ([!]p0[.new]) Rd = #0
+111000_______ Rdd = combine(#i, #i)
+11101________ Rdd = combine(Rs, #0)
+

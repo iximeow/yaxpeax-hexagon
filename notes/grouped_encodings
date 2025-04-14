@@ -1253,3 +1253,44 @@ A L I A S     A L I A S     A L I A S    A L I A S     A L I A S   | Rd=zxtb(Rs)
 |1 0 0 0|0 1 0 1|1 1 1|s s s s s| P P |0 i i i i i|- - -|- - d d d| Pd=sfclass(Rs,#u5)                 - XTYPE FP/slot 2,3
 |1 1 0 1|1 1 0 0|1 0 0|s s s s s| P P |- 0 0 0 i i|i i i|1 0 - d d| Pd=dfclass(Rss,#u5)                 - XTYPE FP/slot 2,3
 |ICLASS |RegType|MajOp|s5       |Parse|           |MinOp|d5       |
+
+# constant-extendable instructions
+|0 1 0 0|1 i i 0 0 1 0|i i i i i| P P |i t t t t t i i i|i i i i i| memh(gp+#u16:1)=Rt                  - ST/slot 0,1
+|0 1 0 0|1 i i 0 0 0 0|i i i i i| P P |i t t t t t i i i|i i i i i| memb(gp+#u16:0)=Rt                  - ST/slot 0,1
+|0 1 0 0|1 i i 0 1 0 0|i i i i i| P P |i t t t t t i i i|i i i i i| memw(gp+#u16:2)=Rt                  - ST/slot 0,1
+|0 1 0 0|1 i i 0 1 0 1|i i i i i| P P |i 0 0 t t t i i i|i i i i i| memb(gp+#u16:0)=Nt.new                  - NV ST/slot 0
+|0 1 0 0|1 i i 0 1 0 1|i i i i i| P P |i 0 1 t t t i i i|i i i i i| memh(gp+#u16:1)=Nt.new                  - NV ST/slot 0
+|0 1 0 0|1 i i 0 1 0 1|i i i i i| P P |i 1 0 t t t i i i|i i i i i| memw(gp+#u16:2)=Nt.new                  - NV ST/slot 0
+|0 1 0 0|1 i i 0 1 1 0|i i i i i| P P |i t t t t t i i i|i i i i i| memd(gp+#u16:3)=Rtt                  - ST/slot 0,1
+|0 1 0 0|1 i i 1 0 0 0|i i i i i| P P |i i i i i i i i i|d d d d d| Rd=memb(gp+#u16:0)    - LD/slot 0,1
+|0 1 0 0|1 i i 1 0 0 1|i i i i i| P P |i i i i i i i i i|d d d d d| Rd=memub(gp+#u16:0)    - LD/slot 0,1
+|0 1 0 0|1 i i 1 0 1 0|i i i i i| P P |i i i i i i i i i|d d d d d| Rd=memh(gp+#u16:1)    - LD/slot 0,1
+|0 1 0 0|1 i i 1 0 1 1|i i i i i| P P |i i i i i i i i i|d d d d d| Rd=memuh(gp+#u16:1)    - LD/slot 0,1
+|0 1 0 0|1 i i 1 1 0 0|i i i i i| P P |i i i i i i i i i|d d d d d| Rd=memw(gp+#u16:2)    - LD/slot 0,1
+|0 1 0 0|1 i i 1 1 1 0|i i i i i| P P |i i i i i i i i i|d d d d d| Rdd=memd(gp+#u16:3)    - LD/slot 0,1
+|1 0 0 1|0 i i 1 0 0 0|s s s s s| P P |i i i i i i i i i|d d d d d| Rd=memb(Rs+#s11:0)    - LD/slot 0,1
+|1 0 0 1|0 i i 1 0 0 1|s s s s s| P P |i i i i i i i i i|d d d d d| Rd=memub(Rs+#s11:0)    - LD/slot 0,1
+|1 0 0 1|0 i i 1 0 1 0|s s s s s| P P |i i i i i i i i i|d d d d d| Rd=memh(Rs+#s11:1)    - LD/slot 0,1
+|1 0 0 1|0 i i 1 0 1 1|s s s s s| P P |i i i i i i i i i|d d d d d| Rd=memuh(Rs+#s11:1)    - LD/slot 0,1
+|1 0 0 1|0 i i 1 1 0 0|s s s s s| P P |i i i i i i i i i|d d d d d| Rd=memw(Rs+#s11:2)    - LD/slot 0,1
+|1 0 0 1|0 i i 1 1 1 0|s s s s s| P P |i i i i i i i i i|d d d d d| Rdd=memd(Rs+#s11:3)    - LD/slot 0,1
+|1 0 0 1|1 0 1 1 0 0 0|e e e e e| P P |0 1 l l l l - l l|d d d d d| Rd=memb(Re=#U6)    - LD/slot 0,1
+|1 0 0 1|1 0 1 1 0 0 1|e e e e e| P P |0 1 l l l l - l l|d d d d d| Rd=memub(Re=#U6)    - LD/slot 0,1
+|1 0 0 1|1 0 1 1 0 1 0|e e e e e| P P |0 1 l l l l - l l|d d d d d| Rd=memh(Re=#U6)    - LD/slot 0,1
+|1 0 0 1|1 0 1 1 0 1 1|e e e e e| P P |0 1 l l l l - l l|d d d d d| Rd=memuh(Re=#U6)    - LD/slot 0,1
+|1 0 0 1|1 0 1 1 1 0 0|e e e e e| P P |0 1 l l l l - l l|d d d d d| Rd=memw(Re=#U6)    - LD/slot 0,1
+|1 0 0 1|1 0 1 1 1 1 0|e e e e e| P P |0 1 l l l l - l l|d d d d d| Rdd=memd(Re=#U6)    - LD/slot 0,1
+|1 0 1 0|0 i i 1 0 1 0|s s s s s| P P |i t t t t t i i i|i i i i i| memh(Rs+#s11:1)=Rt                  - ST/slot 0,1
+|1 0 1 0|0 i i 1 1 0 0|s s s s s| P P |i t t t t t i i i|i i i i i| memb(Rs+#s11:0)=Rt                  - ST/slot 0,1
+|1 0 1 0|0 i i 1 1 0 0|s s s s s| P P |i t t t t t i i i|i i i i i| memw(Rs+#s11:2)=Rt                  - ST/slot 0,1
+|1 0 1 0|0 i i 1 1 0 1|s s s s s| P P |i 0 0 t t t i i i|i i i i i| memb(Rs+#s11:0)=Nt.new                  - NV ST/slot 0
+|1 0 1 0|0 i i 1 1 0 1|s s s s s| P P |i 0 1 t t t i i i|i i i i i| memh(Rs+#s11:1)=Nt.new                  - NV ST/slot 0
+|1 0 1 0|0 i i 1 1 0 1|s s s s s| P P |i 1 0 t t t i i i|i i i i i| memw(Rs+#s11:2)=Nt.new                  - NV ST/slot 0
+|1 0 1 0|0 i i 1 1 1 0|s s s s s| P P |i t t t t t i i i|i i i i i| memd(Rs+#s11:3)=Rtt                  - ST/slot 0,1
+|1 0 1 0|1 0 1 1 0 1 0|e e e e e| P P |0 t t t t t 1 - l|l l l l l| memh(Re=#U6)=Rt                  - ST/slot 0,1
+|1 0 1 0|1 0 1 1 1 0 0|e e e e e| P P |0 t t t t t 1 - l|l l l l l| memb(Re=#U6)=Rt                  - ST/slot 0,1
+|1 0 1 0|1 0 1 1 1 0 0|e e e e e| P P |0 t t t t t 1 - l|l l l l l| memw(Re=#U6)=Rt                  - ST/slot 0,1
+|1 0 1 0|1 0 1 1 1 0 1|e e e e e| P P |0 0 0 t t t 1 - l|l l l l l| memb(Re=#U6)=Nt.new                  - NV ST/slot 0
+|1 0 1 0|1 0 1 1 1 0 1|e e e e e| P P |0 0 1 t t t 1 - l|l l l l l| memh(Re=#U6)=Nt.new                  - NV ST/slot 0
+|1 0 1 0|1 0 1 1 1 0 1|e e e e e| P P |0 1 0 t t t 1 - l|l l l l l| memw(Re=#U6)=Nt.new                  - NV ST/slot 0
+|1 0 1 0|1 0 1 1 1 1 0|e e e e e| P P |0 t t t t t 1 - l|l l l l l| memd(Re=#U6)=Rtt                  - ST/slot 0,1
