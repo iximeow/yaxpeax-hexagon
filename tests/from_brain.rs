@@ -2460,3 +2460,11 @@ fn inst_1111() {
 
     test_display(&0b1111_1101000_00100_11_1_00011_001_00110u32.to_le_bytes(), "{ if (p1.new) r7:6 = contains(r4, r3) }");
 }
+
+#[test]
+fn no_panic() {
+    test_invalid(
+        &[253, 67, 36, 65, 68, 143, 143, 143, 143, 143, 143, 143, 3, 0, 2, 0, 143],
+        DecodeError::InvalidOpcode
+    );
+}

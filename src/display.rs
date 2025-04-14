@@ -40,20 +40,29 @@ fn assign_mode_label(mode: Option<AssignMode>) -> &'static str {
     }
 }
 
+fn display_or_partial<T: fmt::Display + ?Sized>(t: Option<&T>) -> String {
+    match t {
+        Some(t) => { t.to_string() },
+        None => { "<invalid>".to_string() }
+    }
+}
+
 impl fmt::Display for Instruction {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if special_display_rules(&self.opcode) {
             match self.opcode {
                 Opcode::AndAnd => {
-                    return write!(f, "{} = and({}, and({}, {}))", self.dest.as_ref().unwrap(),
+                    return write!(f, "{} = and({}, and({}, {}))",
+                        display_or_partial(self.dest.as_ref()),
                         self.sources[0], self.sources[1], self.sources[2]);
                 }
                 Opcode::AndOr => {
-                    return write!(f, "{} = and({}, or({}, {}))", self.dest.as_ref().unwrap(),
+                    return write!(f, "{} = and({}, or({}, {}))",
+                        display_or_partial(self.dest.as_ref()),
                         self.sources[0], self.sources[1], self.sources[2]);
                 }
                 Opcode::OrAnd => {
-                    return write!(f, "{} = or({}, and({}, {}))", self.dest.as_ref().unwrap(),
+                    return write!(f, "{} = or({}, and({}, {}))", display_or_partial(self.dest.as_ref()),
                         self.sources[0], self.sources[1], self.sources[2]);
                 }
                 Opcode::AndNot => {
@@ -65,125 +74,125 @@ impl fmt::Display for Instruction {
                             assign_mode_label(self.flags.assign_mode),
                             self.sources[0], self.sources[1]);
                     } else {
-                        return write!(f, "{} {} and({}, ~{})", self.dest.as_ref().unwrap(),
+                        return write!(f, "{} {} and({}, ~{})", display_or_partial(self.dest.as_ref()),
                             assign_mode_label(self.flags.assign_mode),
                             self.sources[0], self.sources[1]);
                     }
                 }
                 Opcode::OrOr => {
-                    return write!(f, "{} = or({}, or({}, {}))", self.dest.as_ref().unwrap(),
+                    return write!(f, "{} = or({}, or({}, {}))", display_or_partial(self.dest.as_ref()),
                         self.sources[0], self.sources[1], self.sources[2]);
                 }
                 Opcode::AndAndNot => {
-                    return write!(f, "{} = and({}, and({}, !{}))", self.dest.as_ref().unwrap(),
+                    return write!(f, "{} = and({}, and({}, !{}))", display_or_partial(self.dest.as_ref()),
                         self.sources[0], self.sources[1], self.sources[2]);
                 }
                 Opcode::AndOrNot => {
-                    return write!(f, "{} = and({}, or({}, !{}))", self.dest.as_ref().unwrap(),
+                    return write!(f, "{} = and({}, or({}, !{}))", display_or_partial(self.dest.as_ref()),
                         self.sources[0], self.sources[1], self.sources[2]);
                 }
                 Opcode::OrAndNot => {
-                    return write!(f, "{} = or({}, and({}, !{}))", self.dest.as_ref().unwrap(),
+                    return write!(f, "{} = or({}, and({}, !{}))", display_or_partial(self.dest.as_ref()),
                         self.sources[0], self.sources[1], self.sources[2]);
                 }
                 Opcode::OrNot => {
-                    return write!(f, "{} {} or({}, !{})", self.dest.as_ref().unwrap(),
+                    return write!(f, "{} {} or({}, !{})", display_or_partial(self.dest.as_ref()),
                         assign_mode_label(self.flags.assign_mode),
                         self.sources[0], self.sources[1]);
                 }
                 Opcode::OrOrNot => {
-                    return write!(f, "{} = or({}, or({}, !{}))", self.dest.as_ref().unwrap(),
+                    return write!(f, "{} = or({}, or({}, !{}))", display_or_partial(self.dest.as_ref()),
                         self.sources[0], self.sources[1], self.sources[2]);
                 }
                 Opcode::AndLsr => {
-                    return write!(f, "{} = and({}, lsr({}, {}))", self.dest.as_ref().unwrap(),
+                    return write!(f, "{} = and({}, lsr({}, {}))", display_or_partial(self.dest.as_ref()),
                         self.sources[0], self.sources[1], self.sources[2]);
                 },
                 Opcode::OrLsr => {
-                    return write!(f, "{} = or({}, lsr({}, {}))", self.dest.as_ref().unwrap(),
+                    return write!(f, "{} = or({}, lsr({}, {}))", display_or_partial(self.dest.as_ref()),
                         self.sources[0], self.sources[1], self.sources[2]);
                 },
                 Opcode::AddLsr => {
-                    return write!(f, "{} = add({}, lsr({}, {}))", self.dest.as_ref().unwrap(),
+                    return write!(f, "{} = add({}, lsr({}, {}))", display_or_partial(self.dest.as_ref()),
                         self.sources[0], self.sources[1], self.sources[2]);
                 },
                 Opcode::SubLsr => {
-                    return write!(f, "{} = sub({}, lsr({}, {}))", self.dest.as_ref().unwrap(),
+                    return write!(f, "{} = sub({}, lsr({}, {}))", display_or_partial(self.dest.as_ref()),
                         self.sources[0], self.sources[1], self.sources[2]);
                 },
                 Opcode::AddLsl => {
-                    return write!(f, "{} = add({}, lsl({}, {}))", self.dest.as_ref().unwrap(),
+                    return write!(f, "{} = add({}, lsl({}, {}))", display_or_partial(self.dest.as_ref()),
                         self.sources[0], self.sources[1], self.sources[2]);
                 },
                 Opcode::AddAsl => {
-                    return write!(f, "{} = add({}, asl({}, {}))", self.dest.as_ref().unwrap(),
+                    return write!(f, "{} = add({}, asl({}, {}))", display_or_partial(self.dest.as_ref()),
                         self.sources[0], self.sources[1], self.sources[2]);
                 },
                 Opcode::SubAsl => {
-                    return write!(f, "{} = sub({}, asl({}, {}))", self.dest.as_ref().unwrap(),
+                    return write!(f, "{} = sub({}, asl({}, {}))", display_or_partial(self.dest.as_ref()),
                         self.sources[0], self.sources[1], self.sources[2]);
                 },
                 Opcode::AndAsl => {
-                    return write!(f, "{} = and({}, asl({}, {}))", self.dest.as_ref().unwrap(),
+                    return write!(f, "{} = and({}, asl({}, {}))", display_or_partial(self.dest.as_ref()),
                         self.sources[0], self.sources[1], self.sources[2]);
                 },
                 Opcode::OrAsl => {
-                    return write!(f, "{} = or({}, asl({}, {}))", self.dest.as_ref().unwrap(),
+                    return write!(f, "{} = or({}, asl({}, {}))", display_or_partial(self.dest.as_ref()),
                         self.sources[0], self.sources[1], self.sources[2]);
                 },
                 Opcode::AddAdd => {
-                    return write!(f, "{} = add({}, add({}, {}))", self.dest.as_ref().unwrap(),
+                    return write!(f, "{} = add({}, add({}, {}))", display_or_partial(self.dest.as_ref()),
                         self.sources[0], self.sources[1], self.sources[2]);
                 },
                 Opcode::AddSub => {
-                    return write!(f, "{} = add({}, sub({}, {}))", self.dest.as_ref().unwrap(),
+                    return write!(f, "{} = add({}, sub({}, {}))", display_or_partial(self.dest.as_ref()),
                         self.sources[0], self.sources[1], self.sources[2]);
                 },
                 Opcode::AddMpyi => {
-                    return write!(f, "{} = add({}, mpyi({}, {}))", self.dest.as_ref().unwrap(),
+                    return write!(f, "{} = add({}, mpyi({}, {}))", display_or_partial(self.dest.as_ref()),
                         self.sources[0], self.sources[1], self.sources[2]);
                 },
                 Opcode::MpyiPos => {
-                    return write!(f, "{} = +mpyi({}, {})", self.dest.as_ref().unwrap(),
+                    return write!(f, "{} = +mpyi({}, {})", display_or_partial(self.dest.as_ref()),
                         self.sources[0], self.sources[1]);
                 },
                 Opcode::MpyiNeg => {
-                    return write!(f, "{} = -mpyi({}, {})", self.dest.as_ref().unwrap(),
+                    return write!(f, "{} = -mpyi({}, {})", display_or_partial(self.dest.as_ref()),
                         self.sources[0], self.sources[1]);
                 },
                 Opcode::AddClb => {
-                    return write!(f, "{} = add(clb({}), {})", self.dest.as_ref().unwrap(),
+                    return write!(f, "{} = add(clb({}), {})", display_or_partial(self.dest.as_ref()),
                         self.sources[0], self.sources[1]);
                 }
                 Opcode::Vacsh => {
                     return write!(f, "{}, {} = {}({}, {})",
-                        self.dest.as_ref().unwrap(), self.alt_dest.as_ref().unwrap(),
+                        display_or_partial(self.dest.as_ref()), display_or_partial(self.alt_dest.as_ref()),
                         self.opcode, self.sources[0], self.sources[1]);
                 }
                 Opcode::Vminub => {
                     if let Some(alt_dest) = self.alt_dest.as_ref() {
                         return write!(f, "{}, {} = {}({}, {})",
-                            self.dest.as_ref().unwrap(), alt_dest,
+                            display_or_partial(self.dest.as_ref()), alt_dest,
                             self.opcode, self.sources[0], self.sources[1]);
                     } else {
                         return write!(f, "{} = {}({}, {})",
-                            self.dest.as_ref().unwrap(),
+                            display_or_partial(self.dest.as_ref()),
                             self.opcode, self.sources[0], self.sources[1]);
                     }
                 }
                 Opcode::SfRecipa => {
                     return write!(f, "{}, {} = {}({}, {})",
-                        self.dest.as_ref().unwrap(), self.alt_dest.as_ref().unwrap(),
+                        display_or_partial(self.dest.as_ref()), display_or_partial(self.alt_dest.as_ref()),
                         self.opcode, self.sources[0], self.sources[1]);
                 }
                 Opcode::SfInvsqrta => {
                     return write!(f, "{}, {} = {}({})",
-                        self.dest.as_ref().unwrap(), self.alt_dest.as_ref().unwrap(),
+                        display_or_partial(self.dest.as_ref()), display_or_partial(self.alt_dest.as_ref()),
                         self.opcode, self.sources[0]);
                 }
                 Opcode::Any8VcmpbEq => {
                     return write!(f, "{} = {}any8(vcmpb.eq({}, {}))",
-                        self.dest.as_ref().unwrap(),
+                        display_or_partial(self.dest.as_ref()),
                         if self.flags.negated { "!" } else { "" },
                         self.sources[0], self.sources[1]);
                 }
@@ -211,7 +220,7 @@ impl fmt::Display for Instruction {
                     Some(BranchHint::NotTaken) => { ":nt" },
                     None => { "" },
                 },
-                self.dest.as_ref().unwrap()
+                display_or_partial(self.dest.as_ref())
             );
         }
         // handle cmp+jump first; this includes elements that would be misformatted below (like
@@ -221,25 +230,31 @@ impl fmt::Display for Instruction {
             Opcode::CmpGtuJump, Opcode::TestClrJump,
         ];
         if COMPARE_JUMPS.contains(&self.opcode) {
-            let predicate = self.flags.predicate.as_ref().unwrap();
-            let preg = Operand::pred(predicate.num());
+            if let Some(predicate) = self.flags.predicate.as_ref() {
+                let preg = Operand::pred(predicate.num());
 
-            let hint_label = match self.flags.branch_hint.unwrap() {
-                BranchHint::Taken => { "t" },
-                BranchHint::NotTaken => { "nt" },
-            };
+                let hint_label = match self.flags.branch_hint {
+                    Some(BranchHint::Taken) => { "t" },
+                    Some(BranchHint::NotTaken) => { "nt" },
+                    None => {
+                        "<invalid decode>"
+                    }
+                };
 
-            write!(f, "{} = {}({}, {}); if ({}{}.new) jump:{} {}",
-                preg,
-                self.opcode.cmp_str().unwrap(),
-                self.sources[0],
-                self.sources[1],
-                if predicate.negated() { "!" } else { "" },
-                preg,
-                hint_label,
-                self.dest.as_ref().unwrap(),
-            )?;
-            return Ok(());
+                write!(f, "{} = {}({}, {}); if ({}{}.new) jump:{} {}",
+                    preg,
+                    display_or_partial(self.opcode.cmp_str()),
+                    self.sources[0],
+                    self.sources[1],
+                    if predicate.negated() { "!" } else { "" },
+                    preg,
+                    hint_label,
+                    display_or_partial(self.dest.as_ref()),
+                )?;
+                return Ok(());
+            } else {
+                return write!(f, "<invalid decode>");
+            }
         }
 
         if let Some(predication) = self.flags.predicate {
@@ -309,9 +324,9 @@ impl fmt::Display for Instruction {
         // TransferRegisterJump and TransferImmediateJump also have special display rules...
         if self.opcode == Opcode::TransferRegisterJump || self.opcode == Opcode::TransferImmediateJump {
             write!(f, "{} = {}; jump {}",
-                self.alt_dest.as_ref().unwrap(),
+                display_or_partial(self.alt_dest.as_ref()),
                 self.sources[0],
-                self.dest.as_ref().unwrap(),
+                display_or_partial(self.dest.as_ref()),
             )?;
             return Ok(());
         }
@@ -327,11 +342,11 @@ impl fmt::Display for Instruction {
                 None => { "" },
             };
             write!(f, "if ({}({}, {})) jump{} {}",
-                self.opcode.cmp_str().unwrap(), // (obvious, but) decoder bug if this fails
+                display_or_partial(self.opcode.cmp_str()), // (obvious, but) decoder bug if this fails
                 self.sources[0],
                 self.sources[1],
                 hint_label,
-                self.dest.unwrap(),
+                display_or_partial(self.dest.as_ref()),
             )?;
             return Ok(());
         }
@@ -347,7 +362,7 @@ impl fmt::Display for Instruction {
                     Some(BranchHint::NotTaken) => ":nt",
                     None => "",
                 },
-                self.dest.unwrap())?;
+                display_or_partial(self.dest.as_ref()))?;
             return Ok(());
         }
 

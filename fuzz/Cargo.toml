@@ -1,0 +1,30 @@
+[package]
+name = "yaxpeax-hexagon-fuzz"
+version = "0.0.0"
+authors = ["iximeow <me@iximeow.net>"]
+publish = false
+edition = "2021"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+yaxpeax-hexagon = { path = ".." }
+yaxpeax-arch = "0.3.1"
+
+# Prevent this from interfering with workspaces
+[workspace]
+members = ["."]
+
+[[bin]]
+name = "no-panic"
+path = "fuzz_targets/no-panic.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "fresh-decode"
+path = "fuzz_targets/fresh-decode.rs"
+test = false
+doc = false

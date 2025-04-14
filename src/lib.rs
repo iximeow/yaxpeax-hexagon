@@ -112,7 +112,7 @@ impl Predicate {
     }
 }
 
-#[derive(Debug, Copy, Clone, Default)]
+#[derive(Debug, Copy, Clone, Default, PartialEq)]
 pub struct LoopEnd {
     loops_ended: u8
 }
@@ -161,6 +161,16 @@ pub struct InstructionPacket {
     word_count: u8,
     /// how this packet interacts with hardware loops 0 and/or 1
     loop_effect: LoopEnd,
+}
+
+impl PartialEq for InstructionPacket {
+    fn eq(&self, other: &Self) -> bool {
+        let instructions = self.instruction_count as usize;
+        self.instruction_count == other.instruction_count &&
+            self.word_count == other.word_count &&
+            self.loop_effect == other.loop_effect &&
+            self.instructions[..instructions] == other.instructions[..instructions]
+    }
 }
 
 /// a decoded `hexagon` instruction. this is only one of potentially several instructions in an
@@ -1204,8 +1214,8 @@ trait DecodeHandler<T: Reader<<Hexagon as Arch>::Address, <Hexagon as Arch>::Wor
     fn read_inst_word(&mut self, words: &mut T) -> Result<u32, <Hexagon as Arch>::DecodeError>;
     fn on_decode_start(&mut self) {}
     fn on_decode_end(&mut self) {}
-    fn start_instruction(&mut self);
-    fn end_instruction(&mut self);
+    fn start_instruction(&mut self) -> Result<(), <Hexagon as Arch>::DecodeError> { Ok(()) }
+    fn end_instruction(&mut self) -> Result<(), <Hexagon as Arch>::DecodeError> { Ok(()) }
     fn on_loop_end(&mut self, loop_num: u8);
     fn on_opcode_decoded(&mut self, _opcode: Opcode) -> Result<(), <Hexagon as Arch>::DecodeError> { Ok(()) }
     fn on_source_decoded(&mut self, _operand: Operand) -> Result<(), <Hexagon as Arch>::DecodeError> { Ok(()) }
@@ -1368,9 +1378,13 @@ impl<T: yaxpeax_arch::Reader<<Hexagon as Arch>::Address, <Hexagon as Arch>::Word
         self.read_u32(words)
     }
     fn on_word_read(&mut self, _word: <Hexagon as Arch>::Word) { }
-    fn start_instruction(&mut self) { }
-    fn end_instruction(&mut self) {
+    fn start_instruction(&mut self) -> Result<(), <Hexagon as Arch>::DecodeError> {
+        opcode_check!(self.instruction_count < self.instructions.len() as u8);
+        Ok(())
+    }
+    fn end_instruction(&mut self) -> Result<(), <Hexagon as Arch>::DecodeError> {
         self.instruction_count += 1;
+        Ok(())
     }
 }
 
@@ -1981,12 +1995,12 @@ fn decode_packet<
                         parse_lo: fn(&mut H, u16, &mut Option<u32>) -> Result<(), <Hexagon as Arch>::DecodeError>,
                         parse_hi: fn(&mut H, u16, &mut Option<u32>) -> Result<(), <Hexagon as Arch>::DecodeError>,
                     ) -> Result<(), yaxpeax_arch::StandardDecodeError> {
-                        self.handler.start_instruction();
+                        self.handler.start_instruction()?;
                         parse_lo(self.handler, self.subinstr_low, self.extender)?;
-                        self.handler.end_instruction();
-                        self.handler.start_instruction();
+                        self.handler.end_instruction()?;
+                        self.handler.start_instruction()?;
                         parse_hi(self.handler, self.subinstr_high, self.extender)?;
-                        self.handler.end_instruction();
+                        self.handler.end_instruction()?;
                         Ok(())
                     }
                 }
@@ -2080,7 +2094,7 @@ fn decode_packet<
         if iclass == 0b0000 {
             extender = Some((inst & 0x3fff) | ((inst >> 2) & 0x3ffc000));
         } else {
-            handler.start_instruction();
+            handler.start_instruction()?;
             decode_instruction(decoder, handler, inst, &mut extender)?;
             // V73 section 10.9:
             // > The constant extender serves as a prefix for an instruction: it does not execute
@@ -2095,7 +2109,7 @@ fn decode_packet<
                 // if the extender was not consumed, the instruction (packet) is invalid
                 return Err(DecodeError::InvalidOpcode);
             }
-            handler.end_instruction();
+            handler.end_instruction()?;
         }
 
         current_word += 1;
@@ -3113,9 +3127,9 @@ fn decode_instruction<
                 0b0111000 => {
                     // not in V73! store to supervisor register?
                     let sssss = reg_b16(inst);
-                    let ddddddd = inst & 0b111_1111;
+                    let dddddd = inst & 0b11_1111;
                     handler.on_opcode_decoded(Opcode::TransferRegister)?;
-                    handler.on_dest_decoded(Operand::sr(ddddddd as u8))?;
+                    handler.on_dest_decoded(Operand::sr(dddddd as u8))?;
                     handler.on_source_decoded(Operand::gpr(sssss))?;
                 }
                 // TODO: 1001000 loop0 goes here
@@ -3152,9 +3166,9 @@ fn decode_instruction<
                 0b1110110 | 0b1110111 => {
                     // not in V73! load supervisor register?
                     let sssss = reg_b0(inst);
-                    let ddddddd = (inst >> 16) & 0b111_1111;
+                    let dddddd = (inst >> 16) & 0b11_1111;
                     handler.on_opcode_decoded(Opcode::TransferRegister)?;
-                    handler.on_source_decoded(Operand::sr(ddddddd as u8))?;
+                    handler.on_source_decoded(Operand::sr(dddddd as u8))?;
                     handler.on_dest_decoded(Operand::gpr(sssss))?;
                 }
                 0b1111000 | 0b1111001 |
@@ -3763,7 +3777,8 @@ fn decode_instruction<
                 handler.on_opcode_decoded(Opcode::Nop)?;
             }
             _ => {
-                unreachable!("impossible pattern");
+                // anything left unhandled is invalid..
+                opcode_check!(false);
             }
             }
         }
