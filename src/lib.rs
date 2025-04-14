@@ -5,8 +5,6 @@
 //! * retrieved 2024-09-21 from https://docs.qualcomm.com/bundle/publicresource/80-N2040-53_REV_AB_Qualcomm_Hexagon_V73_Programmers_Reference_Manual.pdf
 //! * sha256: `44ebafd1119f725bd3c6ffb87499232520df9a0a6e3e3dc6ea329b15daed11a8`
 
-use core::fmt;
-
 use yaxpeax_arch::{AddressDiff, Arch, Decoder, LengthedInstruction, Reader};
 use yaxpeax_arch::StandardDecodeError as DecodeError;
 
@@ -1284,47 +1282,6 @@ impl Operand {
     }
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
-pub enum SizeCode {
-    S,
-    B,
-    W,
-    A,
-    L,
-    D,
-    UW,
-}
-
-impl fmt::Display for SizeCode {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let text = match self {
-            SizeCode::S => "s",
-            SizeCode::B => "b",
-            SizeCode::W => "w",
-            SizeCode::A => "a",
-            SizeCode::L => "l",
-            SizeCode::D => "d",
-            SizeCode::UW => "uw",
-        };
-
-        f.write_str(text)
-    }
-}
-
-impl SizeCode {
-    fn bytes(&self) -> u8 {
-        match self {
-            SizeCode::S => 1,
-            SizeCode::B => 1,
-            SizeCode::W => 2,
-            SizeCode::UW => 2,
-            SizeCode::A => 3,
-            SizeCode::L => 4,
-            SizeCode::D => 8,
-        }
-    }
-}
-
 #[derive(Debug)]
 pub struct InstDecoder { }
 
@@ -1335,22 +1292,6 @@ impl Default for InstDecoder {
 }
 
 trait DecodeHandler<T: Reader<<Hexagon as Arch>::Address, <Hexagon as Arch>::Word>> {
-    /*
-    #[inline(always)]
-    fn read_u8(&mut self, words: &mut T) -> Result<u8, <Hexagon as Arch>::DecodeError> {
-        let b = words.next()?;
-        self.on_word_read(b);
-        Ok(b)
-    }
-    #[inline(always)]
-    fn read_u16(&mut self, words: &mut T) -> Result<u16, <Hexagon as Arch>::DecodeError> {
-        let mut buf = [0u8; 2];
-        words.next_n(&mut buf).ok().ok_or(DecodeError::ExhaustedInput)?;
-        self.on_word_read(buf[0]);
-        self.on_word_read(buf[1]);
-        Ok(u16::from_le_bytes(buf))
-    }
-    */
     #[inline(always)]
     fn read_u32(&mut self, words: &mut T) -> Result<u32, <Hexagon as Arch>::DecodeError> {
         let mut buf = [0u8; 4];
@@ -2235,16 +2176,10 @@ fn decode_packet<
             }
         }
 
-        if extender.is_some() {
-            eprintln!("extended:    {:08x}", inst);
-        }
-
         let iclass = (inst >> 28) & 0b1111;
 
         if iclass == 0b0000 {
-            eprintln!("instruction: {:08x}", inst);
             extender = Some((inst & 0x3fff) | ((inst >> 2) & 0x3ffc000));
-            eprintln!("extender:    {:08x}", extender.unwrap());
         } else {
             handler.start_instruction();
             decode_instruction(decoder, handler, inst, &mut extender)?;
@@ -2258,7 +2193,8 @@ fn decode_packet<
             //
             // the extender must extend the instruction word that follows it.
             if extender.is_some() {
-                panic!("unconsumed extender: {:x}", extender.unwrap());
+                // if the extender was not consumed, the instruction (packet) is invalid
+                return Err(DecodeError::InvalidOpcode);
             }
             handler.end_instruction();
         }
@@ -2269,10 +2205,6 @@ fn decode_packet<
     handler.on_decode_end();
 
     Ok(())
-}
-
-fn can_be_extended(iclass: u8, regclass: u8) -> bool {
-    panic!("TODO: Table 10-10")
 }
 
 fn decode_instruction<
@@ -4903,7 +4835,7 @@ fn decode_instruction<
                             handler.inst_predicated(tt as u8, negated, dotnew)?;
                             handler.on_source_decoded(
                                 Operand::immext(iiiiii as u32, extender, |i6| {
-                                    Ok(Operand::imm_u32(iiiiii as u32))
+                                    Ok(Operand::imm_u32(i6))
                                 })?
                             )?;
                             if !wide {
@@ -5876,10 +5808,6 @@ fn decode_instruction<
                     let op_hi = ((inst >> 21) & 0b111) as u8;
 
                     type OpRes = Result<Operand, DecodeError>;
-
-                    fn gpr_result(nr: u8) -> OpRes {
-                        Ok(Operand::gpr(nr))
-                    }
 
                     let do_decode_dst = |handler: &mut H, op: Opcode, dest: fn(u8) -> OpRes, op1: fn(u8) -> OpRes, op2: fn(u8) -> OpRes| {
                         handler.on_opcode_decoded(op)?;
@@ -7595,7 +7523,7 @@ fn decode_instruction<
             }
         }
         _ => {
-            panic!("TODO: remainder");
+            opcode_check!(false);
         }
     }
 
