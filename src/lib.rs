@@ -649,6 +649,10 @@ pub enum Opcode {
     DcKill,
     IcKill,
     L2Fetch,
+    L2Kill,
+    L2Gunlock,
+    L2Gclean,
+    L2Gcleaninv,
     DmSyncHt,
     SyncHt,
 
@@ -5088,19 +5092,36 @@ fn decode_instruction<
                     } else {
                         // if there are any encodings like 1010|010, they are not in the V73
                         // manual...
+                        //
+                        // ... surprise! L2 cache management instructions are system instructions
+                        // and last described in the V65 manual.
                         opcode_check!(opc_upper == 0b11);
                         let opc_lower = (inst >> 21) & 0b111;
-                        // similar..
-                        opcode_check!(opc_lower & 0b11 == 0b00);
 
-                        handler.on_opcode_decoded(Opcode::L2Fetch)?;
-                        handler.on_source_decoded(Rs)?;
                         let ttttt = reg_b8(inst);
-                        if opc_lower == 0b100 {
-                            handler.on_source_decoded(Operand::gprpair(ttttt)?)?;
-                        } else {
-                            opcode_check!((inst >> 5) & 0b111 == 0b000);
-                            handler.on_source_decoded(Operand::gpr(ttttt))?;
+                        match opc_lower {
+                            0b000 => {
+                                handler.on_opcode_decoded(Opcode::L2Fetch)?;
+                                handler.on_source_decoded(Rs)?;
+                                opcode_check!((inst >> 5) & 0b111 == 0b000);
+                                handler.on_source_decoded(Operand::gpr(ttttt))?;
+                            }
+                            0b100 => {
+                                handler.on_opcode_decoded(Opcode::L2Fetch)?;
+                                handler.on_source_decoded(Rs)?;
+                                handler.on_source_decoded(Operand::gprpair(ttttt)?)?;
+                            }
+                            0b101 => {
+                                handler.on_opcode_decoded(Opcode::L2Gclean)?;
+                                handler.on_source_decoded(Operand::gprpair(ttttt)?)?;
+                            }
+                            0b110 => {
+                                handler.on_opcode_decoded(Opcode::L2Gcleaninv)?;
+                                handler.on_source_decoded(Operand::gprpair(ttttt)?)?;
+                            }
+                            _ => {
+                                opcode_check!(false);
+                            }
                         }
                     }
                 } else {
@@ -5133,8 +5154,17 @@ fn decode_instruction<
                     0b000 => {
                         // barrier, dmsyncht, syncht. not much here (maybe these are supervisor
                         // instructions?)
+                        //
+                        // ... yes! l2 cache operations are packed in here.
                         if inst & 0x00_e0_00_e0 == 0 {
                             handler.on_opcode_decoded(Opcode::Barrier)?;
+                        } else if inst & 0x00_e0_00_00 == 0x00_20_00_00 {
+                            let op = (inst >> 10) & 0b111;
+                            static OPCODES: [Option<Opcode>; 8] = [
+                                Some(L2Kill), None, Some(L2Gunlock), None,
+                                Some(L2Gclean), None, Some(L2Gcleaninv), None,
+                            ];
+                            handler.on_opcode_decoded(decode_opcode!(OPCODES[op as usize]))?;
                         } else if inst & 0x00_e0_01_e0 == 0x00_00_00_e0 {
                             handler.on_opcode_decoded(Opcode::DmSyncHt)?;
                             handler.on_dest_decoded(Operand::gpr(inst as u8 & 0b11111))?;

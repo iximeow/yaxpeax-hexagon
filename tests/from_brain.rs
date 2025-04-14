@@ -1435,6 +1435,12 @@ fn inst_1010() {
     test_display(&0b1010_0110000_00010_11_0_00100_000_01011u32.to_le_bytes(), "{ l2fetch(r2, r4) }");
     test_invalid(&0b1010_0110000_00010_11_0_00100_001_01011u32.to_le_bytes(), DecodeError::InvalidOpcode);
     test_display(&0b1010_0110100_00010_11_0_00100_000_01011u32.to_le_bytes(), "{ l2fetch(r2, r5:4) }");
+    test_display(&0b1010_0110101_00010_11_0_00100_000_01011u32.to_le_bytes(), "{ l2gclean(r5:4) }");
+    test_display(&0b1010_0110110_00010_11_0_00100_000_01011u32.to_le_bytes(), "{ l2gcleaninv(r5:4) }");
+    test_display(&0b1010_1000001_00010_11_0_00000_000_01011u32.to_le_bytes(), "{ l2kill }");
+    test_display(&0b1010_1000001_00010_11_0_01000_000_01011u32.to_le_bytes(), "{ l2gunlock }");
+    test_display(&0b1010_1000001_00010_11_0_10000_000_01011u32.to_le_bytes(), "{ l2gclean }");
+    test_display(&0b1010_1000001_00010_11_0_11000_000_01011u32.to_le_bytes(), "{ l2gcleaninv }");
 
     test_display(&0b1010_0101000_00010_11_1_00100_000_01011u32.to_le_bytes(), "{ memb(r2+#1291) = r4 }");
     test_display(&0b1010_0101010_00010_11_1_00100_000_01011u32.to_le_bytes(), "{ memh(r2+#2582) = r4 }");
@@ -1452,7 +1458,6 @@ fn inst_1010() {
     test_invalid(&0b1010_1000000_00010_11_1_00000_001_01011u32.to_le_bytes(), DecodeError::InvalidOpcode);
     test_invalid(&0b1010_1000000_00010_11_1_00000_010_01011u32.to_le_bytes(), DecodeError::InvalidOpcode);
     test_invalid(&0b1010_1000000_00010_11_1_00000_100_01011u32.to_le_bytes(), DecodeError::InvalidOpcode);
-    test_invalid(&0b1010_1000001_00010_11_1_00000_100_01011u32.to_le_bytes(), DecodeError::InvalidOpcode);
     test_display(&0b1010_1000010_00010_11_1_00000_111_01011u32.to_le_bytes(), "{ syncht }");
 
     test_display(&0b1010_1001000_00010_11_1_00011_000_00010u32.to_le_bytes(), "{ memb(r2++I:circ(m1)) = r3 }");

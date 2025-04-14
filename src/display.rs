@@ -717,6 +717,10 @@ impl fmt::Display for Opcode {
             Opcode::DcKill => { f.write_str("dckill") },
             Opcode::IcKill => { f.write_str("ickill") },
             Opcode::L2Fetch => { f.write_str("l2fetch") },
+            Opcode::L2Kill => { f.write_str("l2kill") },
+            Opcode::L2Gunlock => { f.write_str("l2gunlock") },
+            Opcode::L2Gclean => { f.write_str("l2gclean") },
+            Opcode::L2Gcleaninv => { f.write_str("l2gcleaninv") },
             Opcode::DmSyncHt => { f.write_str("dmsyncht") },
             Opcode::SyncHt => { f.write_str("syncht") },
 
