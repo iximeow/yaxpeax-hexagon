@@ -8,11 +8,11 @@
 use yaxpeax_arch::{AddressDiff, Arch, Decoder, LengthedInstruction, Reader};
 use yaxpeax_arch::StandardDecodeError as DecodeError;
 
+#[cfg(feature = "fmt")]
+mod display;
+
 #[derive(Debug)]
 pub struct Hexagon;
-
-// TODO: cfg
-mod display;
 
 impl Arch for Hexagon {
     type Word = u8;
@@ -74,6 +74,9 @@ macro_rules! decode_operand {
     }
 }
 
+// some configurations leave some helpers unused.
+// this probably should be public for programmatic inspection..
+#[allow(dead_code)]
 impl Predicate {
     fn reg(num: u8) -> Self {
         assert!(num <= 0b11);
@@ -286,6 +289,9 @@ enum RoundingMode {
 }
 
 impl RoundingMode {
+    // if there's no `fmt` we don't need labels, for now.
+    // if RoundingMode were inspectable this might be useful even without fmt?
+    #[cfg(feature = "fmt")]
     fn as_label(&self) -> &'static str {
         match self {
             RoundingMode::Round => ":rnd",
@@ -400,14 +406,6 @@ pub enum Opcode {
     // this variant should never be seen externally.
     #[doc(hidden)]
     BUG,
-
-    // V73 Section 10.9
-    // > NOTE: When a constant extender is explicitly specified with a GP-relative load/store, the
-    // > processor ignores the value in GP and creates the effective address directly from the 32-bit
-    // > constant value.
-    //
-    // TODO: similar special interpretation of constant extender on 32-bit immediate operands and
-    // 32-bit jump/call target addresses.
 
     Nop,
 
@@ -885,7 +883,9 @@ pub enum Opcode {
 }
 
 impl Opcode {
-    // TODO: move to cfg(fmt)
+    // if there's no `fmt` we don't need labels, for now.
+    // if RoundingMode were inspectable this might be useful even without fmt?
+    #[cfg(feature = "fmt")]
     fn cmp_str(&self) -> Option<&'static str> {
         match self {
             Opcode::JumpEq => { Some("cmp.eq") },
@@ -903,122 +903,6 @@ impl Opcode {
             _ => None
         }
     }
-}
-
-/// V73 Section 2.2:
-/// > the Hexagon processor includes a set of 32-bit control registers that provide access to
-/// > processor features such as the program counter, hardware loops, and vector predicates.
-/// >
-/// > unlike general registers, control registers are used as instruction operands only in the
-/// > following cases:
-/// > * instructions that require a specific control register as an operand
-/// > * register transfer instructions
-/// >
-/// > NOTE: when a control register is used in a register transfer, the other operand must be a
-/// > general register.
-/// also V73 Section 2.2:
-/// > the control registers have numeric aliases (C0 through C31).
-///
-/// while the names are written out first, the numeric form of the register is probably what is
-/// used more often...
-///
-/// also, the `*LO/*HI` registers seem like they may be used in some circumstances as a pair
-/// without the `LO/HI` suffixes, so there may need to be a `ControlRegPair` type too.
-// TODO: figure out what of this needs to stick around
-#[allow(dead_code)]
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
-struct ControlReg(u8);
-
-// TODO: figure out what of this needs to stick around
-#[allow(dead_code)]
-impl ControlReg {
-    /// Loop start address register 0
-    const SA0: ControlReg = ControlReg(0);
-    /// Loop count register 0
-    const LC0: ControlReg = ControlReg(1);
-    /// Loop start address register 1
-    const SA1: ControlReg = ControlReg(2);
-    /// Loop count register 1
-    const LC1: ControlReg = ControlReg(3);
-    /// Predicate registers
-    const PREDICATES: ControlReg = ControlReg(4);
-
-    // C5 is unused
-
-    /// Modifier register 0
-    const M0: ControlReg = ControlReg(6);
-    /// Modifier register 1
-    const M1: ControlReg = ControlReg(7);
-    /// User status register
-    ///
-    /// V73 Section 2.2.3:
-    /// > USR stores the following status and control values:
-    /// > * Cache prefetch enable
-    /// > * Cache prefetch status
-    /// > * Floating point modes
-    /// > * Floating point status
-    /// > * Hardware loop configuration
-    /// > * Sticky Saturation overflow
-    /// >
-    /// > NOTE: A user control register transfer to USR cannot be gruoped in an instruction packet
-    /// with a Floating point instruction.
-    /// > NOTE: When a transfer to USR chagnes the enable trap bits [29:25], an isync instruction
-    /// (Section 5.11) must execute before the new exception programming can take effect.
-    const USR: ControlReg = ControlReg(8);
-    /// Program counter
-    const PC: ControlReg = ControlReg(9);
-    /// User general pointer
-    const UGP: ControlReg = ControlReg(10);
-    /// Global pointer
-    const GP: ControlReg = ControlReg(11);
-    /// Circular start register 0
-    const CS0: ControlReg = ControlReg(12);
-    /// Circular start register 1
-    const CS1: ControlReg = ControlReg(13);
-    /// Cycle count registers
-    ///
-    /// according to V5x manual section 1.5, new in V5x
-    const UPCYCLELO: ControlReg = ControlReg(14);
-    /// Cycle count registers
-    ///
-    /// according to V5x manual section 1.5, new in V5x
-    const UPCYCLEHI: ControlReg = ControlReg(15);
-    /// Stack bounds register
-    ///
-    /// V73 Section 2.2.10:
-    /// > The frame limit register (FRAMELIMIT) stores the low address of the memory area reserved
-    /// > for the software stack (Section 7.3.1).
-    const FRAMELIMIT: ControlReg = ControlReg(16);
-    /// Stack smash register
-    ///
-    /// V73 Section 2.2.11:
-    /// > The frame key register (FRAMEKEY) stores the key value that XOR-scrambles return
-    /// > addresses when they are stored on the software tack (Section 7.3.2).
-    const FRAMEKEY: ControlReg = ControlReg(17);
-    /// Packet count registers
-    ///
-    /// v73 Section 2.2.12:
-    /// > The packet count registers (PKTCOUNTLO to PKTCOUNTHI) store a 64-bit value containing the
-    /// > current number of instruction packets exceuted since a PKTCOUNT registers was last
-    /// > written to.
-    const PKTCOUNTLO: ControlReg = ControlReg(18);
-    /// Packet count registers
-    const PKTCOUNTHI: ControlReg = ControlReg(19);
-
-    // C20-C29 are reserved
-
-    /// Qtimer registers
-    ///
-    /// V73 Section 2.2.13:
-    /// > The QTimer registers (UTIMERLO to UTIMERHI) provide access to the QTimer global reference
-    /// > count value. They enable Hexagon software to read the 64-bit time value without having to
-    /// > perform an expensive advanced high-performance bus (AHB) load.
-    /// > ...
-    /// > These registers are read only – hardware automatically updates these registers to contain
-    /// > the current QTimer value.
-    const UTIMERLO: ControlReg = ControlReg(30);
-    /// Qtimer registers
-    const UTIMERHI: ControlReg = ControlReg(31);
 }
 
 impl Instruction {
@@ -1097,6 +981,21 @@ pub enum Operand {
     /// way by actual code.
     Gpr { reg: u8 },
     /// `Cn`, a 32-bit control register `C<reg>`
+    ///
+    /// V73 Section 2.2:
+    /// > the Hexagon processor includes a set of 32-bit control registers that provide access to
+    /// > processor features such as the program counter, hardware loops, and vector predicates.
+    /// >
+    /// > unlike general registers, control registers are used as instruction operands only in the
+    /// > following cases:
+    /// > * instructions that require a specific control register as an operand
+    /// > * register transfer instructions
+    /// >
+    /// > NOTE: when a control register is used in a register transfer, the other operand must be a
+    /// > general register.
+    ///
+    /// also V73 Section 2.2:
+    /// > the control registers have numeric aliases (C0 through C31).
     Cr { reg: u8 },
     /// `Sn`, a 32-bit supervisor register `S<reg>`
     Sr { reg: u8 },
@@ -2940,7 +2839,6 @@ fn decode_instruction<
                     let is_call = (inst >> 24) & 1 == 1;
 
                     if is_call {
-                        // TODO: extend
                         handler.on_opcode_decoded(Opcode::Call)?;
                         handler.inst_predicated(uu as u8, negated, false)?;
                         opcode_check!(!dotnew);
@@ -2963,7 +2861,7 @@ fn decode_instruction<
                     return Err(DecodeError::InvalidOpcode);
                 }
                 _ => {
-                    // TODO: exhaustive
+                    opcode_check!(false);
                 }
             }
         },
@@ -3155,7 +3053,6 @@ fn decode_instruction<
                     // 000 -> swi
                     // 001 -> cswi
                     // 011 -> ciad
-                    // TODO:
                     static OPS: [Option<Opcode>; 8] = [
                         Some(Opcode::Swi), Some(Opcode::Cswi), None, Some(Opcode::Ciad),
                         None, None, None, None,
@@ -3166,7 +3063,6 @@ fn decode_instruction<
                 0b0100010 => {
                     // 000 -> wait
                     // 010 -> resume
-                    // TODO:
                     static OPS: [Option<Opcode>; 8] = [
                         Some(Opcode::Wait), None, Some(Opcode::Resume), None,
                         None, None, None, None,
@@ -3178,7 +3074,6 @@ fn decode_instruction<
                     // 000 -> stop
                     // 001 -> start
                     // 010 -> nmi
-                    // TODO:
                     static OPS: [Option<Opcode>; 8] = [
                         Some(Opcode::Stop), Some(Opcode::Start), Some(Opcode::Nmi), None,
                         None, None, None, None,
@@ -3187,7 +3082,6 @@ fn decode_instruction<
                     handler.on_source_decoded(Operand::gpr(reg_b16(inst)))?;
                 }
                 0b0100100 => {
-                    // TODO: double check encoding and manual
                     // 000 -> setimask
                     // 011 -> siad
                     static OPS: [Option<Opcode>; 8] = [
@@ -3245,7 +3139,6 @@ fn decode_instruction<
                 }
                 0b1101100 => {
                     operand_check!(reg_b0(inst) == 0);
-                    // TODO:
                     handler.on_opcode_decoded(Opcode::Crswap)?;
                     handler.on_source_decoded(Operand::gprpair(reg_b16(inst))?)?;
                     handler.on_source_decoded(Operand::srpair(0)?)?;

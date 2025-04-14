@@ -12,3 +12,15 @@ edition = "2021"
 [dependencies]
 yaxpeax-arch = { version = "0.3.1", default-features = false, features = [] }
 "num-traits" = { version = "0.2", default-features = false }
+
+[features]
+default = ["std", "fmt"]
+
+# yaxpeax-arch (and this crate) can drop some featuers and be no-std
+std = ["alloc", "yaxpeax-arch/std"]
+
+# some yaxpeax-arch features require only alloc, not std
+alloc = ["yaxpeax-arch/alloc"]
+
+# regardless of no-std, fmt impls are not necessarily required, and so are optional here
+fmt = []

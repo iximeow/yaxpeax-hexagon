@@ -878,7 +878,6 @@ fn inst_0110() {
     test_display(&0b0110_0000110_00110_11_0_00010_000_01000u32.to_le_bytes(), "{ p3 = sp2loop0($+0x24, r6) }");
     test_display(&0b0110_0000111_00110_11_0_00010_000_01000u32.to_le_bytes(), "{ p3 = sp3loop0($+0x24, r6) }");
 
-    // TODO: test signed (negative) offsets
     test_display(&0b0110_0001001_00110_11_1_000101_00_10110u32.to_le_bytes(), "{ if (r6!=#0) jump:nt $-0x1ad4 }");
     test_display(&0b0110_0001001_00110_11_1_100101_00_10110u32.to_le_bytes(), "{ if (r6!=#0) jump:t $-0x1ad4 }");
     test_display(&0b0110_0001011_00110_11_1_000101_00_10110u32.to_le_bytes(), "{ if (r6>=#0) jump:nt $-0x1ad4 }");
@@ -1263,7 +1262,6 @@ fn inst_1001() {
     test_display(&0b1001_0111110_00010_11_1001_00_000_10000u32.to_le_bytes(), "{ r17:16 = memd(r2+#14592) }");
     test_invalid(&0b1001_0001111_00010_11_0_00100_000_00011u32.to_le_bytes(), DecodeError::InvalidOpcode);
 
-    // TODO: exercise these
     test_display(&0b1001_1000001_00010_11_1000_00111_10000u32.to_le_bytes(), "{ r16 = membh(r2++#0xe:circ(m1)) }");
     test_display(&0b1001_1000010_00010_11_1000_00111_10000u32.to_le_bytes(), "{ r17:16 = memh_fifo(r2++#0xe:circ(m1)) }");
     test_display(&0b1001_1000011_00010_11_1000_00111_10000u32.to_le_bytes(), "{ r16 = memubh(r2++#0xe:circ(m1)) }");
@@ -2462,5 +2460,3 @@ fn inst_1111() {
 
     test_display(&0b1111_1101000_00100_11_1_00011_001_00110u32.to_le_bytes(), "{ if (p1.new) r7:6 = contains(r4, r3) }");
 }
-
-    // TODO: testcase for Rn=add(pc,#nn)
