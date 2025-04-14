@@ -9,9 +9,12 @@ support is good enough to make sense of many programs, but not complete:
 
 - [x] instructions mentioned in the V62 and V73 manuals.
 - [x] system instructions documented in V62 and earlier
-- [ ] undocumented system instructions in V73 and later
+- [x] undocumented system instructions in V73 and later
+- [x] non-HVX vector instructions
+- [x] constant extenders
+- [/] duplex instructions
+  - implemented, but poorly tested
 - [ ] HVX (in any version)
-- [ ] duplex instructions
 
 between V67 and V73, Qualcomm decided to remove most mentions of the Hexagon
 supervisor mode from their manuals. the LLVM target has had support for these
