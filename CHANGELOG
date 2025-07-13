@@ -1,3 +1,10 @@
+## 0.1.1
+
+* fixed decoding of new-value register operands
+  - the register number for registers like N<n>.new were selected incorrectly,
+    and various forms of invalid instruction involving bogus new-value encodings
+    were incorrectly accepted. thank you @CUB3D for the report!
+
 ## 0.1.0
 
 * wrote a decoder

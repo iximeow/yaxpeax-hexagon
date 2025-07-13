@@ -1216,6 +1216,12 @@ trait DecodeHandler<T: Reader<<Hexagon as Arch>::Address, <Hexagon as Arch>::Wor
     fn on_decode_end(&mut self) {}
     fn start_instruction(&mut self) -> Result<(), <Hexagon as Arch>::DecodeError> { Ok(()) }
     fn end_instruction(&mut self) -> Result<(), <Hexagon as Arch>::DecodeError> { Ok(()) }
+    /// register an instruction with a new-value operand. this is described in more detail
+    /// by `10.10 New-value operands` (as of the V73 manual). specifically, this registers
+    /// that the current instruction has a new-value register operand that is produced by some
+    /// instruction "ahead" in the same packet. "ahead" means "at lower memory address", which also
+    /// means the producer ought to have been decoded already.
+    fn on_nv_register(&mut self, _dist: u8) -> Result<(), <Hexagon as Arch>::DecodeError> { Ok(()) }
     fn on_loop_end(&mut self, loop_num: u8);
     fn on_opcode_decoded(&mut self, _opcode: Opcode) -> Result<(), <Hexagon as Arch>::DecodeError> { Ok(()) }
     fn on_source_decoded(&mut self, _operand: Operand) -> Result<(), <Hexagon as Arch>::DecodeError> { Ok(()) }
@@ -1266,6 +1272,43 @@ impl<T: yaxpeax_arch::Reader<<Hexagon as Arch>::Address, <Hexagon as Arch>::Word
             inst.dest = Some(operand);
         }
         Ok(())
+    }
+    fn on_nv_register(&mut self, dist: u8) -> Result<(), <Hexagon as Arch>::DecodeError> {
+        // from the manual:
+        // > Nt[0] is reserved and must always be encoded as zero. A nonzero value produces
+        // > undefined results.
+        operand_check!(dist & 1 == 0);
+
+        let dist = dist >> 1;
+        // Nt[2:1] = 00 // Reserved
+        operand_check!(dist != 0);
+
+        operand_check!(self.instruction_count >= dist);
+        let producer_idx = self.instruction_count - dist;
+
+        let source = match self.instructions.get(producer_idx as usize) {
+            Some(inst) => {
+                match inst.dest {
+                    Some(Operand::Gpr { reg }) => {
+                        reg
+                    }
+                    // note that GprPair is ignored here:
+                    // > Instructions with 64-bit register pair destinations cannot produce
+                    // > new-values. The assembler flags this case with an error, as the result is
+                    // > undefined.
+                    _ => {
+                        // the instruction `dist` slots ahead had an instruction but it did not
+                        // produce a new register?
+                        return Err(DecodeError::InvalidOperand);
+                    }
+                }
+            }
+            None => {
+                return Err(DecodeError::InvalidOperand);
+            }
+        };
+
+        <Self as DecodeHandler<T>>::on_source_decoded(self, Operand::gpr_new(source))
     }
     fn assign_mode(&mut self, assign_mode: AssignMode) -> Result<(), <Hexagon as Arch>::DecodeError> {
         let inst = &mut self.instructions[self.instruction_count as usize];
@@ -1420,7 +1463,7 @@ fn decode_store_ops<
     dest_op: impl FnOnce(u8) -> Result<Operand, DecodeError>
 ) -> Result<(), DecodeError> {
     if opbits == 0b101 {
-        handler.on_source_decoded(Operand::gpr_new(srcreg & 0b111))?;
+        handler.on_nv_register(srcreg & 0b111)?;
         let opbits = (srcreg >> 3) & 0b11;
         static OPS: [Option<Opcode>; 4] = [
             Some(Opcode::StoreMemb), Some(Opcode::StoreMemh),
@@ -2241,11 +2284,11 @@ fn decode_instruction<
                 let ttttt = reg_b8(inst);
 
                 if op < 0b0110 {
-                    handler.on_source_decoded(Operand::GprNew { reg: sss })?;
+                    handler.on_nv_register(sss)?;
                     handler.on_source_decoded(Operand::gpr(ttttt))?;
                 } else {
                     handler.on_source_decoded(Operand::gpr(ttttt))?;
-                    handler.on_source_decoded(Operand::GprNew { reg: sss })?;
+                    handler.on_nv_register(sss)?;
                 }
 
                 static OPS: [Option<Opcode>; 16] = [
@@ -2257,7 +2300,7 @@ fn decode_instruction<
 
                 handler.on_opcode_decoded(decode_opcode!(OPS[op as usize]))?;
             } else {
-                handler.on_source_decoded(Operand::GprNew { reg: sss })?;
+                handler.on_nv_register(sss)?;
 
                 if op < 0b10110 {
                     let lllll = reg_b8(inst);
@@ -2352,7 +2395,7 @@ fn decode_instruction<
                             Some(StoreMemw), None,
                         ];
                         handler.on_opcode_decoded(decode_opcode!(OPCODES[op as usize]))?;
-                        handler.on_source_decoded(Operand::gpr_new(ttt as u8))?;
+                        handler.on_nv_register(ttt as u8)?;
                     } else {
                         static OPCODES: [Option<Opcode>; 8] = [
                             Some(StoreMemb), None, Some(StoreMemh), Some(StoreMemh),
@@ -2463,7 +2506,7 @@ fn decode_instruction<
                                         Some(StoreMemw), None,
                                     ];
                                     handler.on_opcode_decoded(decode_opcode!(OPCODES[op as usize]))?;
-                                    handler.on_source_decoded(Operand::gpr_new(ttt as u8))?;
+                                    handler.on_nv_register(ttt as u8)?;
                                 },
                                 0b0110 => {
                                     handler.on_opcode_decoded(Opcode::StoreMemd)?;
